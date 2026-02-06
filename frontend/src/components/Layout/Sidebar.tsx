@@ -1,19 +1,18 @@
-import { CheckSquare, Music, Clock, Settings, Trash2 } from "lucide-react";
+import { CheckSquare, Headphones, Settings } from "lucide-react";
+import type { SectionId } from "../../types/navigation";
 
 interface SidebarProps {
-  activeSection: string;
-  onSectionChange: (section: string) => void;
+  activeSection: SectionId;
+  onSectionChange: (section: SectionId) => void;
 }
 
-export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
-  const menuItems = [
-    { id: "tasks", label: "Tasks", icon: CheckSquare },
-    { id: "sounds", label: "Sounds", icon: Music },
-    { id: "timer", label: "Timer", icon: Clock },
-    { id: "settings", label: "Settings", icon: Settings },
-    { id: "trash", label: "Trash", icon: Trash2 },
-  ];
+const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] = [
+  { id: "tasks", label: "Tasks", icon: CheckSquare },
+  { id: "session", label: "Session", icon: Headphones },
+  { id: "settings", label: "Settings", icon: Settings },
+];
 
+export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   return (
     <aside className="w-60 h-screen bg-notion-bg-secondary border-r border-notion-border flex flex-col">
       <div className="p-4 border-b border-notion-border">
