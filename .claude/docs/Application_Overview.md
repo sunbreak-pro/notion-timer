@@ -55,6 +55,21 @@
 * `PUT /api/tasks/{id}`: タスク更新（完了フラグ含む）
 * `DELETE /api/tasks/{id}`: タスク削除
 
+### Sound Settings（環境音設定）
+* `GET /api/sound-settings`: 全サウンド設定取得
+* `PUT /api/sound-settings`: サウンド設定更新（soundType, volume, enabled）
+* `GET /api/sound-presets`: プリセット一覧取得
+* `POST /api/sound-presets`: プリセット作成（name, settingsJson）
+* `DELETE /api/sound-presets/{id}`: プリセット削除
+
+### Timer（タイマー設定・セッション）
+* `GET /api/timer-settings`: タイマー設定取得
+* `PUT /api/timer-settings`: タイマー設定更新（workDuration, breakDuration等）
+* `POST /api/timer-sessions`: セッション開始記録（sessionType, taskId）
+* `PUT /api/timer-sessions/{id}`: セッション終了記録（duration, completed）
+* `GET /api/timer-sessions`: セッション履歴取得
+* `GET /api/tasks/{taskId}/sessions`: タスク別セッション履歴取得
+
 ### AI
 * `POST /api/ai/advice`: 現在のタスク内容を元にアドバイスを取得
 
@@ -66,6 +81,36 @@
 * `status`: Enum (TODO, DONE)
 * `createdAt`: LocalDateTime
 * `completedAt`: LocalDateTime
+
+### SoundSettings Entity
+* `id`: Long (Auto Increment)
+* `soundType`: String (rain, fire, cafe など)
+* `volume`: Integer (0-100)
+* `enabled`: Boolean
+* `updatedAt`: LocalDateTime
+
+### SoundPreset Entity
+* `id`: Long (Auto Increment)
+* `name`: String (プリセット名)
+* `settingsJson`: String (各音源の設定をJSON保存)
+* `createdAt`: LocalDateTime
+
+### TimerSettings Entity
+* `id`: Long (Auto Increment)
+* `workDuration`: Integer (作業時間・分、デフォルト25)
+* `breakDuration`: Integer (休憩時間・分、デフォルト5)
+* `longBreakDuration`: Integer (長休憩・分、デフォルト15)
+* `sessionsBeforeLongBreak`: Integer (長休憩までのセッション数)
+* `updatedAt`: LocalDateTime
+
+### TimerSession Entity
+* `id`: Long (Auto Increment)
+* `taskId`: Long (紐付けタスク、nullable)
+* `sessionType`: Enum (WORK, BREAK, LONG_BREAK)
+* `startedAt`: LocalDateTime
+* `completedAt`: LocalDateTime
+* `duration`: Integer (実際の経過時間・秒)
+* `completed`: Boolean (正常完了か中断か)
 
 ## 5. 開発の進め方と制約事項
 1.  **CORS設定:** フロントエンド(通常 port 5173)からバックエンド(通常 port 8080)へのアクセスを許可する `WebMvcConfigurer` 設定を最初に行うこと。

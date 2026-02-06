@@ -1,0 +1,20 @@
+# Backend
+backend/build/
+backend/.gradle/
+backend/data/
+backend/*.db
+backend/*.trace.db
+
+# H2 Database files
+*.h2.db
+*.mv.db
+*.trace.db
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Logs
+*.log

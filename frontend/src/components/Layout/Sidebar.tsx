@@ -1,4 +1,4 @@
-import { CheckSquare, Music, Clock } from 'lucide-react';
+import { CheckSquare, Music, Clock } from "lucide-react";
 
 interface SidebarProps {
   activeSection: string;
@@ -7,9 +7,10 @@ interface SidebarProps {
 
 export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const menuItems = [
-    { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-    { id: 'sounds', label: 'Sounds', icon: Music },
-    { id: 'timer', label: 'Timer', icon: Clock },
+    { id: "tasks", label: "Tasks", icon: CheckSquare },
+    { id: "sounds", label: "Sounds", icon: Music },
+    { id: "timer", label: "Timer", icon: Clock },
+    { id: "settings", label: "Settings", icon: Clock },
   ];
 
   return (
@@ -27,8 +28,8 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
               onClick={() => onSectionChange(item.id)}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
                 isActive
-                  ? 'bg-notion-hover text-notion-text'
-                  : 'text-notion-text-secondary hover:bg-notion-hover hover:text-notion-text'
+                  ? "bg-notion-hover text-notion-text"
+                  : "text-notion-text-secondary hover:bg-notion-hover hover:text-notion-text"
               }`}
             >
               <Icon size={18} />
