@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
-import { Check, Trash2 } from 'lucide-react';
+import { Check, Trash2, Play } from 'lucide-react';
 import type { Task } from '../../types/task';
 
 interface TaskItemProps {
@@ -84,6 +84,14 @@ export function TaskItem({ task, onToggle, onUpdate, onDelete, isFocused, dimmed
         </span>
       )}
 
+      {!isDone && (
+        <button
+          onClick={() => alert('タイマー機能は開発中です')}
+          className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-accent transition-opacity"
+        >
+          <Play size={16} />
+        </button>
+      )}
       <button
         onClick={() => onDelete(task.id)}
         className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-danger transition-opacity"

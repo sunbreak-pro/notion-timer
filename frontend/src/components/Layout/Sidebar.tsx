@@ -1,4 +1,4 @@
-import { CheckSquare, Music, Clock } from "lucide-react";
+import { CheckSquare, Music, Clock, Settings, Trash2 } from "lucide-react";
 
 interface SidebarProps {
   activeSection: string;
@@ -10,7 +10,8 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
     { id: "tasks", label: "Tasks", icon: CheckSquare },
     { id: "sounds", label: "Sounds", icon: Music },
     { id: "timer", label: "Timer", icon: Clock },
-    { id: "settings", label: "Settings", icon: Clock },
+    { id: "settings", label: "Settings", icon: Settings },
+    { id: "trash", label: "Trash", icon: Trash2 },
   ];
 
   return (

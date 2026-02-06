@@ -171,7 +171,7 @@ H2 Database (file: ./data/sonicflow)
 
 ### フロントエンド
 
-```
+```javaScript
 try {
   const result = await api.someMethod();
   setLocalState(result);      // 楽観的更新
