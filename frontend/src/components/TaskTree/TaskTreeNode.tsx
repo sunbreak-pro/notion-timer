@@ -50,6 +50,7 @@ export function TaskTreeNode({
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(node.title);
   const inputRef = useRef<HTMLInputElement>(null);
+  const clickTimerRef = useRef<number | null>(null);
 
   const {
     attributes,
@@ -172,13 +173,21 @@ export function TaskTreeNode({
         ) : (
           <span
             onClick={() => {
-              if (node.type === "task" && onSelectTask) {
-                onSelectTask(node.id);
-              } else {
+              if (isFolder) {
                 setIsEditing(true);
+                return;
+              }
+              if (clickTimerRef.current !== null) {
+                clearTimeout(clickTimerRef.current);
+                clickTimerRef.current = null;
+                setIsEditing(true);
+              } else {
+                clickTimerRef.current = window.setTimeout(() => {
+                  clickTimerRef.current = null;
+                  if (onSelectTask) onSelectTask(node.id);
+                }, 300);
               }
             }}
-            onDoubleClick={() => setIsEditing(true)}
             className={`flex-1 text-sm cursor-pointer truncate ${
               isDone
                 ? "line-through text-notion-text-secondary"

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -12,15 +12,11 @@ interface MemoEditorProps {
 
 export function MemoEditor({ taskId, initialContent, onUpdate }: MemoEditorProps) {
   const debounceRef = useRef<number | null>(null);
+  const onUpdateRef = useRef(onUpdate);
 
-  const handleUpdate = useCallback((json: string) => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-    debounceRef.current = window.setTimeout(() => {
-      onUpdate(json);
-    }, 800);
-  }, [onUpdate]);
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  });
 
   useEffect(() => {
     return () => {
@@ -41,7 +37,13 @@ export function MemoEditor({ taskId, initialContent, onUpdate }: MemoEditorProps
     ],
     content: initialContent ? tryParseJSON(initialContent) : undefined,
     onUpdate: ({ editor }) => {
-      handleUpdate(JSON.stringify(editor.getJSON()));
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      const json = JSON.stringify(editor.getJSON());
+      debounceRef.current = window.setTimeout(() => {
+        onUpdateRef.current(json);
+      }, 800);
     },
     editorProps: {
       attributes: {

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { SessionType } from '../types/timer';
 import { TimerContext } from './timerContextValue';
@@ -35,12 +35,12 @@ function getDuration(sessionType: SessionType, config: TimerConfig): number {
 export function TimerProvider({ children }: { children: ReactNode }) {
   const [workDurationMinutes, setWorkDurationMinutesState] = useState(getStoredWorkDuration);
 
-  const config: TimerConfig = {
+  const config: TimerConfig = useMemo(() => ({
     workDuration: workDurationMinutes * 60,
     breakDuration: 5 * 60,
     longBreakDuration: 15 * 60,
     sessionsBeforeLongBreak: 4,
-  };
+  }), [workDurationMinutes]);
 
   const [sessionType, setSessionType] = useState<SessionType>('WORK');
   const [remainingSeconds, setRemainingSeconds] = useState(config.workDuration);
