@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import type { KeyboardEvent } from "react";
 import { useSortable } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
   ChevronRight,
@@ -21,6 +22,7 @@ import { TaskTreeInput } from "./TaskTreeInput";
 interface TaskTreeNodeProps {
   node: TaskNode;
   depth: number;
+  isLastChild?: boolean;
   onPlayTask?: (node: TaskNode) => void;
   onSelectTask?: (id: string) => void;
   selectedTaskId?: string | null;
@@ -29,6 +31,7 @@ interface TaskTreeNodeProps {
 export function TaskTreeNode({
   node,
   depth,
+  isLastChild,
   onPlayTask,
   onSelectTask,
   selectedTaskId,
@@ -55,6 +58,7 @@ export function TaskTreeNode({
     transform,
     transition,
     isDragging,
+    isOver,
   } = useSortable({ id: node.id });
 
   const style = {
@@ -89,23 +93,34 @@ export function TaskTreeNode({
   };
 
   const children = getChildren(node.id);
+  const childIds = useMemo(() => children.map((c) => c.id), [children]);
   const isFolder = node.type === "folder" || node.type === "subfolder";
   const isDone = node.type === "task" && node.status === "DONE";
   const isTimerActive = timer.activeTask?.id === node.id && timer.isRunning;
   const isSelected = node.type === "task" && selectedTaskId === node.id;
 
   const childPlaceholder =
-    node.type === "folder" ? "+ New subfolder or task..." : "+ New task...";
+    node.type === "folder"
+      ? "Type task name (/ for subfolder)"
+      : "Type task name...";
 
   return (
     <div>
       <div
         ref={setNodeRef}
         style={style}
-        className={`group flex items-center gap-1 px-2 py-1 rounded-md hover:bg-notion-hover transition-colors ${isSelected ? "bg-notion-hover" : ""}`}
+        className={`group flex items-center gap-1 px-2 py-1 rounded-md hover:bg-notion-hover transition-colors ${isSelected ? "bg-notion-hover" : ""} ${isFolder && isOver && !isDragging ? "ring-2 ring-notion-accent/50" : ""}`}
         {...attributes}
       >
-        <div style={{ width: `${depth * 20}px` }} className="shrink-0" />
+        <div className="flex shrink-0" style={{ width: `${depth * 20}px` }}>
+          {Array.from({ length: depth }, (_, i) => (
+            <div key={i} className="w-5 flex justify-center">
+              <div
+                className={`w-1 h-full ${i === depth - 1 && isLastChild ? "h-1/2 self-start" : ""} bg-notion-border`}
+              />
+            </div>
+          ))}
+        </div>
 
         <button
           {...listeners}
@@ -180,7 +195,7 @@ export function TaskTreeNode({
           </span>
         )}
 
-        {node.type === "task" && !isDone && onPlayTask && (
+        {!isDone && onPlayTask && (
           <button
             onClick={() => onPlayTask(node)}
             className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-accent transition-opacity"
@@ -210,29 +225,32 @@ export function TaskTreeNode({
       )}
 
       {isFolder && node.isExpanded && (
-        <div>
-          {children.map((child) => (
-            <TaskTreeNode
-              key={child.id}
-              node={child}
-              depth={depth + 1}
-              onPlayTask={onPlayTask}
-              onSelectTask={onSelectTask}
-              selectedTaskId={selectedTaskId}
-            />
-          ))}
-          <TaskTreeInput
-            placeholder={childPlaceholder}
-            indent={depth + 1}
-            onSubmit={(title) => {
-              if (node.type === "folder" && title.startsWith("/")) {
-                addNode("subfolder", node.id, title.slice(1));
-              } else {
-                addNode("task", node.id, title);
+        <SortableContext items={childIds} strategy={verticalListSortingStrategy}>
+          <div>
+            {children.map((child, index) => (
+              <TaskTreeNode
+                key={child.id}
+                node={child}
+                depth={depth + 1}
+                isLastChild={index === children.length - 1}
+                onPlayTask={onPlayTask}
+                onSelectTask={onSelectTask}
+                selectedTaskId={selectedTaskId}
+              />
+            ))}
+            <TaskTreeInput
+              placeholder={childPlaceholder}
+              indent={depth + 1}
+              allowFolderCreation={node.type === "folder"}
+              onSubmit={(title) => addNode("task", node.id, title)}
+              onSubmitFolder={
+                node.type === "folder"
+                  ? (title) => addNode("subfolder", node.id, title)
+                  : undefined
               }
-            }}
-          />
-        </div>
+            />
+          </div>
+        </SortableContext>
       )}
     </div>
   );

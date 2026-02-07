@@ -12,7 +12,13 @@ interface TaskDetailHeaderProps {
   onDurationChange?: (minutes: number) => void;
 }
 
-const PRESETS = [15, 25, 30, 45, 60];
+const PRESETS = [15, 25, 30, 45, 60, 90, 120, 180, 240];
+
+function formatDuration(minutes: number): string {
+  if (minutes >= 60 && minutes % 60 === 0) return `${minutes / 60}h`;
+  if (minutes > 60) return `${Math.floor(minutes / 60)}h${minutes % 60}m`;
+  return `${minutes}m`;
+}
 
 export function TaskDetailHeader({
   task,
@@ -62,40 +68,40 @@ export function TaskDetailHeader({
             }`}
           >
             <Clock size={14} />
-            <span>{duration}m</span>
+            <span>{formatDuration(duration)}</span>
           </button>
 
           {showDurationPicker && (
-            <div className="absolute top-full left-0 mt-1 z-50 bg-notion-bg border border-notion-border rounded-lg shadow-lg p-3 w-52">
+            <div className="absolute top-full left-0 mt-1 z-50 bg-notion-bg border border-notion-border rounded-lg shadow-lg p-3 w-56">
               <div className="flex items-center justify-between mb-2">
                 <button
-                  onClick={() => onDurationChange?.(Math.max(5, duration - 5))}
+                  onClick={() => onDurationChange?.(Math.max(5, duration - (duration > 60 ? 15 : 5)))}
                   className="p-1 rounded-md text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover"
                 >
                   <Minus size={14} />
                 </button>
                 <span className="text-sm font-mono tabular-nums text-notion-text">
-                  {duration}m
+                  {formatDuration(duration)}
                 </span>
                 <button
-                  onClick={() => onDurationChange?.(Math.min(60, duration + 5))}
+                  onClick={() => onDurationChange?.(Math.min(240, duration + (duration >= 60 ? 15 : 5)))}
                   className="p-1 rounded-md text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover"
                 >
                   <Plus size={14} />
                 </button>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="grid grid-cols-5 gap-1">
                 {PRESETS.map(preset => (
                   <button
                     key={preset}
                     onClick={() => onDurationChange?.(preset)}
-                    className={`flex-1 py-1 rounded text-xs font-medium transition-colors ${
+                    className={`py-1 rounded text-xs font-medium transition-colors ${
                       duration === preset
                         ? 'bg-notion-accent text-white'
                         : 'text-notion-text-secondary hover:bg-notion-hover'
                     }`}
                   >
-                    {preset}
+                    {formatDuration(preset)}
                   </button>
                 ))}
               </div>

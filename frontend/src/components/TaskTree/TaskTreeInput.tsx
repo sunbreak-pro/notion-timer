@@ -1,16 +1,19 @@
 import { useState } from "react";
 import type { KeyboardEvent } from "react";
-import { Plus } from "lucide-react";
 
 interface TaskTreeInputProps {
   placeholder: string;
   onSubmit: (title: string) => void;
+  onSubmitFolder?: (title: string) => void;
+  allowFolderCreation?: boolean;
   indent?: number;
 }
 
 export function TaskTreeInput({
   placeholder,
   onSubmit,
+  onSubmitFolder,
+  allowFolderCreation = false,
   indent = 0,
 }: TaskTreeInputProps) {
   const [value, setValue] = useState("");
@@ -19,6 +22,15 @@ export function TaskTreeInput({
     const trimmed = value.trim();
     if (!trimmed) return;
     setValue("");
+
+    if (allowFolderCreation && trimmed.startsWith("/") && onSubmitFolder) {
+      const folderTitle = trimmed.slice(1).trim();
+      if (folderTitle) {
+        onSubmitFolder(folderTitle);
+        return;
+      }
+    }
+
     onSubmit(trimmed);
   };
 
@@ -32,12 +44,6 @@ export function TaskTreeInput({
       className="flex items-center gap-2 px-2 py-1.5 text-notion-text-secondary hover:bg-notion-hover rounded-md"
       style={{ paddingLeft: `${indent * 20 + 8}px` }}
     >
-      <button
-        onClick={handleSubmit}
-        className="p-0.5 hover:bg-notion-hover rounded"
-      >
-        <Plus size={14} />
-      </button>
       <input
         type="text"
         value={value}

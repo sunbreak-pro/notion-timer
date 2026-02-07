@@ -18,7 +18,7 @@ function getStoredWorkDuration(): number {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const val = parseInt(stored, 10);
-      if (val >= 5 && val <= 60) return val;
+      if (val >= 5 && val <= 240) return val;
     }
   } catch { /* ignore */ }
   return 25;
@@ -135,7 +135,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setWorkDurationMinutes = useCallback((min: number) => {
-    const clamped = Math.max(5, Math.min(60, min));
+    const clamped = Math.max(5, Math.min(240, min));
     setWorkDurationMinutesState(clamped);
     localStorage.setItem(STORAGE_KEY, String(clamped));
     if (!isRunning && sessionType === 'WORK') {

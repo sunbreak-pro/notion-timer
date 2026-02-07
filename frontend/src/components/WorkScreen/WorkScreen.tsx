@@ -6,6 +6,7 @@ import { TimerDisplay } from './TimerDisplay';
 import { TimerProgressBar } from './TimerProgressBar';
 import { DurationSelector } from './DurationSelector';
 import { SoundMixer } from './SoundMixer';
+import { TaskSelector } from './TaskSelector';
 
 interface WorkScreenProps {
   isOverlay?: boolean;
@@ -30,7 +31,7 @@ export function WorkScreen({ isOverlay = false, onClose }: WorkScreenProps) {
   const content = (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-6 py-4 border-b border-notion-border">
-        <h2 className="text-lg font-semibold text-notion-text truncate">{title}</h2>
+        <TaskSelector currentTitle={title} />
         {isOverlay && onClose && (
           <button
             onClick={onClose}

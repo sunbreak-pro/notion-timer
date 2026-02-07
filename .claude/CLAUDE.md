@@ -1,77 +1,99 @@
-# Sonic Flow 開発ガイド
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## プロジェクト概要
-Notionライクなタスク管理 + 環境音ミキサー + ポモドーロタイマーを組み合わせた没入型個人タスク管理アプリ
-
----
-
-## ディレクトリ構成
-```
-notion-timer/
-├── frontend/               # React (TypeScript + Vite)
-│   ├── src/
-│   │   ├── components/     # UIコンポーネント
-│   │   ├── hooks/          # カスタムフック
-│   │   ├── context/        # React Context
-│   │   ├── api/            # API通信
-│   │   └── types/          # 型定義
-│   └── public/
-│       └── sounds/         # 環境音ファイル（.gitignore対象）
-├── backend/                # Spring Boot (Java 23)
-│   └── src/main/java/
-│       ├── controller/     # REST API
-│       ├── service/        # ビジネスロジック
-│       ├── repository/     # データアクセス
-│       └── entity/         # エンティティ
-├── .claude/
-│   ├── current_plans/      # 進行中の実装プラン
-│   ├── feature_plans/      # 将来の機能仕様ストック
-│   ├── archive/            # 完了済みプラン
-│   └── docs/
-│       ├── Application_Overview.md  # 仕様書
-│       ├── adr/                     # アーキテクチャ決定記録
-│       └── code-explanation/        # コード解説
-├── README.md               # 開発ジャーナル
-├── TODO.md                 # ロードマップ
-└── CHANGELOG.md            # 完了タスク履歴
-```
+Notionライクなタスク管理 + 環境音ミキサー + ポモドーロタイマーを組み合わせた没入型個人タスク管理アプリ（Sonic Flow）
 
 ---
 
 ## 開発コマンド
 
-### Frontend (React)
+### Frontend (React 19 + Vite + TypeScript)
 ```bash
-cd frontend
-npm install          # 依存関係インストール
-npm run dev          # 開発サーバー起動 (port 5173)
-npm run build        # プロダクションビルド
-npm run lint         # ESLint実行
-npm run test         # テスト実行
+cd frontend && npm run dev          # 開発サーバー (port 5173)
+cd frontend && npm run build        # tsc -b && vite build
+cd frontend && npm run lint         # ESLint
 ```
 
-### Backend (Spring Boot)
+### Backend (Spring Boot 3.4.2 + Java 23)
 ```bash
-cd backend
-./gradlew bootRun    # 開発サーバー起動 (port 8080)
-./gradlew build      # ビルド
-./gradlew test       # テスト実行
+cd backend && ./gradlew bootRun     # 開発サーバー (port 8080)
+cd backend && ./gradlew test        # JUnit テスト
+cd backend && ./gradlew build       # ビルド
 ```
 
-### 同時起動
-```bash
-# ターミナル1: Backend
-cd backend && ./gradlew bootRun
+両方同時に起動が必要（CORS: localhost:5173 → localhost:8080）
 
-# ターミナル2: Frontend
-cd frontend && npm run dev
+---
+
+## アーキテクチャ
+
+### 現在のデータ永続化（重要）
+**フロントエンドはlocalStorageのみで動作**。バックエンドREST APIは構築済みだが未接続。
+- タスクツリー: `localStorage("sonic-flow-task-tree")`
+- タイマー設定: `localStorage("sonic-flow-work-duration")`
+- サウンド設定: `localStorage("sonic-flow-sound-mixer")`
+- テーマ設定: `localStorage`経由
+
+将来の設計目標: すべてのユーザーデータをバックエンド（H2 DB）に移行し、デバイス間連携を実現する。
+
+### フロントエンド構成
+
+**Context Provider スタック** (`main.tsx`):
 ```
+ThemeProvider → TaskTreeProvider → TimerProvider → App
+```
+
+**ルーティング**: React Routerなし。`App.tsx`が`activeSection`状態で3セクション（tasks/session/settings）を切り替え。
+
+**レイアウト構成** (3カラム):
+```
+App (状態オーケストレーター)
+├── Sidebar (240px固定, ナビゲーション)
+├── SubSidebar (リサイズ可能160-400px)
+│   └── TaskTree (Inbox + Projects + Completed)
+└── MainContent (flex-1)
+    └── TaskDetail | WorkScreen | Settings
+```
+WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerModalOpen`）。
+
+**TaskNode データモデル** (`types/taskTree.ts`):
+- フラット配列 + `parentId`参照で階層を表現（ネストツリーではない）
+- `type`: `'folder' | 'subfolder' | 'task'` — typeが振る舞いを決定
+- フォルダはルートのみ、サブフォルダはフォルダ内のみ、タスクはどこにでも配置可能
+- ソフトデリート: `isDeleted`フラグ → Settings画面のゴミ箱から復元可能
+
+**主要フック**:
+- `useTaskTree` — タスクツリー全体のCRUD・移動・DnD操作（最大のフック、100行超）
+- `useLocalSoundMixer` — サウンドミキサー状態（UI stub、音声再生は未実装）
+- `useTimerContext` / `useTaskTreeContext` — Context消費用の薄いラッパー
+
+**タイマーシステム**:
+- `TimerContext`がクライアントサイド`setInterval`でカウントダウン
+- `activeTask`（タイマー対象）と`selectedTaskId`（詳細表示対象）は独立
+- WORK → BREAK → LONG_BREAK を自動遷移
+- モーダルを閉じてもバックグラウンドで継続
+- `TaskTreeNode`にインラインで残り時間+ミニプログレスバーを表示
+
+**ドラッグ&ドロップ**: `@dnd-kit`使用。`moveNode`（並び替え）と`moveNodeInto`（階層移動）は別操作。循環参照防止あり。
+
+**リッチテキスト**: TipTap (`@tiptap/react`) でタスクメモ編集（MemoEditor）
+
+### バックエンド構成
+
+**パッケージ**: `com.sonicflow.{controller,service,repository,entity,config}`
+
+**エンティティ**: Task, TimerSession, TimerSettings（シングルトン）, SoundSettings, SoundPreset
+- JPA関連なし（TimerSession.taskIdは素のLong、ForeignKeyではない）
+- `@PrePersist`でタイムスタンプ自動設定
+
+**API**: Tasks(`/api/tasks`), Timer(`/api/timer-*`), Sound(`/api/sound-*`) の3ドメイン。AI(`/api/ai/advice`)は未実装。
 
 ---
 
 ## コーディング規約
 
-### 命名規則
 | 種別 | 規則 | 例 |
 |------|------|-----|
 | コンポーネント | PascalCase | `TaskList.tsx` |
@@ -79,108 +101,41 @@ cd frontend && npm run dev
 | 変数・関数 | camelCase | `taskList`, `fetchTasks` |
 | 定数 | SCREAMING_SNAKE_CASE | `API_BASE_URL` |
 | Java クラス | PascalCase | `TaskController.java` |
-| Java パッケージ | lowercase | `com.sonicflow.controller` |
 
-### コード規約
-- **Frontend**: ESLint + Prettier設定に従う
-- **Backend**: Google Java Style Guide準拠
-- コメントは必要最小限（コードで説明できる場合は不要）
+- Frontend: ESLint設定に従う
+- Backend: Google Java Style Guide準拠
+- コメントは必要最小限
 
 ---
 
-## ブランチ戦略
+## コミット規約
 
-### ブランチ構成
-- `main` - 安定版（本番相当）
-- `develop` - 開発統合ブランチ
-- `feature/*` - 機能開発
-- `fix/*` - バグ修正
-
-### コミットメッセージ
 ```
 <type>: <subject>
-
-[optional body]
 ```
-
-**Type一覧:**
-- `feat`: 新機能
-- `fix`: バグ修正
-- `docs`: ドキュメント
-- `style`: フォーマット変更
-- `refactor`: リファクタリング
-- `test`: テスト追加・修正
-- `chore`: ビルド・設定変更
-
-**例:**
-```
-feat: タスク一覧のフィルター機能を追加
-
-- ステータスでのフィルタリング
-- 日付範囲での絞り込み
-```
+type: `feat` / `fix` / `docs` / `style` / `refactor` / `test` / `chore`
 
 ---
 
 ## 作業時の注意点
 
-### 必須: CORS設定
-フロントエンド(5173)とバックエンド(8080)のポートが異なるため、**最初にCORS設定を行うこと**。
-
-### 音源ファイル
-- リポジトリにコミット禁止
-- `public/sounds/` に配置、または外部URL参照
-- `.gitignore` に `public/sounds/` を追加
-
-### API通信
-- 非同期処理には必ず `async/await` を使用
-- ローディング状態とエラーハンドリングを実装
-
-### データベース
-- H2 Database（ファイルモード）で永続化
-- 開発時は `jdbc:h2:file:./data/sonicflow` 推奨
-
-### AIキー管理
-- API Keyは環境変数または `application.properties` で管理
-- フロントエンドに直接記載禁止（必ずバックエンド経由）
-
-### README.md の更新
-- コードやドキュメント構造に変更を加えた場合、**必ずREADME.mdの開発ジャーナルセクションにエントリを追加**すること
-- エントリ形式: `### YYYY-MM-DD - <変更の要約>`、配下に「変更内容」「新規ファイル」「変更ファイル」等を箇条書き
-- 最新エントリが先頭に来るように追加（降順）
+- **README.md更新必須**: コード変更時は開発ジャーナルセクションにエントリ追加（降順）
+- **音源ファイル**: リポジトリにコミット禁止（`public/sounds/`は`.gitignore`対象）
+- **AIキー**: フロントエンドに直接記載禁止、バックエンド経由のみ
+- **CORS**: `WebConfig.java`で`localhost:5173`のみ許可（本番時は要変更）
 
 ---
 
-## 設計方針
+## ドキュメント体系
 
-### アーキテクチャ目標
-- **将来のアプリケーション化**（Electron/Tauri）を見据えた設計
-- **デバイス間連携**を実現するため、すべてのユーザーデータはバックエンドで永続化
+| ディレクトリ | 用途 |
+|------------|------|
+| `.claude/current_plans/` | 進行中の実装プラン |
+| `.claude/feature_plans/` | 将来の機能仕様ストック |
+| `.claude/archive/` | 完了済みプラン |
+| `.claude/docs/Application_Overview.md` | 仕様書 |
+| `.claude/docs/adr/` | アーキテクチャ決定記録 |
+| `TODO.md` | ロードマップ |
+| `CHANGELOG.md` | 完了タスク履歴 |
 
-### データ永続化の原則
-1. ユーザー設定・履歴は**すべてバックエンド（H2 DB）に保存**
-2. フロントエンドのlocalStorageは**一時的なUI状態のみ**に使用
-3. オフラインモードは未対応（常にバックエンド接続が必要）
-
-### フロントエンドの責務
-- UI/UXの状態管理（フォーカスモード、編集中状態など）
-- 音声再生制御（Web Audio API）
-- タイマーのカウントダウン表示
-- API通信とエラーハンドリング
-
-### バックエンドの責務
-- すべてのデータ永続化
-- ビジネスロジック（タイムスタンプ自動設定など）
-- 外部API通信（AIコーチング）
-- バリデーション
-
----
-
-## 関連ドキュメント
-- [仕様書](.claude/docs/Application_Overview.md)
-- [ADR](.claude/docs/adr/)
-- [ロードマップ](TODO.md)
-- [完了履歴](CHANGELOG.md)
-- [進行中プラン](.claude/current_plans/)
-- [機能仕様ストック](.claude/feature_plans/)
-- [アーカイブ](.claude/archive/)
+ライフサイクル: `feature_plans/` → `current_plans/` → `archive/`

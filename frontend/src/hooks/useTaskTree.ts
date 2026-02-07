@@ -141,6 +141,80 @@ export function useTaskTree() {
     persist(nodes.filter(n => !idsToDelete.has(n.id)));
   }, [nodes, persist]);
 
+  const moveNodeInto = useCallback((activeId: string, targetFolderId: string) => {
+    const active = nodes.find(n => n.id === activeId);
+    const target = nodes.find(n => n.id === targetFolderId);
+    if (!active || !target) return;
+
+    // Target must be a folder or subfolder
+    if (target.type === 'task') return;
+
+    // Prevent circular reference
+    const isDescendant = (parentId: string, childId: string): boolean => {
+      const children = nodes.filter(n => n.parentId === parentId);
+      return children.some(c => c.id === childId || isDescendant(c.id, childId));
+    };
+    if (isDescendant(activeId, targetFolderId)) return;
+
+    // Hierarchy constraints
+    if (active.type === 'folder') return; // folders stay at root
+    if (active.type === 'subfolder' && target.type !== 'folder') return;
+
+    // Already in this folder
+    if (active.parentId === targetFolderId) return;
+
+    // Add to end of target's children
+    const targetChildren = nodes
+      .filter(n => !n.isDeleted && n.parentId === targetFolderId)
+      .sort((a, b) => a.order - b.order);
+    const newOrder = targetChildren.length;
+
+    // Reorder old siblings
+    const oldSiblings = nodes
+      .filter(n => !n.isDeleted && n.parentId === active.parentId && n.id !== activeId)
+      .sort((a, b) => a.order - b.order);
+    const orderMap = new Map(oldSiblings.map((n, i) => [n.id, i]));
+
+    persist(nodes.map(n => {
+      if (n.id === activeId) {
+        return { ...n, parentId: targetFolderId, order: newOrder };
+      }
+      if (orderMap.has(n.id)) {
+        return { ...n, order: orderMap.get(n.id)! };
+      }
+      return n;
+    }));
+  }, [nodes, persist]);
+
+  const moveToRoot = useCallback((activeId: string) => {
+    const active = nodes.find(n => n.id === activeId);
+    if (!active || active.parentId === null) return;
+
+    // Only tasks can be moved to root (Inbox)
+    if (active.type !== 'task') return;
+
+    const rootChildren = nodes
+      .filter(n => !n.isDeleted && n.parentId === null)
+      .sort((a, b) => a.order - b.order);
+    const newOrder = rootChildren.length;
+
+    // Reorder old siblings
+    const oldSiblings = nodes
+      .filter(n => !n.isDeleted && n.parentId === active.parentId && n.id !== activeId)
+      .sort((a, b) => a.order - b.order);
+    const orderMap = new Map(oldSiblings.map((n, i) => [n.id, i]));
+
+    persist(nodes.map(n => {
+      if (n.id === activeId) {
+        return { ...n, parentId: null, order: newOrder };
+      }
+      if (orderMap.has(n.id)) {
+        return { ...n, order: orderMap.get(n.id)! };
+      }
+      return n;
+    }));
+  }, [nodes, persist]);
+
   const moveNode = useCallback((activeId: string, overId: string) => {
     const active = nodes.find(n => n.id === activeId);
     const over = nodes.find(n => n.id === overId);
@@ -178,7 +252,7 @@ export function useTaskTree() {
         const parent = nodes.find(n => n.id === newParentId);
         if (!parent || parent.type !== 'folder') return;
       }
-      if (active.type === 'task') {
+      if (active.type === 'task' && newParentId !== null) {
         const parent = nodes.find(n => n.id === newParentId);
         if (!parent || (parent.type !== 'folder' && parent.type !== 'subfolder')) return;
       }
@@ -209,6 +283,27 @@ export function useTaskTree() {
     }
   }, [nodes, persist]);
 
+  const promoteToFolder = useCallback((nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node || node.type !== 'subfolder') return;
+
+    const rootChildren = nodes
+      .filter(n => !n.isDeleted && n.parentId === null);
+    const newOrder = rootChildren.length;
+
+    // Reorder old siblings
+    const oldSiblings = nodes
+      .filter(n => !n.isDeleted && n.parentId === node.parentId && n.id !== nodeId)
+      .sort((a, b) => a.order - b.order);
+    const orderMap = new Map(oldSiblings.map((n, i) => [n.id, i]));
+
+    persist(nodes.map(n => {
+      if (n.id === nodeId) return { ...n, type: 'folder' as const, parentId: null, order: newOrder };
+      if (orderMap.has(n.id)) return { ...n, order: orderMap.get(n.id)! };
+      return n;
+    }));
+  }, [nodes, persist]);
+
   return {
     nodes: activeNodes,
     deletedNodes,
@@ -221,5 +316,8 @@ export function useTaskTree() {
     restoreNode,
     permanentDelete,
     moveNode,
+    moveNodeInto,
+    moveToRoot,
+    promoteToFolder,
   };
 }
