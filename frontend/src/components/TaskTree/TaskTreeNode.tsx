@@ -9,11 +9,13 @@ import {
   FolderOpen,
   Check,
   Play,
+  Pause,
   Trash2,
   GripVertical,
 } from 'lucide-react';
 import type { TaskNode } from '../../types/taskTree';
 import { useTaskTreeContext } from '../../hooks/useTaskTreeContext';
+import { useTimerContext } from '../../hooks/useTimerContext';
 import { TaskTreeInput } from './TaskTreeInput';
 
 interface TaskTreeNodeProps {
@@ -31,6 +33,8 @@ export function TaskTreeNode({ node, depth, onPlayTask }: TaskTreeNodeProps) {
     softDelete,
     addNode,
   } = useTaskTreeContext();
+
+  const timer = useTimerContext();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(node.title);
@@ -79,6 +83,7 @@ export function TaskTreeNode({ node, depth, onPlayTask }: TaskTreeNodeProps) {
   const children = getChildren(node.id);
   const isFolder = node.type === 'folder' || node.type === 'subfolder';
   const isDone = node.type === 'task' && node.status === 'DONE';
+  const isTimerActive = timer.activeTask?.id === node.id && timer.isRunning;
 
   const childPlaceholder = node.type === 'folder'
     ? '+ New subfolder or task...'
@@ -151,12 +156,18 @@ export function TaskTreeNode({ node, depth, onPlayTask }: TaskTreeNodeProps) {
           </span>
         )}
 
+        {isTimerActive && (
+          <span className="text-xs font-mono tabular-nums text-notion-accent shrink-0">
+            {timer.formatTime(timer.remainingSeconds)}
+          </span>
+        )}
+
         {node.type === 'task' && !isDone && onPlayTask && (
           <button
             onClick={() => onPlayTask(node)}
             className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-accent transition-opacity"
           >
-            <Play size={14} />
+            {isTimerActive ? <Pause size={14} /> : <Play size={14} />}
           </button>
         )}
 
@@ -167,6 +178,18 @@ export function TaskTreeNode({ node, depth, onPlayTask }: TaskTreeNodeProps) {
           <Trash2 size={14} />
         </button>
       </div>
+
+      {isTimerActive && (
+        <div
+          className="h-0.5 bg-notion-border rounded-full overflow-hidden"
+          style={{ marginLeft: `${depth * 20 + 32}px`, marginRight: '8px' }}
+        >
+          <div
+            className="h-full bg-notion-accent transition-all duration-1000 ease-linear rounded-full"
+            style={{ width: `${timer.progress}%` }}
+          />
+        </div>
+      )}
 
       {isFolder && node.isExpanded && (
         <div>

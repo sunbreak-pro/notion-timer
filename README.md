@@ -4,18 +4,67 @@
 Notionライクなタスク管理に「環境音ミキサー」と「ポモドーロタイマー」を組み合わせた、没入型個人タスク管理アプリケーション。
 
 ### 主な機能
-- **タスク管理**: テキストベースのCRUD、フォーカスモード、履歴機能
-- **ノイズミキサー**: 複数の環境音を同時再生・音量調整
-- **集中タイマー**: 25分作業 + 5分休憩のポモドーロタイマー
-- **AIコーチング**: タスクに対するアドバイス・励まし
+- **タスク管理**: 階層型タスクツリー（フォルダ/サブフォルダ/タスク）、ドラッグ&ドロップ並び替え、ソフトデリート+ゴミ箱
+- **ノイズミキサー**: 6種の環境音UI（Rain, Thunder, Wind, Ocean, Birds, Fire）※音声再生は開発中
+- **集中タイマー**: WORK/BREAK/LONG_BREAK対応のポモドーロタイマー、セッション管理、設定カスタマイズ
+- **AIコーチング**: 開発予定
+- **外観設定**: ダークモード/ライトモード切替、フォントサイズ設定（S/M/L）
+- **Settings画面**: 外観設定、ゴミ箱（削除タスクの復元・完全削除）
 
 ### 技術スタック
-- **Frontend**: React 18+ (TypeScript) + Vite + Tailwind CSS
-- **Backend**: Spring Boot 3.x (Java 21) + H2 Database
+- **Frontend**: React 19 (TypeScript) + Vite + Tailwind CSS v4 + @dnd-kit
+- **Backend**: Spring Boot 3.4.2 (Java 23) + H2 Database
+
+---
+
+## API エンドポイント
+
+### Tasks (`/api/tasks`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/tasks` | 未完了タスク取得 |
+| GET | `/api/tasks/history` | 完了タスク取得 |
+| POST | `/api/tasks` | タスク作成 |
+| PUT | `/api/tasks/{id}` | タスク更新 |
+| DELETE | `/api/tasks/{id}` | タスク削除 |
+
+### Timer (`/api/timer-*`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/timer-settings` | タイマー設定取得 |
+| PUT | `/api/timer-settings` | タイマー設定更新 |
+| POST | `/api/timer-sessions` | セッション開始 |
+| PUT | `/api/timer-sessions/{id}` | セッション終了 |
+| GET | `/api/timer-sessions` | 全セッション取得 |
+| GET | `/api/tasks/{taskId}/sessions` | タスク別セッション取得 |
+
+### Sound (`/api/sound-*`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/sound-settings` | サウンド設定取得 |
+| PUT | `/api/sound-settings` | サウンド設定更新 |
+| GET | `/api/sound-presets` | プリセット一覧取得 |
+| POST | `/api/sound-presets` | プリセット作成 |
+| DELETE | `/api/sound-presets/{id}` | プリセット削除 |
 
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-06 - 実装状況まとめ
+
+#### 実装済み
+- **Backend全体**: Task/Timer/Sound の3ドメイン（Controller/Service/Repository/Entity）、CORS設定、H2 DB
+- **TaskTree**: 階層型タスク管理（フォルダ/サブフォルダ/タスク）、@dnd-kitによるDnD並び替え、ソフトデリート
+- **WorkScreen**: ポモドーロタイマー + サウンドミキサー統合画面
+- **FocusTimer**: WORK/BREAK/LONG_BREAK、セッション数カウント、プログレスバー、設定カスタマイズ
+- **NoiseMixer**: 6種の環境音選択UI + 音量スライダー
+- **Settings**: ダークモード/ライトモード、フォントサイズ（S/M/L）、ゴミ箱
+
+#### 未実装
+- AIコーチング（バックエンドエンドポイント未作成）
+- 音声再生（Web Audio API連携）
+- レスポンシブデザイン、キーボードショートカット、通知機能
 
 ### 2025-02-06 - プロジェクト初期化
 
@@ -34,17 +83,13 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
   - MEMORY.md: ~/.claude/projects/配下、セッション間で保持される技術仕様
 - 日本語（概要）+ 英語（技術仕様）の二言語運用が効果的
 
-#### Challenges
-- 実装はまだ開始していない
-- フロントエンド・バックエンドのスキャフォールディングが次のステップ
-
 ---
 
 ## セットアップ
 
 ### 前提条件
 - Node.js 18+
-- Java 21
+- Java 23
 - npm または yarn
 
 ### インストール

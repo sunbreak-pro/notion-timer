@@ -1,21 +1,31 @@
+import { useEffect } from 'react';
 import { X } from 'lucide-react';
-import { useLocalTimer } from '../../hooks/useLocalTimer';
+import { useTimerContext } from '../../hooks/useTimerContext';
 import { useLocalSoundMixer } from '../../hooks/useLocalSoundMixer';
 import { TimerDisplay } from './TimerDisplay';
 import { TimerProgressBar } from './TimerProgressBar';
+import { DurationSelector } from './DurationSelector';
 import { SoundMixer } from './SoundMixer';
 
 interface WorkScreenProps {
-  taskTitle?: string;
   isOverlay?: boolean;
   onClose?: () => void;
 }
 
-export function WorkScreen({ taskTitle, isOverlay = false, onClose }: WorkScreenProps) {
-  const timer = useLocalTimer();
+export function WorkScreen({ isOverlay = false, onClose }: WorkScreenProps) {
+  const timer = useTimerContext();
   const { mixer, toggleSound, setVolume } = useLocalSoundMixer();
 
-  const title = taskTitle ?? 'Free Session';
+  const title = timer.activeTask?.title ?? 'Free Session';
+
+  useEffect(() => {
+    if (!isOverlay || !onClose) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOverlay, onClose]);
 
   const content = (
     <div className="flex flex-col h-full">
@@ -44,6 +54,12 @@ export function WorkScreen({ taskTitle, isOverlay = false, onClose }: WorkScreen
           onReset={timer.reset}
         />
 
+        <DurationSelector
+          workDurationMinutes={timer.workDurationMinutes}
+          onChangeDuration={timer.setWorkDurationMinutes}
+          disabled={timer.isRunning}
+        />
+
         <div className="w-full max-w-md">
           <TimerProgressBar progress={timer.progress} />
         </div>
@@ -63,8 +79,11 @@ export function WorkScreen({ taskTitle, isOverlay = false, onClose }: WorkScreen
 
   if (isOverlay) {
     return (
-      <div className="fixed inset-0 z-50 bg-notion-bg">
-        {content}
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+        <div className="relative z-10 w-full max-w-lg mx-4 bg-notion-bg rounded-xl shadow-2xl border border-notion-border max-h-[90vh] overflow-y-auto">
+          {content}
+        </div>
       </div>
     );
   }

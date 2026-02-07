@@ -17,7 +17,7 @@ notion-timer/
 │   │   └── types/          # 型定義
 │   └── public/
 │       └── sounds/         # 環境音ファイル（.gitignore対象）
-├── backend/                # Spring Boot (Java 21)
+├── backend/                # Spring Boot (Java 23)
 │   └── src/main/java/
 │       ├── controller/     # REST API
 │       ├── service/        # ビジネスロジック

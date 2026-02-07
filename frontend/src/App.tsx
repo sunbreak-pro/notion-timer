@@ -3,25 +3,41 @@ import { Layout } from "./components/Layout";
 import { TaskTree } from "./components/TaskTree";
 import { WorkScreen } from "./components/WorkScreen";
 import { Settings } from "./components/Settings";
+import { useTimerContext } from "./hooks/useTimerContext";
+import { useTaskTreeContext } from "./hooks/useTaskTreeContext";
 import type { SectionId } from "./types/navigation";
 import type { TaskNode } from "./types/taskTree";
 
 function App() {
   const [activeSection, setActiveSection] = useState<SectionId>("tasks");
-  const [workScreenTask, setWorkScreenTask] = useState<TaskNode | null>(null);
+  const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const timer = useTimerContext();
+  const { getChildren, addNode } = useTaskTreeContext();
+
+  const rootFolders = getChildren(null).filter(n => n.type === 'folder');
 
   const handlePlayTask = (node: TaskNode) => {
-    setWorkScreenTask(node);
+    timer.startForTask(node.id, node.title);
+    setIsTimerModalOpen(true);
   };
 
-  const handleCloseWorkScreen = () => {
-    setWorkScreenTask(null);
+  const handleOpenTimerModal = () => {
+    setIsTimerModalOpen(true);
+  };
+
+  const handleCloseTimerModal = () => {
+    setIsTimerModalOpen(false);
+  };
+
+  const handleCreateFolder = (title: string) => {
+    addNode('folder', null, title);
   };
 
   const renderContent = () => {
     switch (activeSection) {
       case "tasks":
-        return <TaskTree onPlayTask={handlePlayTask} />;
+        return <TaskTree onPlayTask={handlePlayTask} selectedFolderId={selectedFolderId} />;
       case "session":
         return <WorkScreen />;
       case "settings":
@@ -33,15 +49,22 @@ function App() {
 
   return (
     <>
-      <Layout activeSection={activeSection} onSectionChange={setActiveSection}>
+      <Layout
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        onOpenTimerModal={handleOpenTimerModal}
+        folders={rootFolders}
+        selectedFolderId={selectedFolderId}
+        onSelectFolder={setSelectedFolderId}
+        onCreateFolder={handleCreateFolder}
+      >
         {renderContent()}
       </Layout>
 
-      {workScreenTask && (
+      {isTimerModalOpen && (
         <WorkScreen
-          taskTitle={workScreenTask.title}
           isOverlay
-          onClose={handleCloseWorkScreen}
+          onClose={handleCloseTimerModal}
         />
       )}
     </>

@@ -20,9 +20,10 @@ import type { TaskNode } from '../../types/taskTree';
 
 interface TaskTreeProps {
   onPlayTask?: (node: TaskNode) => void;
+  selectedFolderId?: string | null;
 }
 
-export function TaskTree({ onPlayTask }: TaskTreeProps) {
+export function TaskTree({ onPlayTask, selectedFolderId }: TaskTreeProps) {
   const { nodes, getChildren, addNode, moveNode } = useTaskTreeContext();
   const [showCompleted, setShowCompleted] = useState(false);
 
@@ -31,7 +32,15 @@ export function TaskTree({ onPlayTask }: TaskTreeProps) {
     useSensor(KeyboardSensor),
   );
 
-  const rootFolders = getChildren(null);
+  const isInbox = selectedFolderId === null || selectedFolderId === undefined;
+
+  const displayNodes = isInbox
+    ? getChildren(null).filter(n => n.type === 'task')
+    : getChildren(selectedFolderId!);
+
+  const heading = isInbox
+    ? 'Inbox'
+    : nodes.find(n => n.id === selectedFolderId)?.title ?? 'Tasks';
 
   const allTasks = nodes.filter(n => n.type === 'task');
   const completedTasks = allTasks.filter(t => t.status === 'DONE');
@@ -47,7 +56,7 @@ export function TaskTree({ onPlayTask }: TaskTreeProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-notion-text">Tasks</h2>
+      <h2 className="text-2xl font-bold text-notion-text">{heading}</h2>
 
       <DndContext
         sensors={sensors}
@@ -56,10 +65,10 @@ export function TaskTree({ onPlayTask }: TaskTreeProps) {
       >
         <SortableContext items={allNodeIds} strategy={verticalListSortingStrategy}>
           <div className="space-y-0.5">
-            {rootFolders.map(folder => (
+            {displayNodes.map(node => (
               <TaskTreeNode
-                key={folder.id}
-                node={folder}
+                key={node.id}
+                node={node}
                 depth={0}
                 onPlayTask={onPlayTask}
               />
@@ -68,10 +77,17 @@ export function TaskTree({ onPlayTask }: TaskTreeProps) {
         </SortableContext>
       </DndContext>
 
-      <TaskTreeInput
-        placeholder="+ New Folder"
-        onSubmit={(title) => addNode('folder', null, title)}
-      />
+      {isInbox ? (
+        <TaskTreeInput
+          placeholder="+ New Task"
+          onSubmit={(title) => addNode('task', null, title)}
+        />
+      ) : (
+        <TaskTreeInput
+          placeholder="+ New Task"
+          onSubmit={(title) => addNode('task', selectedFolderId!, title)}
+        />
+      )}
 
       {hasCompleted && (
         <div className="pt-4 border-t border-notion-border">
