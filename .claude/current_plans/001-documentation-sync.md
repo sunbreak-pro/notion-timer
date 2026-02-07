@@ -1,3 +1,8 @@
+---
+Status: IN_PROGRESS
+Started: 2026-02-07
+---
+
 # Documentation Update Plan
 
 Phase 2 UI実装完了後、ドキュメントが実際のコードと乖離している箇所の分析と更新方針
@@ -63,94 +68,43 @@ Phase 2 UI実装完了後、ドキュメントが実際のコードと乖離し�
 ### タスク管理ドキュメント (10-15)
 
 #### 10-task-create.md
-| 現在の記述 | 実際のコード | 優先度 |
-|-----------|------------|--------|
-| Enter押下 → POST → DB保存 | addNode() → localStorage保存 | **High** |
-| TaskInput.tsx, useTasks.ts, TaskController.java | TaskTreeInput.tsx, useTaskTree.ts (localStorage) | **High** |
-
 **更新方針**: 全面書き直し。ローカル状態管理のフローに更新
 
 #### 11-task-edit-title.md
-| 現在の記述 | 実際のコード | 優先度 |
-|-----------|------------|--------|
-| インライン編集 → PUT API | TaskTreeNode内での編集 → updateNode → localStorage | **High** |
-
 **更新方針**: 全面書き直し
 
 #### 12-task-toggle-status.md
-| 現在の記述 | 実際のコード | 優先度 |
-|-----------|------------|--------|
-| チェックボックス → PUT → completedAt管理 | toggleStatus() → localStorage | **High** |
-
 **更新方針**: 全面書き直し
 
 #### 13-task-delete.md
-| 現在の記述 | 実際のコード | 優先度 |
-|-----------|------------|--------|
-| DELETE API → 即時削除 | softDelete() → isDeletedフラグ（復元可能） | **High** |
-
 **更新方針**: 全面書き直し。ソフトデリートパターンの説明を追加
 
 #### 14-task-view-lists.md
-| 現在の記述 | 実際のコード | 優先度 |
-|-----------|------------|--------|
-| マウント時並列fetch → フィルタ表示 | localStorage読み込み → ツリー表示 | **High** |
-
 **更新方針**: 全面書き直し。ツリー構造の表示ロジックに更新
 
 #### 15-task-focus-mode.md
-| 現在の記述 | 実際のコード | 優先度 |
-|-----------|------------|--------|
-| フォーカスモードUI状態制御 | WorkScreenとして実装。タイマー統合 | **Medium** |
-
 **更新方針**: WorkScreenの機能説明に更新
 
 ### タイマードキュメント (20-23)
 
 #### 20-timer-settings.md
-| 現在の記述 | 実際のコード | 優先度 |
-|-----------|------------|--------|
-| シングルトンパターン + API | TimerContext + localStorage | **High** |
-| timerSettings API | API削除済み | **High** |
-
 **更新方針**: 全面書き直し。TimerContext.tsxベースの説明に
 
 #### 21-timer-start-session.md
-| 現在の記述 | 実際のコード | 優先度 |
-|-----------|------------|--------|
-| startTimer → POST → setInterval | start() → setInterval (Context内) | **High** |
-| バックエンドセッション記録 | フロントエンドのみ | **High** |
-
 **更新方針**: 全面書き直し
 
 #### 22-timer-countdown-and-stop.md
-| 現在の記述 | 実際のコード | 優先度 |
-|-----------|------------|--------|
-| interval制御 + セッション遷移 | ロジックは類似だがContext内に移行 | **Medium** |
-
 **更新方針**: コード参照先の更新。ロジック説明はある程度流用可能
 
 #### 23-timer-session-history.md
-| 現在の記述 | 実際のコード | 優先度 |
-|-----------|------------|--------|
-| セッション履歴API | 未実装（Phase 2では履歴機能なし） | **Low** |
-
 **更新方針**: 「未実装」として凍結。将来Backend再接続時に復活
 
 ### サウンドドキュメント (30-31)
 
 #### 30-sound-settings.md
-| 現在の記述 | 実際のコード | 優先度 |
-|-----------|------------|--------|
-| Upsert + API | useLocalSoundMixer + localStorage | **High** |
-
 **更新方針**: 全面書き直し
 
 #### 31-sound-preset-crud.md
-| 現在の記述 | 実際のコード | 優先度 |
-|-----------|------------|--------|
-| settingsJson API保存 | localStorage保存 | **Medium** |
-
 **更新方針**: API部分を削除し、localStorage実装に更新
 
 ---

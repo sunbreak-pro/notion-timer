@@ -8,7 +8,7 @@ import { MainContent } from "./MainContent";
 
 const STORAGE_KEY = "sonic-flow-subsidebar-width";
 const MIN_WIDTH = 160;
-const MAX_WIDTH = 450;
+const MAX_WIDTH = 400;
 const DEFAULT_WIDTH = 240;
 
 function getStoredWidth(): number {
@@ -29,7 +29,6 @@ interface LayoutProps {
   activeSection: SectionId;
   onSectionChange: (section: SectionId) => void;
   onOpenTimerModal: () => void;
-  selectedFolderId: string | null;
   onCreateFolder: (title: string) => void;
   onCreateTask?: (title: string) => void;
   onSelectTask?: (id: string) => void;
@@ -37,12 +36,13 @@ interface LayoutProps {
   selectedTaskId?: string | null;
 }
 
+const SIDEBAR_WIDTH = 240; // Sidebar w-60 = 15rem = 240px
+
 export function Layout({
   children,
   activeSection,
   onSectionChange,
   onOpenTimerModal,
-  selectedFolderId,
   onCreateFolder,
   onCreateTask,
   onSelectTask,
@@ -62,8 +62,7 @@ export function Layout({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing.current) return;
-      // Sidebar is 48px wide (w-12)
-      const newWidth = e.clientX - 48;
+      const newWidth = e.clientX - SIDEBAR_WIDTH;
       const clamped = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
       setSubSidebarWidth(clamped);
     };
@@ -96,10 +95,9 @@ export function Layout({
         onOpenTimerModal={onOpenTimerModal}
       />
       {activeSection === "tasks" && (
-        <div className="relative" style={{ width: subSidebarWidth }}>
+        <div className="relative shrink-0" style={{ width: subSidebarWidth }}>
           <SubSidebar
             width={subSidebarWidth}
-            selectedFolderId={selectedFolderId}
             onCreateFolder={onCreateFolder}
             onCreateTask={onCreateTask}
             onSelectTask={onSelectTask}
@@ -108,7 +106,7 @@ export function Layout({
           />
           <div
             onMouseDown={handleMouseDown}
-            className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-notion-accent/30 transition-colors z-10"
+            className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-notion-accent/30 transition-colors z-10"
           />
         </div>
       )}

@@ -4,7 +4,6 @@ import { TaskTree } from "../TaskTree";
 
 interface SubSidebarProps {
   width: number;
-  selectedFolderId: string | null;
   onCreateFolder: (title: string) => void;
   onCreateTask?: (title: string) => void;
   onSelectTask?: (id: string) => void;
@@ -14,7 +13,6 @@ interface SubSidebarProps {
 
 export function SubSidebar({
   width,
-  selectedFolderId,
   onCreateFolder,
   onCreateTask,
   onSelectTask,
@@ -23,7 +21,7 @@ export function SubSidebar({
 }: SubSidebarProps) {
   return (
     <div
-      className="h-screen bg-notion-bg-secondary border-r border-notion-border flex flex-col"
+      className="h-screen bg-notion-bg-subsidebar border-r border-notion-border flex flex-col"
       style={{ width }}
     >
       <div className="group/header flex items-center justify-between px-3 py-3">
@@ -51,7 +49,6 @@ export function SubSidebar({
       <div className="flex-1 overflow-y-auto px-1">
         <TaskTree
           onPlayTask={onPlayTask}
-          selectedFolderId={selectedFolderId}
           onSelectTask={onSelectTask}
           selectedTaskId={selectedTaskId}
         />

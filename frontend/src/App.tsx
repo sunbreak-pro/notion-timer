@@ -11,7 +11,6 @@ import type { TaskNode } from "./types/taskTree";
 function App() {
   const [activeSection, setActiveSection] = useState<SectionId>("tasks");
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
-  const selectedFolderId: string | null = null;
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const timer = useTimerContext();
   const { nodes, addNode, updateNode, softDelete } = useTaskTreeContext();
@@ -61,7 +60,7 @@ function App() {
   };
 
   const handleCreateTask = (title: string) => {
-    addNode('task', selectedFolderId, title);
+    addNode('task', null, title);
   };
 
   const renderContent = () => {
@@ -93,7 +92,6 @@ function App() {
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         onOpenTimerModal={handleOpenTimerModal}
-        selectedFolderId={selectedFolderId}
         onCreateFolder={handleCreateFolder}
         onCreateTask={handleCreateTask}
         onSelectTask={setSelectedTaskId}

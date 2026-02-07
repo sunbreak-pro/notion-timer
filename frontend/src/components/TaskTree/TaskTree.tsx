@@ -20,14 +20,12 @@ import type { TaskNode } from "../../types/taskTree";
 
 interface TaskTreeProps {
   onPlayTask?: (node: TaskNode) => void;
-  selectedFolderId?: string | null;
   onSelectTask?: (id: string) => void;
   selectedTaskId?: string | null;
 }
 
 export function TaskTree({
   onPlayTask,
-  selectedFolderId,
   onSelectTask,
   selectedTaskId,
 }: TaskTreeProps) {
@@ -39,11 +37,7 @@ export function TaskTree({
     useSensor(KeyboardSensor),
   );
 
-  const isInbox = selectedFolderId === null || selectedFolderId === undefined;
-
-  const displayNodes = isInbox
-    ? getChildren(null).filter((n) => n.type !== "folder")
-    : getChildren(selectedFolderId!);
+  const displayNodes = getChildren(null);
 
   const allTasks = nodes.filter((n) => n.type === "task");
   const completedTasks = allTasks.filter((t) => t.status === "DONE");
@@ -83,17 +77,10 @@ export function TaskTree({
         </SortableContext>
       </DndContext>
 
-      {isInbox ? (
-        <TaskTreeInput
-          placeholder="New Task"
-          onSubmit={(title) => addNode("task", null, title)}
-        />
-      ) : (
-        <TaskTreeInput
-          placeholder="New Task"
-          onSubmit={(title) => addNode("task", selectedFolderId!, title)}
-        />
-      )}
+      <TaskTreeInput
+        placeholder="New Task"
+        onSubmit={(title) => addNode("task", null, title)}
+      />
 
       {hasCompleted && (
         <div className="pt-2 border-t border-notion-border">

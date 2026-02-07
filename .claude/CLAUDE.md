@@ -24,11 +24,16 @@ notion-timer/
 │       ├── repository/     # データアクセス
 │       └── entity/         # エンティティ
 ├── .claude/
+│   ├── current_plans/      # 進行中の実装プラン
+│   ├── feature_plans/      # 将来の機能仕様ストック
+│   ├── archive/            # 完了済みプラン
 │   └── docs/
 │       ├── Application_Overview.md  # 仕様書
-│       └── adr/                     # アーキテクチャ決定記録
+│       ├── adr/                     # アーキテクチャ決定記録
+│       └── code-explanation/        # コード解説
 ├── README.md               # 開発ジャーナル
-└── TODO.md                 # 実装タスク
+├── TODO.md                 # ロードマップ
+└── CHANGELOG.md            # 完了タスク履歴
 ```
 
 ---
@@ -139,6 +144,11 @@ feat: タスク一覧のフィルター機能を追加
 - API Keyは環境変数または `application.properties` で管理
 - フロントエンドに直接記載禁止（必ずバックエンド経由）
 
+### README.md の更新
+- コードやドキュメント構造に変更を加えた場合、**必ずREADME.mdの開発ジャーナルセクションにエントリを追加**すること
+- エントリ形式: `### YYYY-MM-DD - <変更の要約>`、配下に「変更内容」「新規ファイル」「変更ファイル」等を箇条書き
+- 最新エントリが先頭に来るように追加（降順）
+
 ---
 
 ## 設計方針
@@ -169,4 +179,8 @@ feat: タスク一覧のフィルター機能を追加
 ## 関連ドキュメント
 - [仕様書](.claude/docs/Application_Overview.md)
 - [ADR](.claude/docs/adr/)
-- [TODO](TODO.md)
+- [ロードマップ](TODO.md)
+- [完了履歴](CHANGELOG.md)
+- [進行中プラン](.claude/current_plans/)
+- [機能仕様ストック](.claude/feature_plans/)
+- [アーカイブ](.claude/archive/)

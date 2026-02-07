@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
-import type { KeyboardEvent } from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { useState, useRef, useEffect } from "react";
+import type { KeyboardEvent } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   ChevronRight,
   ChevronDown,
@@ -12,11 +12,11 @@ import {
   Pause,
   Trash2,
   GripVertical,
-} from 'lucide-react';
-import type { TaskNode } from '../../types/taskTree';
-import { useTaskTreeContext } from '../../hooks/useTaskTreeContext';
-import { useTimerContext } from '../../hooks/useTimerContext';
-import { TaskTreeInput } from './TaskTreeInput';
+} from "lucide-react";
+import type { TaskNode } from "../../types/taskTree";
+import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
+import { useTimerContext } from "../../hooks/useTimerContext";
+import { TaskTreeInput } from "./TaskTreeInput";
 
 interface TaskTreeNodeProps {
   node: TaskNode;
@@ -26,7 +26,13 @@ interface TaskTreeNodeProps {
   selectedTaskId?: string | null;
 }
 
-export function TaskTreeNode({ node, depth, onPlayTask, onSelectTask, selectedTaskId }: TaskTreeNodeProps) {
+export function TaskTreeNode({
+  node,
+  depth,
+  onPlayTask,
+  onSelectTask,
+  selectedTaskId,
+}: TaskTreeNodeProps) {
   const {
     getChildren,
     updateNode,
@@ -75,35 +81,31 @@ export function TaskTreeNode({ node, depth, onPlayTask, onSelectTask, selectedTa
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSave();
-    if (e.key === 'Escape') {
+    if (e.key === "Enter") handleSave();
+    if (e.key === "Escape") {
       setEditValue(node.title);
       setIsEditing(false);
     }
   };
 
   const children = getChildren(node.id);
-  const isFolder = node.type === 'folder' || node.type === 'subfolder';
-  const isDone = node.type === 'task' && node.status === 'DONE';
+  const isFolder = node.type === "folder" || node.type === "subfolder";
+  const isDone = node.type === "task" && node.status === "DONE";
   const isTimerActive = timer.activeTask?.id === node.id && timer.isRunning;
-  const isSelected = node.type === 'task' && selectedTaskId === node.id;
+  const isSelected = node.type === "task" && selectedTaskId === node.id;
 
-  const childPlaceholder = node.type === 'folder'
-    ? '+ New subfolder or task...'
-    : '+ New task...';
+  const childPlaceholder =
+    node.type === "folder" ? "+ New subfolder or task..." : "+ New task...";
 
   return (
     <div>
       <div
         ref={setNodeRef}
         style={style}
-        className={`group flex items-center gap-1 px-2 py-1 rounded-md hover:bg-notion-hover transition-colors ${isSelected ? 'bg-notion-hover' : ''}`}
+        className={`group flex items-center gap-1 px-2 py-1 rounded-md hover:bg-notion-hover transition-colors ${isSelected ? "bg-notion-hover" : ""}`}
         {...attributes}
       >
-        <div
-          style={{ width: `${depth * 20}px` }}
-          className="shrink-0"
-        />
+        <div style={{ width: `${depth * 20}px` }} className="shrink-0" />
 
         <button
           {...listeners}
@@ -117,15 +119,19 @@ export function TaskTreeNode({ node, depth, onPlayTask, onSelectTask, selectedTa
             onClick={() => toggleExpanded(node.id)}
             className="p-0.5 text-notion-text-secondary hover:text-notion-text"
           >
-            {node.isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            {node.isExpanded ? (
+              <ChevronDown size={14} />
+            ) : (
+              <ChevronRight size={14} />
+            )}
           </button>
         ) : (
           <button
             onClick={() => toggleTaskStatus(node.id)}
             className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
               isDone
-                ? 'bg-notion-accent border-notion-accent text-white'
-                : 'border-notion-border hover:border-notion-accent'
+                ? "bg-notion-accent border-notion-accent text-white"
+                : "border-notion-border hover:border-notion-accent"
             }`}
           >
             {isDone && <Check size={10} />}
@@ -151,7 +157,7 @@ export function TaskTreeNode({ node, depth, onPlayTask, onSelectTask, selectedTa
         ) : (
           <span
             onClick={() => {
-              if (node.type === 'task' && onSelectTask) {
+              if (node.type === "task" && onSelectTask) {
                 onSelectTask(node.id);
               } else {
                 setIsEditing(true);
@@ -159,8 +165,10 @@ export function TaskTreeNode({ node, depth, onPlayTask, onSelectTask, selectedTa
             }}
             onDoubleClick={() => setIsEditing(true)}
             className={`flex-1 text-sm cursor-pointer truncate ${
-              isDone ? 'line-through text-notion-text-secondary' : 'text-notion-text'
-            } ${isFolder ? 'font-medium' : ''}`}
+              isDone
+                ? "line-through text-notion-text-secondary"
+                : "text-notion-text"
+            } ${isFolder ? "font-medium" : ""}`}
           >
             {node.title}
           </span>
@@ -172,7 +180,7 @@ export function TaskTreeNode({ node, depth, onPlayTask, onSelectTask, selectedTa
           </span>
         )}
 
-        {node.type === 'task' && !isDone && onPlayTask && (
+        {node.type === "task" && !isDone && onPlayTask && (
           <button
             onClick={() => onPlayTask(node)}
             className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-accent transition-opacity"
@@ -192,7 +200,7 @@ export function TaskTreeNode({ node, depth, onPlayTask, onSelectTask, selectedTa
       {isTimerActive && (
         <div
           className="h-0.5 bg-notion-border rounded-full overflow-hidden"
-          style={{ marginLeft: `${depth * 20 + 32}px`, marginRight: '8px' }}
+          style={{ marginLeft: `${depth * 20 + 32}px`, marginRight: "8px" }}
         >
           <div
             className="h-full bg-notion-accent transition-all duration-1000 ease-linear rounded-full"
@@ -203,7 +211,7 @@ export function TaskTreeNode({ node, depth, onPlayTask, onSelectTask, selectedTa
 
       {isFolder && node.isExpanded && (
         <div>
-          {children.map(child => (
+          {children.map((child) => (
             <TaskTreeNode
               key={child.id}
               node={child}
@@ -217,10 +225,10 @@ export function TaskTreeNode({ node, depth, onPlayTask, onSelectTask, selectedTa
             placeholder={childPlaceholder}
             indent={depth + 1}
             onSubmit={(title) => {
-              if (node.type === 'folder' && title.startsWith('/')) {
-                addNode('subfolder', node.id, title.slice(1));
+              if (node.type === "folder" && title.startsWith("/")) {
+                addNode("subfolder", node.id, title.slice(1));
               } else {
-                addNode('task', node.id, title);
+                addNode("task", node.id, title);
               }
             }}
           />

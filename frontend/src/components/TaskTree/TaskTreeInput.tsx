@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import type { KeyboardEvent } from 'react';
-import { Plus } from 'lucide-react';
+import { useState } from "react";
+import type { KeyboardEvent } from "react";
+import { Plus } from "lucide-react";
 
 interface TaskTreeInputProps {
   placeholder: string;
@@ -8,19 +8,23 @@ interface TaskTreeInputProps {
   indent?: number;
 }
 
-export function TaskTreeInput({ placeholder, onSubmit, indent = 0 }: TaskTreeInputProps) {
-  const [value, setValue] = useState('');
+export function TaskTreeInput({
+  placeholder,
+  onSubmit,
+  indent = 0,
+}: TaskTreeInputProps) {
+  const [value, setValue] = useState("");
 
   const handleSubmit = () => {
     const trimmed = value.trim();
     if (!trimmed) return;
-    setValue('');
+    setValue("");
     onSubmit(trimmed);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSubmit();
-    if (e.key === 'Escape') setValue('');
+    if (e.key === "Enter") handleSubmit();
+    if (e.key === "Escape") setValue("");
   };
 
   return (
@@ -28,7 +32,10 @@ export function TaskTreeInput({ placeholder, onSubmit, indent = 0 }: TaskTreeInp
       className="flex items-center gap-2 px-2 py-1.5 text-notion-text-secondary hover:bg-notion-hover rounded-md"
       style={{ paddingLeft: `${indent * 20 + 8}px` }}
     >
-      <button onClick={handleSubmit} className="p-0.5 hover:bg-notion-hover rounded">
+      <button
+        onClick={handleSubmit}
+        className="p-0.5 hover:bg-notion-hover rounded"
+      >
         <Plus size={14} />
       </button>
       <input

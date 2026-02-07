@@ -56,6 +56,19 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 
 ## 開発ジャーナル
 
+### 2026-02-07 - ドキュメント構造の再編成
+
+#### 変更内容
+- **ドキュメント分類体系を導入**: `.claude/` 配下に `current_plans/`（進行中）、`feature_plans/`（将来予定）、`archive/`（完了済み）を新設
+- **ライフサイクル**: `feature_plans/` → `current_plans/` → `archive/` のフローで管理
+- **TODO.md**: 完了タスクを削除し、簡潔なロードマップに書き換え。各項目から `feature_plans/` へリンク
+- **CHANGELOG.md**: 新規作成。Phase 1/2 の全完了タスク履歴を集約
+- **既存ドキュメント移動**:
+  - `docs/documentation-update-plan.md` → `current_plans/001-documentation-sync.md`
+  - `docs/UI_Implementation_Plan.md` → `archive/001-ui-implementation-phase2.md`
+  - `docs/code-integrity-report.md` → `archive/002-code-integrity-review.md`
+- **feature_plans 新規作成**: AI Coaching / Noise Mixer音声再生 / Polish & Enhancement / Backend再統合
+
 ### 2026-02-06 (2) - UI拡張: グローバルタイマー + サブサイドバー
 
 #### 実装済み
@@ -155,4 +168,7 @@ cd frontend && npm run dev
 - [開発ガイド](.claude/CLAUDE.md)
 - [仕様書](.claude/docs/Application_Overview.md)
 - [アーキテクチャ決定記録](.claude/docs/adr/)
-- [TODO](TODO.md)
+- [ロードマップ](TODO.md)
+- [完了履歴](CHANGELOG.md)
+- [進行中プラン](.claude/current_plans/)
+- [機能仕様ストック](.claude/feature_plans/)

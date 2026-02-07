@@ -2,7 +2,8 @@
 
 :root {
   --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #F7F6F3;
+  --color-bg-secondary: #fffaed;
+  --color-bg-subsidebar: #e1e8d5;
   --color-text-primary: #37352F;
   --color-text-secondary: #787774;
   --color-border: #E9E9E7;
@@ -28,6 +29,7 @@
 @theme {
   --color-notion-bg: var(--color-bg-primary);
   --color-notion-bg-secondary: var(--color-bg-secondary);
+  --color-notion-bg-subsidebar: var(--color-bg-subsidebar);
   --color-notion-text: var(--color-text-primary);
   --color-notion-text-secondary: var(--color-text-secondary);
   --color-notion-border: var(--color-border);
