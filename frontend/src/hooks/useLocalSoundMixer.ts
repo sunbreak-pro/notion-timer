@@ -1,5 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { SOUND_TYPES } from '../constants/sounds';
+import { STORAGE_KEYS } from '../constants/storageKeys';
+import { useLocalStorage } from './useLocalStorage';
 
 export interface SoundState {
   enabled: boolean;
@@ -8,15 +10,7 @@ export interface SoundState {
 
 export type SoundMixerState = Record<string, SoundState>;
 
-const STORAGE_KEY = 'sonic-flow-sound-mixer';
-
-function loadState(): SoundMixerState {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch { /* fall through */ }
-  }
+function getDefaultMixerState(): SoundMixerState {
   const initial: SoundMixerState = {};
   for (const s of SOUND_TYPES) {
     initial[s.id] = { enabled: false, volume: 50 };
@@ -24,28 +18,19 @@ function loadState(): SoundMixerState {
   return initial;
 }
 
-function saveState(state: SoundMixerState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
 export function useLocalSoundMixer() {
-  const [mixer, setMixer] = useState<SoundMixerState>(loadState);
+  const [mixer, setMixer] = useLocalStorage<SoundMixerState>(
+    STORAGE_KEYS.SOUND_MIXER,
+    getDefaultMixerState()
+  );
 
   const toggleSound = useCallback((id: string) => {
-    setMixer(prev => {
-      const updated = { ...prev, [id]: { ...prev[id], enabled: !prev[id].enabled } };
-      saveState(updated);
-      return updated;
-    });
-  }, []);
+    setMixer(prev => ({ ...prev, [id]: { ...prev[id], enabled: !prev[id].enabled } }));
+  }, [setMixer]);
 
   const setVolume = useCallback((id: string, volume: number) => {
-    setMixer(prev => {
-      const updated = { ...prev, [id]: { ...prev[id], volume } };
-      saveState(updated);
-      return updated;
-    });
-  }, []);
+    setMixer(prev => ({ ...prev, [id]: { ...prev[id], volume } }));
+  }, [setMixer]);
 
   return { mixer, toggleSound, setVolume };
 }

@@ -56,6 +56,29 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 
 ## 開発ジャーナル
 
+### 2026-02-07 (3) - Phase 2 重複排除 (D1-D4)
+
+#### 変更内容
+- **D2: localStorage定数集約**: 全6キーを`constants/storageKeys.ts`に集約、各ファイルのハードコード文字列を定数参照に置換
+- **D3: 汎用`useLocalStorage`フック**: `hooks/useLocalStorage.ts`を新規作成し、ThemeContext / TimerContext / Layout / useLocalSoundMixer の手動read/write処理を統一
+- **D1: DurationPicker統一**: DurationSelector.tsx と TaskDetailHeader.tsx の完全重複コード（PRESETS定数、formatDuration関数、±ステップロジック、プリセットグリッド）を`components/shared/DurationPicker.tsx`に統合
+- **D4: コンポーネント外定数の整理**: D1で解決済み（PRESETS移動）、SlashCommandMenuのCOMMANDS配列は現状維持
+
+#### 新規ファイル
+- `frontend/src/constants/storageKeys.ts` — localStorage キー定数
+- `frontend/src/hooks/useLocalStorage.ts` — 汎用localStorage永続化フック
+- `frontend/src/components/shared/DurationPicker.tsx` — 共通Duration Pickerコンポーネント
+- `frontend/src/utils/duration.ts` — formatDuration ユーティリティ関数
+
+#### 変更ファイル
+- `hooks/useTaskTree.ts` — STORAGE_KEYS定数参照に置換
+- `hooks/useLocalSoundMixer.ts` — STORAGE_KEYS + useLocalStorageで書き換え
+- `context/TimerContext.tsx` — STORAGE_KEYS + useLocalStorageで書き換え
+- `context/ThemeContext.tsx` — STORAGE_KEYS + useLocalStorageで書き換え
+- `components/Layout/Layout.tsx` — STORAGE_KEYS + useLocalStorageで書き換え
+- `components/WorkScreen/DurationSelector.tsx` — DurationPickerラッパーに簡素化
+- `components/TaskDetail/TaskDetailHeader.tsx` — DurationPicker + formatDuration使用に統合
+
 ### 2026-02-07 (2) - フロントエンド コード品質分析 & リファクタリングプラン作成
 
 #### 変更内容

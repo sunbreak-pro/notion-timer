@@ -1,27 +1,20 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { SectionId } from "../../types/navigation";
 import type { TaskNode } from "../../types/taskTree";
 import { Sidebar } from "./Sidebar";
 import { SubSidebar } from "./SubSidebar";
 import { MainContent } from "./MainContent";
+import { STORAGE_KEYS } from "../../constants/storageKeys";
+import { useLocalStorage } from "../../hooks/useLocalStorage";
 
-const STORAGE_KEY = "sonic-flow-subsidebar-width";
 const MIN_WIDTH = 160;
 const MAX_WIDTH = 400;
 const DEFAULT_WIDTH = 240;
 
-function getStoredWidth(): number {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const val = parseInt(stored, 10);
-      if (val >= MIN_WIDTH && val <= MAX_WIDTH) return val;
-    }
-  } catch {
-    /* ignore */
-  }
-  return DEFAULT_WIDTH;
+function deserializeWidth(raw: string): number {
+  const val = parseInt(raw, 10);
+  return (val >= MIN_WIDTH && val <= MAX_WIDTH) ? val : DEFAULT_WIDTH;
 }
 
 interface LayoutProps {
@@ -49,7 +42,11 @@ export function Layout({
   onPlayTask,
   selectedTaskId,
 }: LayoutProps) {
-  const [subSidebarWidth, setSubSidebarWidth] = useState(getStoredWidth);
+  const [subSidebarWidth, setSubSidebarWidth] = useLocalStorage<number>(
+    STORAGE_KEYS.SUBSIDEBAR_WIDTH,
+    DEFAULT_WIDTH,
+    { serialize: String, deserialize: deserializeWidth }
+  );
   const isResizing = useRef(false);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -72,10 +69,6 @@ export function Layout({
         isResizing.current = false;
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
-        setSubSidebarWidth((w) => {
-          localStorage.setItem(STORAGE_KEY, String(w));
-          return w;
-        });
       }
     };
 
@@ -85,7 +78,7 @@ export function Layout({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, []);
+  }, [setSubSidebarWidth]);
 
   return (
     <div className="flex min-h-screen">

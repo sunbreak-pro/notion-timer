@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
 import type { TaskNode, NodeType, TaskStatus } from '../types/taskTree';
 import { mockTaskTree } from '../mocks/taskTree';
+import { STORAGE_KEYS } from '../constants/storageKeys';
 
-const STORAGE_KEY = 'sonic-flow-task-tree';
+const STORAGE_KEY = STORAGE_KEYS.TASK_TREE;
 
 function loadNodes(): TaskNode[] {
   const saved = localStorage.getItem(STORAGE_KEY);

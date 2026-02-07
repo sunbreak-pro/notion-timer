@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import type { SessionType } from '../types/timer';
 import { TimerContext } from './timerContextValue';
 import type { ActiveTask } from './timerContextValue';
+import { STORAGE_KEYS } from '../constants/storageKeys';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 interface TimerConfig {
   workDuration: number;
@@ -11,17 +13,9 @@ interface TimerConfig {
   sessionsBeforeLongBreak: number;
 }
 
-const STORAGE_KEY = 'sonic-flow-work-duration';
-
-function getStoredWorkDuration(): number {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const val = parseInt(stored, 10);
-      if (val >= 5 && val <= 240) return val;
-    }
-  } catch { /* ignore */ }
-  return 25;
+function deserializeWorkDuration(raw: string): number {
+  const val = parseInt(raw, 10);
+  return (val >= 5 && val <= 240) ? val : 25;
 }
 
 function getDuration(sessionType: SessionType, config: TimerConfig): number {
@@ -33,7 +27,11 @@ function getDuration(sessionType: SessionType, config: TimerConfig): number {
 }
 
 export function TimerProvider({ children }: { children: ReactNode }) {
-  const [workDurationMinutes, setWorkDurationMinutesState] = useState(getStoredWorkDuration);
+  const [workDurationMinutes, setWorkDurationMinutesState] = useLocalStorage<number>(
+    STORAGE_KEYS.WORK_DURATION,
+    25,
+    { serialize: String, deserialize: deserializeWorkDuration }
+  );
 
   const config: TimerConfig = useMemo(() => ({
     workDuration: workDurationMinutes * 60,
@@ -137,11 +135,10 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const setWorkDurationMinutes = useCallback((min: number) => {
     const clamped = Math.max(5, Math.min(240, min));
     setWorkDurationMinutesState(clamped);
-    localStorage.setItem(STORAGE_KEY, String(clamped));
     if (!isRunning && sessionType === 'WORK') {
       setRemainingSeconds(clamped * 60);
     }
-  }, [isRunning, sessionType]);
+  }, [isRunning, sessionType, setWorkDurationMinutesState]);
 
   return (
     <TimerContext.Provider value={{

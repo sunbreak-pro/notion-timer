@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Play, Trash2, Clock, Minus, Plus } from 'lucide-react';
+import { Play, Trash2, Clock } from 'lucide-react';
 import type { TaskNode } from '../../types/taskTree';
 import { getAncestors } from '../../utils/breadcrumb';
+import { DurationPicker } from '../shared/DurationPicker';
+import { formatDuration } from '../../utils/duration';
 
 interface TaskDetailHeaderProps {
   task: TaskNode;
@@ -10,14 +12,6 @@ interface TaskDetailHeaderProps {
   onPlay: () => void;
   onDelete: () => void;
   onDurationChange?: (minutes: number) => void;
-}
-
-const PRESETS = [15, 25, 30, 45, 60, 90, 120, 180, 240];
-
-function formatDuration(minutes: number): string {
-  if (minutes >= 60 && minutes % 60 === 0) return `${minutes / 60}h`;
-  if (minutes > 60) return `${Math.floor(minutes / 60)}h${minutes % 60}m`;
-  return `${minutes}m`;
 }
 
 export function TaskDetailHeader({
@@ -73,49 +67,16 @@ export function TaskDetailHeader({
 
           {showDurationPicker && (
             <div className="absolute top-full left-0 mt-1 z-50 bg-notion-bg border border-notion-border rounded-lg shadow-lg p-3 w-56">
-              <div className="flex items-center justify-between mb-2">
-                <button
-                  onClick={() => onDurationChange?.(Math.max(5, duration - (duration > 60 ? 15 : 5)))}
-                  className="p-1 rounded-md text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover"
-                >
-                  <Minus size={14} />
-                </button>
-                <span className="text-sm font-mono tabular-nums text-notion-text">
-                  {formatDuration(duration)}
-                </span>
-                <button
-                  onClick={() => onDurationChange?.(Math.min(240, duration + (duration >= 60 ? 15 : 5)))}
-                  className="p-1 rounded-md text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
-              <div className="grid grid-cols-5 gap-1">
-                {PRESETS.map(preset => (
-                  <button
-                    key={preset}
-                    onClick={() => onDurationChange?.(preset)}
-                    className={`py-1 rounded text-xs font-medium transition-colors ${
-                      duration === preset
-                        ? 'bg-notion-accent text-white'
-                        : 'text-notion-text-secondary hover:bg-notion-hover'
-                    }`}
-                  >
-                    {formatDuration(preset)}
-                  </button>
-                ))}
-              </div>
-              {isCustomDuration && (
-                <button
-                  onClick={() => {
-                    onDurationChange?.(0);
-                    setShowDurationPicker(false);
-                  }}
-                  className="w-full mt-2 py-1 text-xs text-notion-text-secondary hover:text-notion-text text-center"
-                >
-                  Use global default ({globalWorkDuration}m)
-                </button>
-              )}
+              <DurationPicker
+                value={duration}
+                onChange={(min) => onDurationChange?.(min)}
+                showResetToDefault={isCustomDuration}
+                onResetToDefault={() => {
+                  onDurationChange?.(0);
+                  setShowDurationPicker(false);
+                }}
+                defaultLabel={`Use global default (${globalWorkDuration}m)`}
+              />
             </div>
           )}
         </div>
