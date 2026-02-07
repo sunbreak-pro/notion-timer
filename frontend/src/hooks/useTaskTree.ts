@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { TaskNode, NodeType, TaskStatus } from '../types/taskTree';
+import { MAX_FOLDER_DEPTH } from '../types/taskTree';
 import { mockTaskTree } from '../mocks/taskTree';
 import { STORAGE_KEYS } from '../constants/storageKeys';
 
@@ -9,7 +10,20 @@ function loadNodes(): TaskNode[] {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
-      return JSON.parse(saved);
+      const parsed: TaskNode[] = JSON.parse(saved);
+      // One-time migration: subfolder → folder
+      let migrated = false;
+      const result = parsed.map(n => {
+        if ((n.type as string) === 'subfolder') {
+          migrated = true;
+          return { ...n, type: 'folder' as const };
+        }
+        return n;
+      });
+      if (migrated) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+      }
+      return result;
     } catch {
       return mockTaskTree;
     }
@@ -43,7 +57,40 @@ export function useTaskTree() {
       .sort((a, b) => a.order - b.order);
   }, [activeNodes]);
 
+  // Depth helpers (internal only)
+  const getNodeDepth = useCallback((nodeId: string): number => {
+    let depth = 0;
+    let current = nodes.find(n => n.id === nodeId);
+    while (current?.parentId) {
+      depth++;
+      current = nodes.find(n => n.id === current!.parentId);
+    }
+    return depth;
+  }, [nodes]);
+
+  const getSubtreeMaxDepth = useCallback((nodeId: string): number => {
+    const children = nodes.filter(n => n.parentId === nodeId && !n.isDeleted);
+    if (children.length === 0) return 0;
+    return 1 + Math.max(...children.map(c => getSubtreeMaxDepth(c.id)));
+  }, [nodes]);
+
+  const canMoveToDepth = useCallback((nodeId: string, targetDepth: number): boolean => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return false;
+    if (node.type === 'folder') {
+      const subtreeDepth = getSubtreeMaxDepth(nodeId);
+      return targetDepth + subtreeDepth < MAX_FOLDER_DEPTH;
+    }
+    return true;
+  }, [nodes, getSubtreeMaxDepth]);
+
   const addNode = useCallback((type: NodeType, parentId: string | null, title: string) => {
+    // Check depth limit for folder creation
+    if (type === 'folder' && parentId !== null) {
+      const parentDepth = getNodeDepth(parentId);
+      if (parentDepth + 1 >= MAX_FOLDER_DEPTH) return null;
+    }
+
     const siblings = nodes.filter(n => !n.isDeleted && n.parentId === parentId);
     const newNode: TaskNode = {
       id: generateId(type),
@@ -57,7 +104,7 @@ export function useTaskTree() {
     };
     persist([...nodes, newNode]);
     return newNode;
-  }, [nodes, persist]);
+  }, [nodes, persist, getNodeDepth]);
 
   const updateNode = useCallback((id: string, updates: Partial<TaskNode>) => {
     persist(nodes.map(n => n.id === id ? { ...n, ...updates } : n));
@@ -147,7 +194,7 @@ export function useTaskTree() {
     const target = nodes.find(n => n.id === targetFolderId);
     if (!active || !target) return;
 
-    // Target must be a folder or subfolder
+    // Target must be a folder
     if (target.type === 'task') return;
 
     // Prevent circular reference
@@ -157,9 +204,9 @@ export function useTaskTree() {
     };
     if (isDescendant(activeId, targetFolderId)) return;
 
-    // Hierarchy constraints
-    if (active.type === 'folder') return; // folders stay at root
-    if (active.type === 'subfolder' && target.type !== 'folder') return;
+    // Depth validation for folders
+    const targetDepth = getNodeDepth(targetFolderId);
+    if (!canMoveToDepth(activeId, targetDepth + 1)) return;
 
     // Already in this folder
     if (active.parentId === targetFolderId) return;
@@ -185,14 +232,11 @@ export function useTaskTree() {
       }
       return n;
     }));
-  }, [nodes, persist]);
+  }, [nodes, persist, getNodeDepth, canMoveToDepth]);
 
   const moveToRoot = useCallback((activeId: string) => {
     const active = nodes.find(n => n.id === activeId);
     if (!active || active.parentId === null) return;
-
-    // Only tasks can be moved to root (Inbox)
-    if (active.type !== 'task') return;
 
     const rootChildren = nodes
       .filter(n => !n.isDeleted && n.parentId === null)
@@ -247,15 +291,11 @@ export function useTaskTree() {
       // Different parent: move to over's parent at over's position
       const newParentId = over.parentId;
 
-      // Validate hierarchy constraints
-      if (active.type === 'folder' && newParentId !== null) return;
-      if (active.type === 'subfolder') {
+      // Validate depth constraints
+      if (newParentId !== null) {
         const parent = nodes.find(n => n.id === newParentId);
-        if (!parent || parent.type !== 'folder') return;
-      }
-      if (active.type === 'task' && newParentId !== null) {
-        const parent = nodes.find(n => n.id === newParentId);
-        if (!parent || (parent.type !== 'folder' && parent.type !== 'subfolder')) return;
+        if (!parent || parent.type === 'task') return;
+        if (!canMoveToDepth(activeId, getNodeDepth(newParentId) + 1)) return;
       }
 
       const newSiblings = nodes
@@ -282,28 +322,7 @@ export function useTaskTree() {
         return n;
       }));
     }
-  }, [nodes, persist]);
-
-  const promoteToFolder = useCallback((nodeId: string) => {
-    const node = nodes.find(n => n.id === nodeId);
-    if (!node || node.type !== 'subfolder') return;
-
-    const rootChildren = nodes
-      .filter(n => !n.isDeleted && n.parentId === null);
-    const newOrder = rootChildren.length;
-
-    // Reorder old siblings
-    const oldSiblings = nodes
-      .filter(n => !n.isDeleted && n.parentId === node.parentId && n.id !== nodeId)
-      .sort((a, b) => a.order - b.order);
-    const orderMap = new Map(oldSiblings.map((n, i) => [n.id, i]));
-
-    persist(nodes.map(n => {
-      if (n.id === nodeId) return { ...n, type: 'folder' as const, parentId: null, order: newOrder };
-      if (orderMap.has(n.id)) return { ...n, order: orderMap.get(n.id)! };
-      return n;
-    }));
-  }, [nodes, persist]);
+  }, [nodes, persist, getNodeDepth, canMoveToDepth]);
 
   return {
     nodes: activeNodes,
@@ -319,6 +338,5 @@ export function useTaskTree() {
     moveNode,
     moveNodeInto,
     moveToRoot,
-    promoteToFolder,
   };
 }

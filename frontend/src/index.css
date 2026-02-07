@@ -3,7 +3,7 @@
 :root {
   --color-bg-primary: #FFFFFF;
   --color-bg-secondary: #fffaed;
-  --color-bg-subsidebar: #e1e8d5;
+  --color-bg-subsidebar: #f8ffec;
   --color-text-primary: #37352F;
   --color-text-secondary: #787774;
   --color-border: #E9E9E7;
@@ -61,7 +61,7 @@ body {
 
 /* TipTap / ProseMirror editor styles */
 .memo-editor {
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.7;
   color: var(--color-text-primary);
 }

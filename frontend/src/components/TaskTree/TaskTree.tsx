@@ -49,7 +49,7 @@ export function TaskTree({
   onSelectTask,
   selectedTaskId,
 }: TaskTreeProps) {
-  const { nodes, getChildren, addNode, moveNode, moveNodeInto, moveToRoot, promoteToFolder } =
+  const { nodes, getChildren, addNode, moveNode, moveNodeInto, moveToRoot } =
     useTaskTreeContext();
   const [showCompleted, setShowCompleted] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -85,13 +85,13 @@ export function TaskTree({
 
     // Drop onto Inbox section header
     if (overId === "droppable-inbox-section") {
-      if (activeNode.type === "task") moveToRoot(active.id as string);
+      moveToRoot(active.id as string);
       return;
     }
 
     // Drop onto Projects section header
     if (overId === "droppable-projects-section") {
-      if (activeNode.type === "subfolder") promoteToFolder(active.id as string);
+      if (activeNode.parentId !== null) moveToRoot(active.id as string);
       return;
     }
 
@@ -99,9 +99,9 @@ export function TaskTree({
     const overNode = nodes.find((n) => n.id === overId);
     if (!overNode) return;
 
-    const isOverFolder = overNode.type === "folder" || overNode.type === "subfolder";
+    const isOverFolder = overNode.type === "folder";
     const isDifferentParent = activeNode.parentId !== overNode.id;
-    if (isOverFolder && isDifferentParent && activeNode.type !== "folder") {
+    if (isOverFolder && isDifferentParent) {
       moveNodeInto(active.id as string, over.id as string);
     } else {
       moveNode(active.id as string, over.id as string);

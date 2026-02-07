@@ -68,7 +68,7 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
         children.forEach((child) => {
           if (child.type === "task" && child.status === "TODO") {
             tasks.push(child);
-          } else if (child.type === "subfolder") {
+          } else if (child.type === "folder") {
             tasks.push(...collectTasks(child.id));
           }
         });
@@ -96,6 +96,7 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
     const trimmed = newTaskValue.trim();
     if (!trimmed) return;
     const newNode = addNode("task", null, trimmed);
+    if (!newNode) return;
     timer.openForTask(newNode.id, newNode.title);
     setNewTaskValue("");
     setIsOpen(false);

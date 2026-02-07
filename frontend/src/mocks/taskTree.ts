@@ -12,7 +12,7 @@ export const mockTaskTree: TaskNode[] = [
   },
   {
     id: 'subfolder-1',
-    type: 'subfolder',
+    type: 'folder',
     title: 'Frontend',
     parentId: 'folder-1',
     order: 0,

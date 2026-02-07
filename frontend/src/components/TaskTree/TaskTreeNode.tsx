@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import type { KeyboardEvent } from "react";
 import { useSortable } from "@dnd-kit/sortable";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
   ChevronRight,
@@ -15,6 +18,7 @@ import {
   GripVertical,
 } from "lucide-react";
 import type { TaskNode } from "../../types/taskTree";
+import { MAX_FOLDER_DEPTH } from "../../types/taskTree";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useTimerContext } from "../../hooks/useTimerContext";
 import { TaskTreeInput } from "./TaskTreeInput";
@@ -95,45 +99,48 @@ export function TaskTreeNode({
 
   const children = getChildren(node.id);
   const childIds = useMemo(() => children.map((c) => c.id), [children]);
-  const isFolder = node.type === "folder" || node.type === "subfolder";
+  const isFolder = node.type === "folder";
   const isDone = node.type === "task" && node.status === "DONE";
   const isTimerActive = timer.activeTask?.id === node.id && timer.isRunning;
   const isSelected = node.type === "task" && selectedTaskId === node.id;
-
-  const childPlaceholder =
-    node.type === "folder"
-      ? "Type task name (/ for subfolder)"
-      : "Type task name...";
+  const allowChildFolder = depth + 1 < MAX_FOLDER_DEPTH;
 
   return (
     <div>
       <div
         ref={setNodeRef}
         style={style}
-        className={`group flex items-center gap-1 px-2 py-1 rounded-md hover:bg-notion-hover transition-colors ${isSelected ? "bg-notion-hover" : ""} ${isFolder && isOver && !isDragging ? "ring-2 ring-notion-accent/50" : ""}`}
+        className={`group flex items-center gap-0.5 rounded-md hover:bg-notion-hover transition-colors ${isSelected ? "bg-notion-hover" : ""} ${isFolder && isOver && !isDragging ? "ring-2 ring-notion-accent/50" : ""}`}
         {...attributes}
       >
-        <div className="flex shrink-0" style={{ width: `${depth * 20}px` }}>
-          {Array.from({ length: depth }, (_, i) => (
-            <div key={i} className="w-5 flex justify-center">
-              <div
-                className={`w-1 h-full ${i === depth - 1 && isLastChild ? "h-1/2 self-start" : ""} bg-notion-border`}
-              />
-            </div>
-          ))}
-        </div>
-
         <button
           {...listeners}
           className="opacity-0 group-hover:opacity-100 p-0.5 cursor-grab text-notion-text-secondary"
         >
-          <GripVertical size={14} />
+          <GripVertical size={18} />
         </button>
 
-        {isFolder ? (
+        {/* Unified indent for all nodes */}
+        {depth > 0 && (
+          <div
+            className="flex shrink-0 self-stretch"
+            style={{ width: `${depth * 12}px` }}
+          >
+            {Array.from({ length: depth }, (_, i) => (
+              <div key={i} className="w-5 flex justify-center">
+                <div
+                  className={`w-px h-full ${i === depth - 1 && isLastChild ? "h-1/2 self-start" : ""} bg-gray-800`}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Folder: chevron */}
+        {isFolder && (
           <button
             onClick={() => toggleExpanded(node.id)}
-            className="p-0.5 text-notion-text-secondary hover:text-notion-text"
+            className="text-notion-text-secondary hover:text-notion-text"
           >
             {node.isExpanded ? (
               <ChevronDown size={14} />
@@ -141,12 +148,15 @@ export function TaskTreeNode({
               <ChevronRight size={14} />
             )}
           </button>
-        ) : (
+        )}
+
+        {/* Task: checkbox */}
+        {!isFolder && (
           <button
             onClick={() => toggleTaskStatus(node.id)}
-            className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+            className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
               isDone
-                ? "bg-notion-accent border-notion-accent text-white"
+                ? "bg-notion-accent border-notion-accent text-gray-700"
                 : "border-notion-border hover:border-notion-accent"
             }`}
           >
@@ -234,7 +244,10 @@ export function TaskTreeNode({
       )}
 
       {isFolder && node.isExpanded && (
-        <SortableContext items={childIds} strategy={verticalListSortingStrategy}>
+        <SortableContext
+          items={childIds}
+          strategy={verticalListSortingStrategy}
+        >
           <div>
             {children.map((child, index) => (
               <TaskTreeNode
@@ -248,13 +261,13 @@ export function TaskTreeNode({
               />
             ))}
             <TaskTreeInput
-              placeholder={childPlaceholder}
+              placeholder="Type task name (/ for folder)"
               indent={depth + 1}
-              allowFolderCreation={node.type === "folder"}
+              allowFolderCreation={allowChildFolder}
               onSubmit={(title) => addNode("task", node.id, title)}
               onSubmitFolder={
-                node.type === "folder"
-                  ? (title) => addNode("subfolder", node.id, title)
+                allowChildFolder
+                  ? (title) => addNode("folder", node.id, title)
                   : undefined
               }
             />

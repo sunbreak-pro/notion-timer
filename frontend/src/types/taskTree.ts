@@ -1,5 +1,7 @@
-export type NodeType = 'folder' | 'subfolder' | 'task';
+export type NodeType = 'folder' | 'task';
 export type TaskStatus = 'TODO' | 'DONE';
+
+export const MAX_FOLDER_DEPTH = 5;
 
 export interface TaskNode {
   id: string;
