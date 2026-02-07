@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -7,23 +7,30 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useTaskTreeContext } from '../../hooks/useTaskTreeContext';
-import { TaskTreeNode } from './TaskTreeNode';
-import { TaskTreeInput } from './TaskTreeInput';
-import type { TaskNode } from '../../types/taskTree';
+} from "@dnd-kit/sortable";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
+import { TaskTreeNode } from "./TaskTreeNode";
+import { TaskTreeInput } from "./TaskTreeInput";
+import type { TaskNode } from "../../types/taskTree";
 
 interface TaskTreeProps {
   onPlayTask?: (node: TaskNode) => void;
   selectedFolderId?: string | null;
+  onSelectTask?: (id: string) => void;
+  selectedTaskId?: string | null;
 }
 
-export function TaskTree({ onPlayTask, selectedFolderId }: TaskTreeProps) {
+export function TaskTree({
+  onPlayTask,
+  selectedFolderId,
+  onSelectTask,
+  selectedTaskId,
+}: TaskTreeProps) {
   const { nodes, getChildren, addNode, moveNode } = useTaskTreeContext();
   const [showCompleted, setShowCompleted] = useState(false);
 
@@ -35,15 +42,11 @@ export function TaskTree({ onPlayTask, selectedFolderId }: TaskTreeProps) {
   const isInbox = selectedFolderId === null || selectedFolderId === undefined;
 
   const displayNodes = isInbox
-    ? getChildren(null).filter(n => n.type === 'task')
+    ? getChildren(null).filter((n) => n.type !== "folder")
     : getChildren(selectedFolderId!);
 
-  const heading = isInbox
-    ? 'Inbox'
-    : nodes.find(n => n.id === selectedFolderId)?.title ?? 'Tasks';
-
-  const allTasks = nodes.filter(n => n.type === 'task');
-  const completedTasks = allTasks.filter(t => t.status === 'DONE');
+  const allTasks = nodes.filter((n) => n.type === "task");
+  const completedTasks = allTasks.filter((t) => t.status === "DONE");
   const hasCompleted = completedTasks.length > 0;
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -52,25 +55,28 @@ export function TaskTree({ onPlayTask, selectedFolderId }: TaskTreeProps) {
     moveNode(active.id as string, over.id as string);
   };
 
-  const allNodeIds = nodes.map(n => n.id);
+  const allNodeIds = nodes.map((n) => n.id);
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-notion-text">{heading}</h2>
-
+    <div className="space-y-1">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <SortableContext items={allNodeIds} strategy={verticalListSortingStrategy}>
+        <SortableContext
+          items={allNodeIds}
+          strategy={verticalListSortingStrategy}
+        >
           <div className="space-y-0.5">
-            {displayNodes.map(node => (
+            {displayNodes.map((node) => (
               <TaskTreeNode
                 key={node.id}
                 node={node}
                 depth={0}
                 onPlayTask={onPlayTask}
+                onSelectTask={onSelectTask}
+                selectedTaskId={selectedTaskId}
               />
             ))}
           </div>
@@ -79,32 +85,38 @@ export function TaskTree({ onPlayTask, selectedFolderId }: TaskTreeProps) {
 
       {isInbox ? (
         <TaskTreeInput
-          placeholder="+ New Task"
-          onSubmit={(title) => addNode('task', null, title)}
+          placeholder="New Task"
+          onSubmit={(title) => addNode("task", null, title)}
         />
       ) : (
         <TaskTreeInput
-          placeholder="+ New Task"
-          onSubmit={(title) => addNode('task', selectedFolderId!, title)}
+          placeholder="New Task"
+          onSubmit={(title) => addNode("task", selectedFolderId!, title)}
         />
       )}
 
       {hasCompleted && (
-        <div className="pt-4 border-t border-notion-border">
+        <div className="pt-2 border-t border-notion-border">
           <button
             onClick={() => setShowCompleted(!showCompleted)}
-            className="flex items-center gap-2 text-sm text-notion-text-secondary hover:text-notion-text mb-2"
+            className="flex items-center gap-2 text-xs text-notion-text-secondary hover:text-notion-text mb-1 px-2"
           >
-            {showCompleted ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {showCompleted ? (
+              <ChevronDown size={14} />
+            ) : (
+              <ChevronRight size={14} />
+            )}
             <span>Completed ({completedTasks.length})</span>
           </button>
           {showCompleted && (
             <div className="space-y-0.5 opacity-60">
-              {completedTasks.map(task => (
+              {completedTasks.map((task) => (
                 <TaskTreeNode
                   key={task.id}
                   node={task}
-                  depth={1}
+                  depth={0}
+                  onSelectTask={onSelectTask}
+                  selectedTaskId={selectedTaskId}
                 />
               ))}
             </div>

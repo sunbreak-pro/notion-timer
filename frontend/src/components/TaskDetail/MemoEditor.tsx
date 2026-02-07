@@ -1,0 +1,67 @@
+import { useEffect, useRef, useCallback } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import { SlashCommandMenu } from './SlashCommandMenu';
+
+interface MemoEditorProps {
+  taskId: string;
+  initialContent?: string;
+  onUpdate: (content: string) => void;
+}
+
+export function MemoEditor({ taskId, initialContent, onUpdate }: MemoEditorProps) {
+  const debounceRef = useRef<number | null>(null);
+
+  const handleUpdate = useCallback((json: string) => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = window.setTimeout(() => {
+      onUpdate(json);
+    }, 800);
+  }, [onUpdate]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+      }),
+      Placeholder.configure({
+        placeholder: "Type '/' for commands...",
+      }),
+    ],
+    content: initialContent ? tryParseJSON(initialContent) : undefined,
+    onUpdate: ({ editor }) => {
+      handleUpdate(JSON.stringify(editor.getJSON()));
+    },
+    editorProps: {
+      attributes: {
+        class: 'memo-editor outline-none min-h-[200px]',
+      },
+    },
+  }, [taskId]);
+
+  return (
+    <div className="relative">
+      <EditorContent editor={editor} />
+      {editor && <SlashCommandMenu editor={editor} />}
+    </div>
+  );
+}
+
+function tryParseJSON(str: string): Record<string, unknown> | string {
+  try {
+    return JSON.parse(str);
+  } catch {
+    return str;
+  }
+}

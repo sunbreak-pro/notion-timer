@@ -1,5 +1,5 @@
 import { Play, Pause, RotateCcw } from 'lucide-react';
-import type { SessionType } from '../../hooks/useLocalTimer';
+import type { SessionType } from '../../types/timer';
 
 interface TimerDisplayProps {
   sessionType: SessionType;

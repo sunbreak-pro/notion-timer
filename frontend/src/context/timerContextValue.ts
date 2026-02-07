@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { SessionType } from '../hooks/useLocalTimer';
+import type { SessionType } from '../types/timer';
 
 export interface ActiveTask {
   id: string;
@@ -21,6 +21,7 @@ export interface TimerContextValue {
   reset: () => void;
   formatTime: (seconds: number) => string;
   startForTask: (id: string, title: string) => void;
+  openForTask: (id: string, title: string, durationMinutes?: number) => void;
   clearTask: () => void;
   setWorkDurationMinutes: (min: number) => void;
 }

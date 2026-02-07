@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { SessionType } from '../hooks/useLocalTimer';
+import type { SessionType } from '../types/timer';
 import { TimerContext } from './timerContextValue';
 import type { ActiveTask } from './timerContextValue';
 
@@ -121,6 +121,15 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     setIsRunning(true);
   }, [clearTimer, workDurationMinutes]);
 
+  const openForTask = useCallback((id: string, title: string, durationMinutes?: number) => {
+    clearTimer();
+    setActiveTask({ id, title });
+    setSessionType('WORK');
+    const dur = durationMinutes ?? workDurationMinutes;
+    setRemainingSeconds(dur * 60);
+    setIsRunning(false);
+  }, [clearTimer, workDurationMinutes]);
+
   const clearTask = useCallback(() => {
     setActiveTask(null);
   }, []);
@@ -150,6 +159,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       reset,
       formatTime,
       startForTask,
+      openForTask,
       clearTask,
       setWorkDurationMinutes,
     }}>

@@ -23,6 +23,13 @@ public class Task {
 
     private LocalDateTime completedAt;
 
+    @Lob
+    @Column(columnDefinition = "CLOB")
+    private String content;
+
+    @Column
+    private Integer workDurationMinutes;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -66,5 +73,21 @@ public class Task {
 
     public void setCompletedAt(LocalDateTime completedAt) {
         this.completedAt = completedAt;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public Integer getWorkDurationMinutes() {
+        return workDurationMinutes;
+    }
+
+    public void setWorkDurationMinutes(Integer workDurationMinutes) {
+        this.workDurationMinutes = workDurationMinutes;
     }
 }

@@ -43,14 +43,22 @@ public class TaskController {
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTask(
             @PathVariable Long id,
-            @RequestBody Map<String, String> request) {
+            @RequestBody Map<String, Object> request) {
         try {
-            String title = request.get("title");
+            String title = (String) request.get("title");
             TaskStatus status = null;
             if (request.containsKey("status")) {
-                status = TaskStatus.valueOf(request.get("status"));
+                status = TaskStatus.valueOf((String) request.get("status"));
             }
-            Task task = taskService.updateTask(id, title, status);
+            String content = (String) request.get("content");
+            Integer workDurationMinutes = null;
+            if (request.containsKey("workDurationMinutes")) {
+                Object val = request.get("workDurationMinutes");
+                if (val instanceof Number) {
+                    workDurationMinutes = ((Number) val).intValue();
+                }
+            }
+            Task task = taskService.updateTask(id, title, status, content, workDurationMinutes);
             return ResponseEntity.ok(task);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();

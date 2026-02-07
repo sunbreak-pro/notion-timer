@@ -5,8 +5,13 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 
 ### 主な機能
 - **タスク管理**: 階層型タスクツリー（フォルダ/サブフォルダ/タスク）、ドラッグ&ドロップ並び替え、ソフトデリート+ゴミ箱
+- **プロジェクトナビゲーション**: サブサイドバーでInbox+フォルダ別にタスクを絞り込み表示
+- **グローバルタイマー**: 画面遷移してもタイマーが継続するContextベースのポモドーロタイマー
+- **集中タイマー**: WORK/BREAK/LONG_BREAK対応、作業時間カスタマイズ（5〜60分、5分刻み）、プログレスバー（ドットインジケータ付き）
+- **タイマーモーダル**: タスクのPlayボタンでモーダル表示、閉じてもバックグラウンドでタイマー継続
+- **サイドバータイマー表示**: タイマー実行中はサイドバーにタスク名・残り時間・編集ボタンを表示
+- **TaskTreeタイマー表示**: 実行中のタスク行に残り時間テキスト+ミニプログレスバーを表示
 - **ノイズミキサー**: 6種の環境音UI（Rain, Thunder, Wind, Ocean, Birds, Fire）※音声再生は開発中
-- **集中タイマー**: WORK/BREAK/LONG_BREAK対応のポモドーロタイマー、セッション管理、設定カスタマイズ
 - **AIコーチング**: 開発予定
 - **外観設定**: ダークモード/ライトモード切替、フォントサイズ設定（S/M/L）
 - **Settings画面**: 外観設定、ゴミ箱（削除タスクの復元・完全削除）
@@ -50,6 +55,38 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-06 (2) - UI拡張: グローバルタイマー + サブサイドバー
+
+#### 実装済み
+- **TimerContext**: タイマーをReact Contextに昇格、全コンポーネントから共有可能に
+  - `activeTask`状態（タイマーと紐づくタスク情報）
+  - `startForTask(id, title)` / `clearTask()` / `setWorkDurationMinutes()`
+  - 作業時間をlocalStorageに永続化（5〜60分、デフォルト25分）
+- **モーダル化**: WorkScreenのフルスクリーンオーバーレイを中央配置モーダルに変更
+  - バックドロップクリック / ESCキーで閉じる（タイマーはバックグラウンドで継続）
+- **サイドバータイマー表示**: Session下にタスク名・残り時間・Pencil編集ボタンを表示
+- **TaskTreeタイマー表示**: アクティブタスク行に残り時間テキスト + ミニプログレスバー + Pauseアイコン
+- **SubSidebar**: Inbox（ルートタスク）+ フォルダ一覧でタスク絞り込み、新規フォルダ作成UI
+- **DurationSelector**: +/-ボタン（5分刻み）+ プリセット（15/25/30/45/60分）、実行中はdisabled
+- **プログレスバードット**: 現在位置に12pxのドットインジケータ、1秒スムーズトランジション
+
+#### 新規ファイル
+- `frontend/src/context/timerContextValue.ts` — Timer Context型定義
+- `frontend/src/context/TimerContext.tsx` — TimerProvider
+- `frontend/src/hooks/useTimerContext.ts` — Consumerフック
+- `frontend/src/components/Layout/SubSidebar.tsx` — プロジェクトナビゲーション
+- `frontend/src/components/WorkScreen/DurationSelector.tsx` — タイマー時間選択UI
+
+#### 変更ファイル
+- `main.tsx` — TimerProvider追加
+- `App.tsx` — isTimerModalOpen + selectedFolderId状態、フォルダナビ連携
+- `WorkScreen.tsx` — Context化、モーダルUI、DurationSelector追加
+- `TimerProgressBar.tsx` — ドットインジケータ追加
+- `Sidebar.tsx` — タイマー表示+編集ボタン
+- `Layout.tsx` — SubSidebar条件レンダリング
+- `TaskTreeNode.tsx` — タイマー表示+ミニプログレスバー
+- `TaskTree.tsx` — selectedFolderIdでフィルタリング
 
 ### 2026-02-06 - 実装状況まとめ
 

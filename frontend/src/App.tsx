@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Layout } from "./components/Layout";
-import { TaskTree } from "./components/TaskTree";
+import { TaskDetail } from "./components/TaskDetail";
 import { WorkScreen } from "./components/WorkScreen";
 import { Settings } from "./components/Settings";
 import { useTimerContext } from "./hooks/useTimerContext";
@@ -11,15 +11,41 @@ import type { TaskNode } from "./types/taskTree";
 function App() {
   const [activeSection, setActiveSection] = useState<SectionId>("tasks");
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const selectedFolderId: string | null = null;
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const timer = useTimerContext();
-  const { getChildren, addNode } = useTaskTreeContext();
+  const { nodes, addNode, updateNode, softDelete } = useTaskTreeContext();
 
-  const rootFolders = getChildren(null).filter(n => n.type === 'folder');
+  const selectedTask = selectedTaskId
+    ? nodes.find(n => n.id === selectedTaskId && n.type === 'task') ?? null
+    : null;
 
   const handlePlayTask = (node: TaskNode) => {
-    timer.startForTask(node.id, node.title);
+    timer.openForTask(node.id, node.title, node.workDurationMinutes);
     setIsTimerModalOpen(true);
+  };
+
+  const handlePlaySelectedTask = () => {
+    if (!selectedTask) return;
+    timer.openForTask(selectedTask.id, selectedTask.title, selectedTask.workDurationMinutes);
+    setIsTimerModalOpen(true);
+  };
+
+  const handleDeleteSelectedTask = () => {
+    if (!selectedTask) return;
+    softDelete(selectedTask.id);
+    setSelectedTaskId(null);
+  };
+
+  const handleUpdateContent = (content: string) => {
+    if (!selectedTaskId) return;
+    updateNode(selectedTaskId, { content });
+  };
+
+  const handleDurationChange = (minutes: number) => {
+    if (!selectedTaskId) return;
+    // 0 means "reset to global default"
+    updateNode(selectedTaskId, { workDurationMinutes: minutes === 0 ? undefined : minutes });
   };
 
   const handleOpenTimerModal = () => {
@@ -34,10 +60,24 @@ function App() {
     addNode('folder', null, title);
   };
 
+  const handleCreateTask = (title: string) => {
+    addNode('task', selectedFolderId, title);
+  };
+
   const renderContent = () => {
     switch (activeSection) {
       case "tasks":
-        return <TaskTree onPlayTask={handlePlayTask} selectedFolderId={selectedFolderId} />;
+        return (
+          <TaskDetail
+            task={selectedTask}
+            allNodes={nodes}
+            globalWorkDuration={timer.workDurationMinutes}
+            onPlay={handlePlaySelectedTask}
+            onDelete={handleDeleteSelectedTask}
+            onUpdateContent={handleUpdateContent}
+            onDurationChange={handleDurationChange}
+          />
+        );
       case "session":
         return <WorkScreen />;
       case "settings":
@@ -53,10 +93,12 @@ function App() {
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         onOpenTimerModal={handleOpenTimerModal}
-        folders={rootFolders}
         selectedFolderId={selectedFolderId}
-        onSelectFolder={setSelectedFolderId}
         onCreateFolder={handleCreateFolder}
+        onCreateTask={handleCreateTask}
+        onSelectTask={setSelectedTaskId}
+        onPlayTask={handlePlayTask}
+        selectedTaskId={selectedTaskId}
       >
         {renderContent()}
       </Layout>

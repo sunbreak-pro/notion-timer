@@ -22,9 +22,11 @@ interface TaskTreeNodeProps {
   node: TaskNode;
   depth: number;
   onPlayTask?: (node: TaskNode) => void;
+  onSelectTask?: (id: string) => void;
+  selectedTaskId?: string | null;
 }
 
-export function TaskTreeNode({ node, depth, onPlayTask }: TaskTreeNodeProps) {
+export function TaskTreeNode({ node, depth, onPlayTask, onSelectTask, selectedTaskId }: TaskTreeNodeProps) {
   const {
     getChildren,
     updateNode,
@@ -84,6 +86,7 @@ export function TaskTreeNode({ node, depth, onPlayTask }: TaskTreeNodeProps) {
   const isFolder = node.type === 'folder' || node.type === 'subfolder';
   const isDone = node.type === 'task' && node.status === 'DONE';
   const isTimerActive = timer.activeTask?.id === node.id && timer.isRunning;
+  const isSelected = node.type === 'task' && selectedTaskId === node.id;
 
   const childPlaceholder = node.type === 'folder'
     ? '+ New subfolder or task...'
@@ -94,7 +97,7 @@ export function TaskTreeNode({ node, depth, onPlayTask }: TaskTreeNodeProps) {
       <div
         ref={setNodeRef}
         style={style}
-        className={`group flex items-center gap-1 px-2 py-1 rounded-md hover:bg-notion-hover transition-colors`}
+        className={`group flex items-center gap-1 px-2 py-1 rounded-md hover:bg-notion-hover transition-colors ${isSelected ? 'bg-notion-hover' : ''}`}
         {...attributes}
       >
         <div
@@ -147,8 +150,15 @@ export function TaskTreeNode({ node, depth, onPlayTask }: TaskTreeNodeProps) {
           />
         ) : (
           <span
-            onClick={() => setIsEditing(true)}
-            className={`flex-1 text-sm cursor-text truncate ${
+            onClick={() => {
+              if (node.type === 'task' && onSelectTask) {
+                onSelectTask(node.id);
+              } else {
+                setIsEditing(true);
+              }
+            }}
+            onDoubleClick={() => setIsEditing(true)}
+            className={`flex-1 text-sm cursor-pointer truncate ${
               isDone ? 'line-through text-notion-text-secondary' : 'text-notion-text'
             } ${isFolder ? 'font-medium' : ''}`}
           >
@@ -199,6 +209,8 @@ export function TaskTreeNode({ node, depth, onPlayTask }: TaskTreeNodeProps) {
               node={child}
               depth={depth + 1}
               onPlayTask={onPlayTask}
+              onSelectTask={onSelectTask}
+              selectedTaskId={selectedTaskId}
             />
           ))}
           <TaskTreeInput

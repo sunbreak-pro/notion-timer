@@ -34,7 +34,7 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
-    public Task updateTask(Long id, String title, TaskStatus status) {
+    public Task updateTask(Long id, String title, TaskStatus status, String content, Integer workDurationMinutes) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found: " + id));
 
@@ -51,6 +51,14 @@ public class TaskService {
             } else if (status == TaskStatus.TODO) {
                 task.setCompletedAt(null);
             }
+        }
+
+        if (content != null) {
+            task.setContent(content);
+        }
+
+        if (workDurationMinutes != null) {
+            task.setWorkDurationMinutes(workDurationMinutes);
         }
 
         return taskRepository.save(task);
