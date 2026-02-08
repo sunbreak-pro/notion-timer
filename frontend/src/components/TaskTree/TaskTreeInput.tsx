@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { KeyboardEvent } from "react";
 
 interface TaskTreeInputProps {
-  placeholder: string;
   onSubmit: (title: string) => void;
   onSubmitFolder?: (title: string) => void;
   allowFolderCreation?: boolean;
@@ -10,7 +9,6 @@ interface TaskTreeInputProps {
 }
 
 export function TaskTreeInput({
-  placeholder,
   onSubmit,
   onSubmitFolder,
   allowFolderCreation = false,
@@ -49,7 +47,6 @@ export function TaskTreeInput({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder}
         className="flex-1 bg-transparent outline-none text-sm placeholder:text-notion-text-secondary text-notion-text"
       />
     </div>

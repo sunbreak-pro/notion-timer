@@ -14,10 +14,8 @@ import {
   GripVertical,
 } from "lucide-react";
 import type { TaskNode } from "../../types/taskTree";
-import { MAX_FOLDER_DEPTH } from "../../types/taskTree";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useTimerContext } from "../../hooks/useTimerContext";
-import { TaskTreeInput } from "./TaskTreeInput";
 import { TaskNodeEditor } from "./TaskNodeEditor";
 import { TaskNodeContent } from "./TaskNodeContent";
 import { TaskNodeActions } from "./TaskNodeActions";
@@ -75,7 +73,6 @@ export function TaskTreeNode({
   const isDone = node.type === "task" && node.status === "DONE";
   const isTimerActive = timer.activeTask?.id === node.id && timer.isRunning;
   const isSelected = node.type === "task" && selectedTaskId === node.id;
-  const allowChildFolder = depth + 1 < MAX_FOLDER_DEPTH;
 
   return (
     <div>
@@ -169,6 +166,8 @@ export function TaskTreeNode({
           node={node}
           isDone={isDone}
           isTimerActive={isTimerActive}
+          makeFolder={(node) => addNode("folder", node.id, "New Folder")}
+          makeTask={(node) => addNode("task", node.id, "New Task")}
           onPlayTask={onPlayTask}
           onDelete={softDelete}
         />
@@ -197,17 +196,6 @@ export function TaskTreeNode({
                 selectedTaskId={selectedTaskId}
               />
             ))}
-            <TaskTreeInput
-              placeholder="Type task name (/ for folder)"
-              indent={depth + 1}
-              allowFolderCreation={allowChildFolder}
-              onSubmit={(title) => addNode("task", node.id, title)}
-              onSubmitFolder={
-                allowChildFolder
-                  ? (title) => addNode("folder", node.id, title)
-                  : undefined
-              }
-            />
           </div>
         </SortableContext>
       )}

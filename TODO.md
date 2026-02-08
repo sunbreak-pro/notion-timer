@@ -10,6 +10,7 @@
 - [ ] Polish & Enhancement — [feature_plans/003-polish-enhancement.md](.claude/feature_plans/003-polish-enhancement.md)
 
 ## Backlog
+- [ ] カレンダー & アナリティクス — [feature_plans/005-calendar-analytics.md](.claude/feature_plans/005-calendar-analytics.md)
 - [ ] Backend再統合 — [feature_plans/004-backend-reintegration.md](.claude/feature_plans/004-backend-reintegration.md)
 
 ## In Progress

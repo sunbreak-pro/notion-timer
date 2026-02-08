@@ -8,13 +8,18 @@ interface SidebarProps {
   onOpenTimerModal: () => void;
 }
 
-const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] = [
-  { id: "tasks", label: "Tasks", icon: CheckSquare },
-  { id: "session", label: "Session", icon: Headphones },
-  { id: "settings", label: "Settings", icon: Settings },
-];
+const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] =
+  [
+    { id: "tasks", label: "Tasks", icon: CheckSquare },
+    { id: "session", label: "Session", icon: Headphones },
+    { id: "settings", label: "Settings", icon: Settings },
+  ];
 
-export function Sidebar({ activeSection, onSectionChange, onOpenTimerModal }: SidebarProps) {
+export function Sidebar({
+  activeSection,
+  onSectionChange,
+  onOpenTimerModal,
+}: SidebarProps) {
   const timer = useTimerContext();
   const showTimer = timer.activeTask !== null || timer.isRunning;
 
@@ -46,7 +51,7 @@ export function Sidebar({ activeSection, onSectionChange, onOpenTimerModal }: Si
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-notion-text-secondary truncate">
-                        {timer.activeTask?.title ?? 'Free Session'}
+                        {timer.activeTask?.title ?? "Free Session"}
                       </p>
                       <p className="text-sm font-mono tabular-nums text-notion-accent">
                         {timer.formatTime(timer.remainingSeconds)}
@@ -54,7 +59,7 @@ export function Sidebar({ activeSection, onSectionChange, onOpenTimerModal }: Si
                     </div>
                     <button
                       onClick={onOpenTimerModal}
-                      className="p-1 text-notion-text-secondary hover:text-notion-text rounded transition-colors shrink-0"
+                      className="p-1 text-notion-text-secondary hover:text-notion-text rounded transition-colors shrink-0 cursor-pointer"
                     >
                       <Pencil size={14} />
                     </button>

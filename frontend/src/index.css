@@ -17,6 +17,7 @@
 [data-theme="dark"] {
   --color-bg-primary: #191919;
   --color-bg-secondary: #202020;
+  --color-bg-subsidebar: #404040;
   --color-text-primary: #E8E8E3;
   --color-text-secondary: #9B9A97;
   --color-border: #2F2F2F;

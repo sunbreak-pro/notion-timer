@@ -22,7 +22,7 @@ export function SubSidebar({
       style={{ width }}
     >
       <div className="flex items-center px-3 py-3">
-        <span className="text-[18px] font-semibold uppercase tracking-wider text-notion-text-secondary">
+        <span className="text-[20px] font-semibold uppercase tracking-wider text-notion-text-secondary">
           Tasks
         </span>
       </div>

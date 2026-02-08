@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { TaskTreeNode } from "./TaskTreeNode";
-import { TaskTreeInput } from "./TaskTreeInput";
 import type { TaskNode } from "../../types/taskTree";
 
 interface TaskTreeProps {
@@ -49,7 +48,7 @@ export function TaskTree({
   onSelectTask,
   selectedTaskId,
 }: TaskTreeProps) {
-  const { nodes, getChildren, addNode, moveNode, moveNodeInto, moveToRoot } =
+  const { nodes, getChildren, moveNode, moveNodeInto, moveToRoot } =
     useTaskTreeContext();
   const [showCompleted, setShowCompleted] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -112,9 +111,7 @@ export function TaskTree({
     setActiveId(null);
   };
 
-  const activeNode = activeId
-    ? nodes.find((n) => n.id === activeId)
-    : null;
+  const activeNode = activeId ? nodes.find((n) => n.id === activeId) : null;
 
   return (
     <div className="space-y-1">
@@ -131,7 +128,9 @@ export function TaskTree({
             <div>
               <div
                 className={`flex items-center gap-2 px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-notion-text-secondary rounded-md transition-colors ${
-                  isOver ? "bg-notion-accent/10 ring-1 ring-notion-accent/30" : ""
+                  isOver
+                    ? "bg-notion-accent/10 ring-1 ring-notion-accent/30"
+                    : ""
                 }`}
               >
                 <Inbox size={14} />
@@ -142,7 +141,10 @@ export function TaskTree({
                   )}
                 </span>
               </div>
-              <SortableContext items={inboxIds} strategy={verticalListSortingStrategy}>
+              <SortableContext
+                items={inboxIds}
+                strategy={verticalListSortingStrategy}
+              >
                 <div className="space-y-0.5">
                   {inboxTasks.map((node) => (
                     <TaskTreeNode
@@ -156,10 +158,6 @@ export function TaskTree({
                   ))}
                 </div>
               </SortableContext>
-              <TaskTreeInput
-                placeholder="New Task"
-                onSubmit={(title) => addNode("task", null, title)}
-              />
             </div>
           )}
         </DroppableSection>
@@ -173,14 +171,19 @@ export function TaskTree({
             <div>
               <div
                 className={`flex items-center gap-2 px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-notion-text-secondary rounded-md transition-colors ${
-                  isOver ? "bg-notion-accent/10 ring-1 ring-notion-accent/30" : ""
+                  isOver
+                    ? "bg-notion-accent/10 ring-1 ring-notion-accent/30"
+                    : ""
                 }`}
               >
                 <FolderOpen size={14} />
                 <span>Projects</span>
               </div>
-              <SortableContext items={folderIds} strategy={verticalListSortingStrategy}>
-                <div className="space-y-0.5">
+              <SortableContext
+                items={folderIds}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-1">
                   {folders.map((node) => (
                     <TaskTreeNode
                       key={node.id}
@@ -193,12 +196,6 @@ export function TaskTree({
                   ))}
                 </div>
               </SortableContext>
-              <TaskTreeInput
-                placeholder="New Task"
-                onSubmit={(title) => addNode("task", null, title)}
-                allowFolderCreation={true}
-                onSubmitFolder={(title) => addNode("folder", null, title)}
-              />
             </div>
           )}
         </DroppableSection>
@@ -206,10 +203,7 @@ export function TaskTree({
         <DragOverlay>
           {activeNode ? (
             <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-notion-bg border border-notion-border shadow-lg text-sm text-notion-text">
-              <GripVertical
-                size={14}
-                className="text-notion-text-secondary"
-              />
+              <GripVertical size={14} className="text-notion-text-secondary" />
               <span>{activeNode.title}</span>
             </div>
           ) : null}
