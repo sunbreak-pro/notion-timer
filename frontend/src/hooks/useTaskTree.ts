@@ -1,8 +1,10 @@
-import { useState, useCallback } from 'react';
-import type { TaskNode, NodeType, TaskStatus } from '../types/taskTree';
-import { MAX_FOLDER_DEPTH } from '../types/taskTree';
+import { useState, useCallback, useMemo } from 'react';
+import type { TaskNode, NodeType } from '../types/taskTree';
 import { mockTaskTree } from '../mocks/taskTree';
 import { STORAGE_KEYS } from '../constants/storageKeys';
+import { useTaskTreeCRUD } from './useTaskTreeCRUD';
+import { useTaskTreeDeletion } from './useTaskTreeDeletion';
+import { useTaskTreeMovement } from './useTaskTreeMovement';
 
 const STORAGE_KEY = STORAGE_KEYS.TASK_TREE;
 
@@ -48,8 +50,8 @@ export function useTaskTree() {
     saveNodes(updated);
   }, []);
 
-  const activeNodes = nodes.filter(n => !n.isDeleted);
-  const deletedNodes = nodes.filter(n => n.isDeleted);
+  const activeNodes = useMemo(() => nodes.filter(n => !n.isDeleted), [nodes]);
+  const deletedNodes = useMemo(() => nodes.filter(n => n.isDeleted), [nodes]);
 
   const getChildren = useCallback((parentId: string | null) => {
     return activeNodes
@@ -57,7 +59,6 @@ export function useTaskTree() {
       .sort((a, b) => a.order - b.order);
   }, [activeNodes]);
 
-  // Depth helpers (internal only)
   const getNodeDepth = useCallback((nodeId: string): number => {
     let depth = 0;
     let current = nodes.find(n => n.id === nodeId);
@@ -68,275 +69,16 @@ export function useTaskTree() {
     return depth;
   }, [nodes]);
 
-  const getSubtreeMaxDepth = useCallback((nodeId: string): number => {
-    const children = nodes.filter(n => n.parentId === nodeId && !n.isDeleted);
-    if (children.length === 0) return 0;
-    return 1 + Math.max(...children.map(c => getSubtreeMaxDepth(c.id)));
-  }, [nodes]);
-
-  const canMoveToDepth = useCallback((nodeId: string, targetDepth: number): boolean => {
-    const node = nodes.find(n => n.id === nodeId);
-    if (!node) return false;
-    if (node.type === 'folder') {
-      const subtreeDepth = getSubtreeMaxDepth(nodeId);
-      return targetDepth + subtreeDepth < MAX_FOLDER_DEPTH;
-    }
-    return true;
-  }, [nodes, getSubtreeMaxDepth]);
-
-  const addNode = useCallback((type: NodeType, parentId: string | null, title: string) => {
-    // Check depth limit for folder creation
-    if (type === 'folder' && parentId !== null) {
-      const parentDepth = getNodeDepth(parentId);
-      if (parentDepth + 1 >= MAX_FOLDER_DEPTH) return null;
-    }
-
-    const siblings = nodes.filter(n => !n.isDeleted && n.parentId === parentId);
-    const newNode: TaskNode = {
-      id: generateId(type),
-      type,
-      title,
-      parentId,
-      order: siblings.length,
-      status: type === 'task' ? 'TODO' : undefined,
-      isExpanded: type !== 'task' ? true : undefined,
-      createdAt: new Date().toISOString(),
-    };
-    persist([...nodes, newNode]);
-    return newNode;
-  }, [nodes, persist, getNodeDepth]);
-
-  const updateNode = useCallback((id: string, updates: Partial<TaskNode>) => {
-    persist(nodes.map(n => n.id === id ? { ...n, ...updates } : n));
-  }, [nodes, persist]);
-
-  const toggleExpanded = useCallback((id: string) => {
-    persist(nodes.map(n => n.id === id ? { ...n, isExpanded: !n.isExpanded } : n));
-  }, [nodes, persist]);
-
-  const toggleTaskStatus = useCallback((id: string) => {
-    persist(nodes.map(n => {
-      if (n.id !== id || n.type !== 'task') return n;
-      const newStatus: TaskStatus = n.status === 'TODO' ? 'DONE' : 'TODO';
-      return {
-        ...n,
-        status: newStatus,
-        completedAt: newStatus === 'DONE' ? new Date().toISOString() : undefined,
-      };
-    }));
-  }, [nodes, persist]);
-
-  const softDelete = useCallback((id: string) => {
-    const descendantIds = new Set<string>();
-    const collectDescendants = (parentId: string) => {
-      nodes.filter(n => n.parentId === parentId).forEach(child => {
-        descendantIds.add(child.id);
-        collectDescendants(child.id);
-      });
-    };
-    descendantIds.add(id);
-    collectDescendants(id);
-
-    persist(nodes.map(n =>
-      descendantIds.has(n.id)
-        ? { ...n, isDeleted: true, deletedAt: new Date().toISOString() }
-        : n
-    ));
-  }, [nodes, persist]);
-
-  const restoreNode = useCallback((id: string) => {
-    const node = nodes.find(n => n.id === id);
-    if (!node) return;
-
-    const idsToRestore = new Set<string>();
-    const collectDescendants = (parentId: string) => {
-      nodes.filter(n => n.parentId === parentId).forEach(child => {
-        idsToRestore.add(child.id);
-        collectDescendants(child.id);
-      });
-    };
-    idsToRestore.add(id);
-    collectDescendants(id);
-
-    // Also restore ancestors if they're deleted
-    let current = node;
-    while (current.parentId) {
-      const parent = nodes.find(n => n.id === current.parentId);
-      if (parent && parent.isDeleted) {
-        idsToRestore.add(parent.id);
-      }
-      if (!parent) break;
-      current = parent;
-    }
-
-    persist(nodes.map(n =>
-      idsToRestore.has(n.id)
-        ? { ...n, isDeleted: false, deletedAt: undefined }
-        : n
-    ));
-  }, [nodes, persist]);
-
-  const permanentDelete = useCallback((id: string) => {
-    const idsToDelete = new Set<string>();
-    const collectDescendants = (parentId: string) => {
-      nodes.filter(n => n.parentId === parentId).forEach(child => {
-        idsToDelete.add(child.id);
-        collectDescendants(child.id);
-      });
-    };
-    idsToDelete.add(id);
-    collectDescendants(id);
-    persist(nodes.filter(n => !idsToDelete.has(n.id)));
-  }, [nodes, persist]);
-
-  const moveNodeInto = useCallback((activeId: string, targetFolderId: string) => {
-    const active = nodes.find(n => n.id === activeId);
-    const target = nodes.find(n => n.id === targetFolderId);
-    if (!active || !target) return;
-
-    // Target must be a folder
-    if (target.type === 'task') return;
-
-    // Prevent circular reference
-    const isDescendant = (parentId: string, childId: string): boolean => {
-      const children = nodes.filter(n => n.parentId === parentId);
-      return children.some(c => c.id === childId || isDescendant(c.id, childId));
-    };
-    if (isDescendant(activeId, targetFolderId)) return;
-
-    // Depth validation for folders
-    const targetDepth = getNodeDepth(targetFolderId);
-    if (!canMoveToDepth(activeId, targetDepth + 1)) return;
-
-    // Already in this folder
-    if (active.parentId === targetFolderId) return;
-
-    // Add to end of target's children
-    const targetChildren = nodes
-      .filter(n => !n.isDeleted && n.parentId === targetFolderId)
-      .sort((a, b) => a.order - b.order);
-    const newOrder = targetChildren.length;
-
-    // Reorder old siblings
-    const oldSiblings = nodes
-      .filter(n => !n.isDeleted && n.parentId === active.parentId && n.id !== activeId)
-      .sort((a, b) => a.order - b.order);
-    const orderMap = new Map(oldSiblings.map((n, i) => [n.id, i]));
-
-    persist(nodes.map(n => {
-      if (n.id === activeId) {
-        return { ...n, parentId: targetFolderId, order: newOrder };
-      }
-      if (orderMap.has(n.id)) {
-        return { ...n, order: orderMap.get(n.id)! };
-      }
-      return n;
-    }));
-  }, [nodes, persist, getNodeDepth, canMoveToDepth]);
-
-  const moveToRoot = useCallback((activeId: string) => {
-    const active = nodes.find(n => n.id === activeId);
-    if (!active || active.parentId === null) return;
-
-    const rootChildren = nodes
-      .filter(n => !n.isDeleted && n.parentId === null)
-      .sort((a, b) => a.order - b.order);
-    const newOrder = rootChildren.length;
-
-    // Reorder old siblings
-    const oldSiblings = nodes
-      .filter(n => !n.isDeleted && n.parentId === active.parentId && n.id !== activeId)
-      .sort((a, b) => a.order - b.order);
-    const orderMap = new Map(oldSiblings.map((n, i) => [n.id, i]));
-
-    persist(nodes.map(n => {
-      if (n.id === activeId) {
-        return { ...n, parentId: null, order: newOrder };
-      }
-      if (orderMap.has(n.id)) {
-        return { ...n, order: orderMap.get(n.id)! };
-      }
-      return n;
-    }));
-  }, [nodes, persist]);
-
-  const moveNode = useCallback((activeId: string, overId: string) => {
-    const active = nodes.find(n => n.id === activeId);
-    const over = nodes.find(n => n.id === overId);
-    if (!active || !over) return;
-
-    // Prevent dropping into own descendants
-    const isDescendant = (parentId: string, childId: string): boolean => {
-      const children = nodes.filter(n => n.parentId === parentId);
-      return children.some(c => c.id === childId || isDescendant(c.id, childId));
-    };
-    if (isDescendant(activeId, overId)) return;
-
-    // Same parent: reorder
-    if (active.parentId === over.parentId) {
-      const siblings = nodes
-        .filter(n => !n.isDeleted && n.parentId === active.parentId)
-        .sort((a, b) => a.order - b.order);
-      const oldIndex = siblings.findIndex(n => n.id === activeId);
-      const newIndex = siblings.findIndex(n => n.id === overId);
-      if (oldIndex === -1 || newIndex === -1) return;
-
-      const reordered = [...siblings];
-      const [moved] = reordered.splice(oldIndex, 1);
-      reordered.splice(newIndex, 0, moved);
-
-      const orderMap = new Map(reordered.map((n, i) => [n.id, i]));
-      persist(nodes.map(n => orderMap.has(n.id) ? { ...n, order: orderMap.get(n.id)! } : n));
-    } else {
-      // Different parent: move to over's parent at over's position
-      const newParentId = over.parentId;
-
-      // Validate depth constraints
-      if (newParentId !== null) {
-        const parent = nodes.find(n => n.id === newParentId);
-        if (!parent || parent.type === 'task') return;
-        if (!canMoveToDepth(activeId, getNodeDepth(newParentId) + 1)) return;
-      }
-
-      const newSiblings = nodes
-        .filter(n => !n.isDeleted && n.parentId === newParentId && n.id !== activeId)
-        .sort((a, b) => a.order - b.order);
-      const overIndex = newSiblings.findIndex(n => n.id === overId);
-      newSiblings.splice(overIndex === -1 ? newSiblings.length : overIndex, 0, active);
-
-      const orderMap = new Map(newSiblings.map((n, i) => [n.id, i]));
-
-      // Reorder old siblings
-      const oldSiblings = nodes
-        .filter(n => !n.isDeleted && n.parentId === active.parentId && n.id !== activeId)
-        .sort((a, b) => a.order - b.order);
-      oldSiblings.forEach((n, i) => orderMap.set(n.id, i));
-
-      persist(nodes.map(n => {
-        if (n.id === activeId) {
-          return { ...n, parentId: newParentId, order: orderMap.get(n.id) ?? 0 };
-        }
-        if (orderMap.has(n.id)) {
-          return { ...n, order: orderMap.get(n.id)! };
-        }
-        return n;
-      }));
-    }
-  }, [nodes, persist, getNodeDepth, canMoveToDepth]);
+  const crud = useTaskTreeCRUD(nodes, persist, getNodeDepth, generateId);
+  const deletion = useTaskTreeDeletion(nodes, persist);
+  const movement = useTaskTreeMovement(nodes, persist, getNodeDepth);
 
   return {
     nodes: activeNodes,
     deletedNodes,
     getChildren,
-    addNode,
-    updateNode,
-    toggleExpanded,
-    toggleTaskStatus,
-    softDelete,
-    restoreNode,
-    permanentDelete,
-    moveNode,
-    moveNodeInto,
-    moveToRoot,
+    ...crud,
+    ...deletion,
+    ...movement,
   };
 }

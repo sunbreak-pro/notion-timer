@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { SectionId } from "../../types/navigation";
 import type { TaskNode } from "../../types/taskTree";
@@ -48,6 +48,7 @@ export function Layout({
     { serialize: String, deserialize: deserializeWidth }
   );
   const isResizing = useRef(false);
+  const [dragWidth, setDragWidth] = useState<number | null>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -61,7 +62,7 @@ export function Layout({
       if (!isResizing.current) return;
       const newWidth = e.clientX - SIDEBAR_WIDTH;
       const clamped = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
-      setSubSidebarWidth(clamped);
+      setDragWidth(clamped);
     };
 
     const handleMouseUp = () => {
@@ -69,6 +70,10 @@ export function Layout({
         isResizing.current = false;
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
+        setDragWidth(prev => {
+          if (prev !== null) setSubSidebarWidth(prev);
+          return null;
+        });
       }
     };
 
@@ -88,9 +93,9 @@ export function Layout({
         onOpenTimerModal={onOpenTimerModal}
       />
       {activeSection === "tasks" && (
-        <div className="relative shrink-0" style={{ width: subSidebarWidth }}>
+        <div className="relative shrink-0" style={{ width: dragWidth ?? subSidebarWidth }}>
           <SubSidebar
-            width={subSidebarWidth}
+            width={dragWidth ?? subSidebarWidth}
             onCreateFolder={onCreateFolder}
             onCreateTask={onCreateTask}
             onSelectTask={onSelectTask}

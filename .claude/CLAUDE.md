@@ -60,12 +60,12 @@ WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerMo
 
 **TaskNode データモデル** (`types/taskTree.ts`):
 - フラット配列 + `parentId`参照で階層を表現（ネストツリーではない）
-- `type`: `'folder' | 'subfolder' | 'task'` — typeが振る舞いを決定
-- フォルダはルートのみ、サブフォルダはフォルダ内のみ、タスクはどこにでも配置可能
+- `type`: `'folder' | 'task'` — typeが振る舞いを決定
+- フォルダは5階層までネスト可能（`MAX_FOLDER_DEPTH = 5`）、タスクはどこにでも配置可能
 - ソフトデリート: `isDeleted`フラグ → Settings画面のゴミ箱から復元可能
 
 **主要フック**:
-- `useTaskTree` — タスクツリー全体のCRUD・移動・DnD操作（最大のフック、100行超）
+- `useTaskTree` — タスクツリー全体のCRUD・移動・DnD操作（分割済み: useTaskTreeCRUD/Deletion/Movement）
 - `useLocalSoundMixer` — サウンドミキサー状態（UI stub、音声再生は未実装）
 - `useTimerContext` / `useTaskTreeContext` — Context消費用の薄いラッパー
 
@@ -139,3 +139,8 @@ type: `feat` / `fix` / `docs` / `style` / `refactor` / `test` / `chore`
 | `CHANGELOG.md` | 完了タスク履歴 |
 
 ライフサイクル: `feature_plans/` → `current_plans/` → `archive/`
+
+**プラン完了時の手順**:
+1. プランファイル内の Status を `COMPLETED` に更新
+2. `current_plans/` から `archive/` へファイルを移動
+3. `CHANGELOG.md` に完了内容を追記

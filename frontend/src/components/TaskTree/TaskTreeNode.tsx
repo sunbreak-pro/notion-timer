@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import type { KeyboardEvent } from "react";
+import { useState, useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import {
   SortableContext,
@@ -12,9 +11,6 @@ import {
   Folder,
   FolderOpen,
   Check,
-  Play,
-  Pause,
-  Trash2,
   GripVertical,
 } from "lucide-react";
 import type { TaskNode } from "../../types/taskTree";
@@ -22,6 +18,10 @@ import { MAX_FOLDER_DEPTH } from "../../types/taskTree";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useTimerContext } from "../../hooks/useTimerContext";
 import { TaskTreeInput } from "./TaskTreeInput";
+import { TaskNodeEditor } from "./TaskNodeEditor";
+import { TaskNodeContent } from "./TaskNodeContent";
+import { TaskNodeActions } from "./TaskNodeActions";
+import { TaskNodeTimer, TaskNodeTimerBar } from "./TaskNodeTimer";
 
 interface TaskTreeNodeProps {
   node: TaskNode;
@@ -52,9 +52,6 @@ export function TaskTreeNode({
   const timer = useTimerContext();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(node.title);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const clickTimerRef = useRef<number | null>(null);
 
   const {
     attributes,
@@ -70,31 +67,6 @@ export function TaskTreeNode({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-  };
-
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  const handleSave = () => {
-    const trimmed = editValue.trim();
-    if (trimmed && trimmed !== node.title) {
-      updateNode(node.id, { title: trimmed });
-    } else {
-      setEditValue(node.title);
-    }
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSave();
-    if (e.key === "Escape") {
-      setEditValue(node.title);
-      setIsEditing(false);
-    }
   };
 
   const children = getChildren(node.id);
@@ -120,7 +92,6 @@ export function TaskTreeNode({
           <GripVertical size={18} />
         </button>
 
-        {/* Unified indent for all nodes */}
         {depth > 0 && (
           <div
             className="flex shrink-0 self-stretch"
@@ -136,7 +107,6 @@ export function TaskTreeNode({
           </div>
         )}
 
-        {/* Folder: chevron */}
         {isFolder && (
           <button
             onClick={() => toggleExpanded(node.id)}
@@ -150,7 +120,6 @@ export function TaskTreeNode({
           </button>
         )}
 
-        {/* Task: checkbox */}
         {!isFolder && (
           <button
             onClick={() => toggleTaskStatus(node.id)}
@@ -171,77 +140,45 @@ export function TaskTreeNode({
         )}
 
         {isEditing ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent outline-none text-sm text-notion-text px-1 border-b border-notion-accent"
+          <TaskNodeEditor
+            initialValue={node.title}
+            onSave={(value) => {
+              updateNode(node.id, { title: value });
+              setIsEditing(false);
+            }}
+            onCancel={() => setIsEditing(false)}
           />
         ) : (
-          <span
-            onClick={() => {
-              if (isFolder) {
-                setIsEditing(true);
-                return;
-              }
-              if (clickTimerRef.current !== null) {
-                clearTimeout(clickTimerRef.current);
-                clickTimerRef.current = null;
-                setIsEditing(true);
-              } else {
-                clickTimerRef.current = window.setTimeout(() => {
-                  clickTimerRef.current = null;
-                  if (onSelectTask) onSelectTask(node.id);
-                }, 300);
-              }
-            }}
-            className={`flex-1 text-sm cursor-pointer truncate ${
-              isDone
-                ? "line-through text-notion-text-secondary"
-                : "text-notion-text"
-            } ${isFolder ? "font-medium" : ""}`}
-          >
-            {node.title}
-          </span>
+          <TaskNodeContent
+            title={node.title}
+            isDone={isDone}
+            isFolder={isFolder}
+            onSelectTask={onSelectTask}
+            onStartEditing={() => setIsEditing(true)}
+            nodeId={node.id}
+          />
         )}
 
-        {isTimerActive && (
-          <span className="text-xs font-mono tabular-nums text-notion-accent shrink-0">
-            {timer.formatTime(timer.remainingSeconds)}
-          </span>
-        )}
+        <TaskNodeTimer
+          isActive={isTimerActive}
+          remainingSeconds={timer.remainingSeconds}
+          formatTime={timer.formatTime}
+        />
 
-        {!isDone && onPlayTask && (
-          <button
-            onClick={() => onPlayTask(node)}
-            className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-accent transition-opacity"
-          >
-            {isTimerActive ? <Pause size={14} /> : <Play size={14} />}
-          </button>
-        )}
-
-        <button
-          onClick={() => softDelete(node.id)}
-          className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-danger transition-opacity"
-        >
-          <Trash2 size={14} />
-        </button>
+        <TaskNodeActions
+          node={node}
+          isDone={isDone}
+          isTimerActive={isTimerActive}
+          onPlayTask={onPlayTask}
+          onDelete={softDelete}
+        />
       </div>
 
-      {isTimerActive && (
-        <div
-          className="h-0.5 bg-notion-border rounded-full overflow-hidden"
-          style={{ marginLeft: `${depth * 20 + 32}px`, marginRight: "8px" }}
-        >
-          <div
-            className="h-full bg-notion-accent transition-all duration-1000 ease-linear rounded-full"
-            style={{ width: `${timer.progress}%` }}
-          />
-        </div>
-      )}
+      <TaskNodeTimerBar
+        isActive={isTimerActive}
+        progress={timer.progress}
+        depth={depth}
+      />
 
       {isFolder && node.isExpanded && (
         <SortableContext

@@ -4,6 +4,26 @@
 
 ---
 
+## Phase 3: リファクタリング & 改善
+
+### SubSidebar & WorkScreen 改善 (Plan 003)
+- SubSidebar リサイズ対応 (160-400px)
+- WorkScreen モーダルオーバーレイモード
+- TaskTreeInput の UX 改善
+
+### Subfolder 廃止、Folder 統一型 + 5階層ネスト対応
+- `subfolder` タイプを廃止し `folder` に統一
+- フォルダの5階層ネスト対応 (`MAX_FOLDER_DEPTH = 5`)
+- localStorage の自動マイグレーション
+
+### Frontend リファクタリング (Plan 002)
+- Phase 1 バグ修正 (B1-B4): localStorage参照統一、key collision修正
+- Phase 2 重複排除 (D1-D4): 定数・ロジック重複の解消
+- Phase 3 コンポーネント分割 (E1-E3): TaskTreeNode→5分割、useTaskTree→4分割、SlashCommandMenu→hook+component分割
+- Phase 4 パフォーマンス最適化 (E4-E6, B5-B6): useMemo化、localStorage書込みデバウンス、未使用axios削除
+
+---
+
 ## Phase 2: UI-First Implementation
 
 ### TaskTree - 階層型タスク管理
