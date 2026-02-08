@@ -1,6 +1,8 @@
 import {
   CheckSquare,
   Headphones,
+  Calendar,
+  BarChart3,
   Settings,
   Pencil,
   PanelLeft,
@@ -19,6 +21,8 @@ const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] =
   [
     { id: "tasks", label: "Tasks", icon: CheckSquare },
     { id: "session", label: "Session", icon: Headphones },
+    { id: "calendar", label: "Calendar", icon: Calendar },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 

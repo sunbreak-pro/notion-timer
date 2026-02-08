@@ -16,6 +16,7 @@ interface TaskDetailProps {
   onDelete: () => void;
   onUpdateContent?: (content: string) => void;
   onDurationChange?: (minutes: number) => void;
+  onScheduledAtChange?: (scheduledAt: string | undefined) => void;
   onNavigateToSettings?: () => void;
 }
 
@@ -27,6 +28,7 @@ export function TaskDetail({
   onDelete,
   onUpdateContent,
   onDurationChange,
+  onScheduledAtChange,
   onNavigateToSettings,
 }: TaskDetailProps) {
   if (!task) {
@@ -43,6 +45,7 @@ export function TaskDetail({
           onPlay={onPlay}
           onDelete={onDelete}
           onDurationChange={onDurationChange}
+          onScheduledAtChange={onScheduledAtChange}
         />
         <div className="mt-6">
           <Suspense fallback={<div className="min-h-50" />}>

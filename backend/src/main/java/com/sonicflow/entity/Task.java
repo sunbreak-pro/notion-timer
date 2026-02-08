@@ -8,20 +8,33 @@ import java.time.LocalDateTime;
 public class Task {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     @Column(nullable = false)
     private String title;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TaskStatus status = TaskStatus.TODO;
+    private String type;
+
+    private String parentId;
+
+    private Integer sortOrder;
+
+    @Enumerated(EnumType.STRING)
+    private TaskStatus status;
+
+    private Boolean isExpanded;
 
     @Column(nullable = false)
+    private Boolean isDeleted = false;
+
+    private LocalDateTime deletedAt;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime completedAt;
+
+    private LocalDateTime scheduledAt;
 
     @Lob
     @Column(columnDefinition = "CLOB")
@@ -30,16 +43,11 @@ public class Task {
     @Column
     private Integer workDurationMinutes;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
-
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -51,12 +59,60 @@ public class Task {
         this.title = title;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
+    }
+
+    public Integer getSortOrder() {
+        return sortOrder;
+    }
+
+    public void setSortOrder(Integer sortOrder) {
+        this.sortOrder = sortOrder;
+    }
+
     public TaskStatus getStatus() {
         return status;
     }
 
     public void setStatus(TaskStatus status) {
         this.status = status;
+    }
+
+    public Boolean getIsExpanded() {
+        return isExpanded;
+    }
+
+    public void setIsExpanded(Boolean isExpanded) {
+        this.isExpanded = isExpanded;
+    }
+
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -73,6 +129,14 @@ public class Task {
 
     public void setCompletedAt(LocalDateTime completedAt) {
         this.completedAt = completedAt;
+    }
+
+    public LocalDateTime getScheduledAt() {
+        return scheduledAt;
+    }
+
+    public void setScheduledAt(LocalDateTime scheduledAt) {
+        this.scheduledAt = scheduledAt;
     }
 
     public String getContent() {

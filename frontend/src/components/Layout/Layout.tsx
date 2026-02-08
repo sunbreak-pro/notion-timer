@@ -9,13 +9,13 @@ import { MainContent } from "./MainContent";
 import { STORAGE_KEYS } from "../../constants/storageKeys";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 
-const MIN_WIDTH = 160;
+const MIN_WIDTH = 200;
 const MAX_WIDTH = 400;
-const DEFAULT_WIDTH = 240;
+const DEFAULT_WIDTH = 280;
 
 function deserializeWidth(raw: string): number {
   const val = parseInt(raw, 10);
-  return (val >= MIN_WIDTH && val <= MAX_WIDTH) ? val : DEFAULT_WIDTH;
+  return val >= MIN_WIDTH && val <= MAX_WIDTH ? val : DEFAULT_WIDTH;
 }
 
 function deserializeBool(raw: string): boolean {
@@ -48,17 +48,17 @@ export function Layout({
   const [rightSidebarWidth, setRightSidebarWidth] = useLocalStorage<number>(
     STORAGE_KEYS.RIGHT_SIDEBAR_WIDTH,
     DEFAULT_WIDTH,
-    { serialize: String, deserialize: deserializeWidth }
+    { serialize: String, deserialize: deserializeWidth },
   );
   const [leftSidebarOpen, setLeftSidebarOpen] = useLocalStorage<boolean>(
     STORAGE_KEYS.LEFT_SIDEBAR_OPEN,
     true,
-    { serialize: String, deserialize: deserializeBool }
+    { serialize: String, deserialize: deserializeBool },
   );
   const [rightSidebarOpen, setRightSidebarOpen] = useLocalStorage<boolean>(
     STORAGE_KEYS.RIGHT_SIDEBAR_OPEN,
     true,
-    { serialize: String, deserialize: deserializeBool }
+    { serialize: String, deserialize: deserializeBool },
   );
   const isResizing = useRef(false);
   const [dragWidth, setDragWidth] = useState<number | null>(null);
@@ -83,7 +83,7 @@ export function Layout({
         isResizing.current = false;
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
-        setDragWidth(prev => {
+        setDragWidth((prev) => {
           if (prev !== null) setRightSidebarWidth(prev);
           return null;
         });
@@ -120,9 +120,12 @@ export function Layout({
         </div>
       )}
       <MainContent>{children}</MainContent>
-      {showRightSidebar && (
-        rightSidebarOpen ? (
-          <div className="relative shrink-0" style={{ width: dragWidth ?? rightSidebarWidth }}>
+      {showRightSidebar &&
+        (rightSidebarOpen ? (
+          <div
+            className="relative shrink-0"
+            style={{ width: dragWidth ?? rightSidebarWidth }}
+          >
             <div
               onMouseDown={handleMouseDown}
               className="absolute top-0 left-0 w-1.5 h-full cursor-col-resize hover:bg-notion-accent/30 transition-colors z-10"
@@ -146,8 +149,7 @@ export function Layout({
               <PanelRight size={18} />
             </button>
           </div>
-        )
-      )}
+        ))}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import type { TaskNode } from '../../types/taskTree';
 import { getAncestors } from '../../utils/breadcrumb';
 import { DurationPicker } from '../shared/DurationPicker';
 import { formatDuration } from '../../utils/duration';
+import { DateTimePicker } from '../Calendar/DateTimePicker';
 
 interface TaskDetailHeaderProps {
   task: TaskNode;
@@ -12,6 +13,7 @@ interface TaskDetailHeaderProps {
   onPlay: () => void;
   onDelete: () => void;
   onDurationChange?: (minutes: number) => void;
+  onScheduledAtChange?: (scheduledAt: string | undefined) => void;
 }
 
 export function TaskDetailHeader({
@@ -21,6 +23,7 @@ export function TaskDetailHeader({
   onPlay,
   onDelete,
   onDurationChange,
+  onScheduledAtChange,
 }: TaskDetailHeaderProps) {
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const ancestors = getAncestors(task.id, allNodes);
@@ -80,6 +83,11 @@ export function TaskDetailHeader({
             </div>
           )}
         </div>
+
+        <DateTimePicker
+          value={task.scheduledAt}
+          onChange={(val) => onScheduledAtChange?.(val)}
+        />
 
         <button
           onClick={onDelete}

@@ -15,6 +15,7 @@ export interface TaskNode {
   deletedAt?: string;
   createdAt: string;
   completedAt?: string;
+  scheduledAt?: string;
   content?: string;
   workDurationMinutes?: number;
 }

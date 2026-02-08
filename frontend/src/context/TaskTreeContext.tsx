@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { useTaskTree } from '../hooks/useTaskTree';
+import { useTaskTreeAPI } from '../hooks/useTaskTreeAPI';
 import { TaskTreeContext } from './taskTreeContextValue';
 
 export function TaskTreeProvider({ children }: { children: ReactNode }) {
-  const taskTree = useTaskTree();
+  const taskTree = useTaskTreeAPI();
   return (
     <TaskTreeContext.Provider value={taskTree}>
       {children}

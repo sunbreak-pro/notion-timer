@@ -1,5 +1,6 @@
 package com.sonicflow.service;
 
+import com.sonicflow.dto.TaskNodeDTO;
 import com.sonicflow.entity.Task;
 import com.sonicflow.entity.TaskStatus;
 import com.sonicflow.repository.TaskRepository;
@@ -32,79 +33,89 @@ class TaskServiceTest {
     @BeforeEach
     void setUp() {
         sampleTask = new Task();
-        sampleTask.setId(1L);
+        sampleTask.setId("task-1");
         sampleTask.setTitle("Test Task");
+        sampleTask.setType("task");
         sampleTask.setStatus(TaskStatus.TODO);
+        sampleTask.setIsDeleted(false);
     }
 
     @Test
     void createTask_shouldSaveAndReturn() {
         when(taskRepository.save(any(Task.class))).thenReturn(sampleTask);
 
-        Task result = taskService.createTask("Test Task");
+        TaskNodeDTO dto = new TaskNodeDTO(
+                "task-1", "task", "Test Task", null, 0,
+                "TODO", null, false, null,
+                "2026-02-09T00:00:00", null, null, null, null
+        );
+        TaskNodeDTO result = taskService.createTask(dto);
 
-        assertThat(result.getTitle()).isEqualTo("Test Task");
+        assertThat(result.title()).isEqualTo("Test Task");
         verify(taskRepository).save(any(Task.class));
     }
 
     @Test
-    void getIncompleteTasks_shouldReturnTodoTasks() {
-        when(taskRepository.findByStatusOrderByCreatedAtDesc(TaskStatus.TODO))
+    void getTaskTree_shouldReturnNonDeletedTasks() {
+        when(taskRepository.findByIsDeletedFalseOrderBySortOrderAsc())
                 .thenReturn(List.of(sampleTask));
 
-        List<Task> tasks = taskService.getIncompleteTasks();
+        List<TaskNodeDTO> tasks = taskService.getTaskTree();
 
         assertThat(tasks).hasSize(1);
-        assertThat(tasks.getFirst().getStatus()).isEqualTo(TaskStatus.TODO);
+        assertThat(tasks.getFirst().status()).isEqualTo("TODO");
     }
 
     @Test
     void updateTask_shouldSetCompletedAtWhenDone() {
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(sampleTask));
+        when(taskRepository.findById("task-1")).thenReturn(Optional.of(sampleTask));
         when(taskRepository.save(any(Task.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Task result = taskService.updateTask(1L, null, TaskStatus.DONE, null, null);
+        TaskNodeDTO dto = new TaskNodeDTO(
+                null, null, null, null, null,
+                "DONE", null, null, null, null, null, null, null, null
+        );
+        TaskNodeDTO result = taskService.updateTask("task-1", dto);
 
-        assertThat(result.getStatus()).isEqualTo(TaskStatus.DONE);
-        assertThat(result.getCompletedAt()).isNotNull();
+        assertThat(result.status()).isEqualTo("DONE");
+        assertThat(result.completedAt()).isNotNull();
     }
 
     @Test
     void updateTask_shouldClearCompletedAtWhenTodo() {
         sampleTask.setStatus(TaskStatus.DONE);
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(sampleTask));
+        when(taskRepository.findById("task-1")).thenReturn(Optional.of(sampleTask));
         when(taskRepository.save(any(Task.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Task result = taskService.updateTask(1L, null, TaskStatus.TODO, null, null);
+        TaskNodeDTO dto = new TaskNodeDTO(
+                null, null, null, null, null,
+                "TODO", null, null, null, null, null, null, null, null
+        );
+        TaskNodeDTO result = taskService.updateTask("task-1", dto);
 
-        assertThat(result.getStatus()).isEqualTo(TaskStatus.TODO);
-        assertThat(result.getCompletedAt()).isNull();
+        assertThat(result.status()).isEqualTo("TODO");
+        assertThat(result.completedAt()).isNull();
     }
 
     @Test
     void updateTask_shouldThrowWhenNotFound() {
-        when(taskRepository.findById(999L)).thenReturn(Optional.empty());
+        when(taskRepository.findById("task-999")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> taskService.updateTask(999L, "title", null, null, null))
+        TaskNodeDTO dto = new TaskNodeDTO(
+                null, null, "title", null, null,
+                null, null, null, null, null, null, null, null, null
+        );
+        assertThatThrownBy(() -> taskService.updateTask("task-999", dto))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Task not found");
     }
 
     @Test
-    void deleteTask_shouldThrowWhenNotFound() {
-        when(taskRepository.existsById(999L)).thenReturn(false);
+    void permanentDelete_shouldDeleteTask() {
+        when(taskRepository.findAll()).thenReturn(List.of(sampleTask));
 
-        assertThatThrownBy(() -> taskService.deleteTask(999L))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Task not found");
-    }
+        taskService.permanentDelete("task-1");
 
-    @Test
-    void deleteTask_shouldDeleteExistingTask() {
-        when(taskRepository.existsById(1L)).thenReturn(true);
-
-        taskService.deleteTask(1L);
-
-        verify(taskRepository).deleteById(1L);
+        verify(taskRepository).deleteAllById(List.of("task-1"));
     }
 }

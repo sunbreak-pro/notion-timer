@@ -24,6 +24,7 @@ export function useTaskTreeCRUD(
       status: type === 'task' ? 'TODO' : undefined,
       isExpanded: type !== 'task' ? true : undefined,
       createdAt: new Date().toISOString(),
+      scheduledAt: type === 'task' ? new Date().toISOString() : undefined,
     };
     persist([...nodes, newNode]);
     return newNode;

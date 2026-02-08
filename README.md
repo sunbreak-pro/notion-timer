@@ -17,6 +17,9 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **デスクトップ通知**: タイマーセッション完了時にブラウザ通知
 - **キーボードショートカット**: Space（タイマー）、n（新規タスク）、Escape（モーダル閉じ）、Delete（タスク削除）
 - **Settings画面**: 外観設定、通知設定、ゴミ箱（削除タスクの復元・完全削除）
+- **カレンダー**: 月/週表示切替、タスクを日付別に表示、フィルタリング（incomplete/completed）
+- **アナリティクス**: 基本統計（総タスク数、完了率、フォルダ数）
+- **Backend連携**: localStorage→H2 DB自動マイグレーション、Optimistic Update、オフラインフォールバック
 
 ### 技術スタック
 - **Frontend**: React 19 (TypeScript) + Vite + Tailwind CSS v4 + @dnd-kit

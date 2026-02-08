@@ -1,0 +1,172 @@
+import { useState, useRef, useEffect } from 'react';
+import { Calendar as CalendarIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { formatDateKey } from '../../hooks/useCalendar';
+
+interface DateTimePickerProps {
+  value?: string;
+  onChange: (value: string | undefined) => void;
+}
+
+const MONTH_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const current = value ? new Date(value) : new Date();
+  const [viewYear, setViewYear] = useState(current.getFullYear());
+  const [viewMonth, setViewMonth] = useState(current.getMonth());
+  const [hour, setHour] = useState(current.getHours());
+  const [minute, setMinute] = useState(current.getMinutes());
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const today = formatDateKey(new Date());
+  const selectedKey = value ? value.substring(0, 10) : null;
+
+  const handleSelectDate = (day: number) => {
+    const dt = new Date(viewYear, viewMonth, day, hour, minute);
+    onChange(dt.toISOString());
+  };
+
+  const handleTimeChange = (h: number, m: number) => {
+    setHour(h);
+    setMinute(m);
+    if (value) {
+      const dt = new Date(value);
+      dt.setHours(h, m);
+      onChange(dt.toISOString());
+    }
+  };
+
+  const displayText = value
+    ? new Date(value).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      })
+    : 'Set date';
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 text-sm px-2 py-1 rounded-md text-notion-text-secondary hover:bg-notion-hover transition-colors"
+      >
+        <CalendarIcon size={14} />
+        <span>{displayText}</span>
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-50 bg-notion-bg border border-notion-border rounded-lg shadow-lg p-3 w-64">
+          {/* Month nav */}
+          <div className="flex items-center justify-between mb-2">
+            <button
+              onClick={() => {
+                if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+                else setViewMonth(m => m - 1);
+              }}
+              className="p-1 rounded hover:bg-notion-hover text-notion-text-secondary"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <span className="text-sm font-medium text-notion-text">
+              {MONTH_NAMES[viewMonth]} {viewYear}
+            </span>
+            <button
+              onClick={() => {
+                if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+                else setViewMonth(m => m + 1);
+              }}
+              className="p-1 rounded hover:bg-notion-hover text-notion-text-secondary"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
+          {/* Day headers */}
+          <div className="grid grid-cols-7 mb-1">
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+              <div key={i} className="text-center text-xs text-notion-text-secondary py-1">{d}</div>
+            ))}
+          </div>
+
+          {/* Days grid */}
+          <div className="grid grid-cols-7">
+            {Array.from({ length: firstDay }, (_, i) => (
+              <div key={`pad-${i}`} />
+            ))}
+            {Array.from({ length: daysInMonth }, (_, i) => {
+              const day = i + 1;
+              const key = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              const isToday = key === today;
+              const isSelected = key === selectedKey;
+              return (
+                <button
+                  key={day}
+                  onClick={() => handleSelectDate(day)}
+                  className={`text-xs py-1 rounded transition-colors ${
+                    isSelected
+                      ? 'bg-notion-accent text-white'
+                      : isToday
+                      ? 'bg-notion-accent/20 text-notion-accent font-bold'
+                      : 'text-notion-text hover:bg-notion-hover'
+                  }`}
+                >
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Time selector */}
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-notion-border">
+            <select
+              value={hour}
+              onChange={e => handleTimeChange(Number(e.target.value), minute)}
+              className="flex-1 text-sm bg-notion-bg-secondary border border-notion-border rounded px-2 py-1 text-notion-text"
+            >
+              {Array.from({ length: 24 }, (_, i) => (
+                <option key={i} value={i}>{String(i).padStart(2, '0')}</option>
+              ))}
+            </select>
+            <span className="text-notion-text-secondary">:</span>
+            <select
+              value={minute}
+              onChange={e => handleTimeChange(hour, Number(e.target.value))}
+              className="flex-1 text-sm bg-notion-bg-secondary border border-notion-border rounded px-2 py-1 text-notion-text"
+            >
+              {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(m => (
+                <option key={m} value={m}>{String(m).padStart(2, '0')}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Clear button */}
+          {value && (
+            <button
+              onClick={() => { onChange(undefined); setOpen(false); }}
+              className="flex items-center gap-1 mt-2 text-xs text-notion-text-secondary hover:text-notion-danger transition-colors"
+            >
+              <X size={12} />
+              <span>Clear date</span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

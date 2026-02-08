@@ -1,14 +1,12 @@
 package com.sonicflow.controller;
 
-import com.sonicflow.entity.Task;
-import com.sonicflow.entity.TaskStatus;
+import com.sonicflow.dto.TaskNodeDTO;
 import com.sonicflow.service.TaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -20,56 +18,68 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-    @GetMapping
-    public List<Task> getIncompleteTasks() {
-        return taskService.getIncompleteTasks();
+    @GetMapping("/tree")
+    public List<TaskNodeDTO> getTaskTree() {
+        return taskService.getTaskTree();
     }
 
-    @GetMapping("/history")
-    public List<Task> getCompletedTasks() {
-        return taskService.getCompletedTasks();
+    @GetMapping("/deleted")
+    public List<TaskNodeDTO> getDeletedTasks() {
+        return taskService.getDeletedTasks();
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Map<String, String> request) {
-        String title = request.get("title");
-        if (title == null || title.isBlank()) {
+    public ResponseEntity<TaskNodeDTO> createTask(@RequestBody TaskNodeDTO dto) {
+        if (dto.title() == null || dto.title().isBlank()) {
             return ResponseEntity.badRequest().build();
         }
-        Task task = taskService.createTask(title);
-        return ResponseEntity.status(HttpStatus.CREATED).body(task);
+        TaskNodeDTO created = taskService.createTask(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(
-            @PathVariable Long id,
-            @RequestBody Map<String, Object> request) {
+    public ResponseEntity<TaskNodeDTO> updateTask(
+            @PathVariable String id,
+            @RequestBody TaskNodeDTO dto) {
         try {
-            String title = (String) request.get("title");
-            TaskStatus status = null;
-            if (request.containsKey("status")) {
-                status = TaskStatus.valueOf((String) request.get("status"));
-            }
-            String content = (String) request.get("content");
-            Integer workDurationMinutes = null;
-            if (request.containsKey("workDurationMinutes")) {
-                Object val = request.get("workDurationMinutes");
-                if (val instanceof Number) {
-                    workDurationMinutes = ((Number) val).intValue();
-                }
-            }
-            Task task = taskService.updateTask(id, title, status, content, workDurationMinutes);
-            return ResponseEntity.ok(task);
+            TaskNodeDTO updated = taskService.updateTask(id, dto);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/tree")
+    public ResponseEntity<Void> syncTree(@RequestBody List<TaskNodeDTO> dtos) {
+        taskService.syncTree(dtos);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}/soft")
+    public ResponseEntity<Void> softDelete(@PathVariable String id) {
+        try {
+            taskService.softDelete(id);
+            return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
+    public ResponseEntity<Void> permanentDelete(@PathVariable String id) {
         try {
-            taskService.deleteTask(id);
+            taskService.permanentDelete(id);
             return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<Void> restore(@PathVariable String id) {
+        try {
+            taskService.restore(id);
+            return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }

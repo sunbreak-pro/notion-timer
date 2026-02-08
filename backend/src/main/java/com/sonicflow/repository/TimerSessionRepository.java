@@ -11,5 +11,5 @@ public interface TimerSessionRepository extends JpaRepository<TimerSession, Long
 
     List<TimerSession> findAllByOrderByStartedAtDesc();
 
-    List<TimerSession> findByTaskIdOrderByStartedAtDesc(Long taskId);
+    List<TimerSession> findByTaskIdOrderByStartedAtDesc(String taskId);
 }

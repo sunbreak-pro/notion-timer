@@ -4,6 +4,40 @@
 
 ---
 
+## Phase 7: Backend再統合 + Calendar & Analytics
+
+### Backend再統合 (004)
+- **Task Entity全面改修**: `Long` ID → `String` ID（フロントエンド `"task-xxxx"` 形式に統一）
+- **TaskNodeDTO**: record型で `TaskNode` と1:1マッピング
+- **TaskRepository**: `findByIsDeletedFalseOrderBySortOrderAsc()`, `findByIsDeletedTrue()` 追加
+- **TaskService全面改修**: `getTaskTree()`, `syncTree()`, `softDelete()`, `restore()`, `permanentDelete()` — カスケード操作対応
+- **TaskController新API**: `GET /tree`, `GET /deleted`, `PUT /tree` (一括同期), `DELETE /{id}/soft`, `POST /{id}/restore`
+- **TimerSession.taskId**: `Long` → `String` 型変更
+- **MigrationController**: `POST /api/migrate/tasks` — localStorage一括投入エンドポイント
+- **TaskServiceTest**: 新API対応にテスト全面更新
+
+### Frontend API Client & Hooks
+- **taskClient.ts**: native fetch による Task API クライアント（CRUD + sync + migration）
+- **useTaskTreeAPI hook**: API起動時にfetch → localStorageフォールバック。Optimistic Update + 500msデバウンスのwrite-through同期
+- **TaskTreeContext切替**: `useTaskTree` → `useTaskTreeAPI` にデータソース切替（接続ポイント1箇所のみ）
+- **useMigration hook**: localStorage→Backend自動マイグレーション（二重実行防止フラグ付き）
+
+### Calendar & Analytics (005)
+- **ナビゲーション拡張**: `SectionId` に `'calendar' | 'analytics'` 追加、LeftSidebar にメニュー追加
+- **CalendarView**: 月/週表示切替、前後ナビゲーション、Todayボタン
+- **MonthlyView**: 6行x7列グリッド、前後月の日付パディング
+- **WeeklyView**: 1行x7列シンプル版
+- **DayCell**: 今日ハイライト、最大2件表示 + "+N more" 折りたたみ
+- **CalendarTaskItem**: タスク名省略表示、完了状態スタイル
+- **DateTimePicker**: カスタムコンポーネント（ミニカレンダー + 時/分セレクター + クリアボタン）
+- **useCalendar hook**: タスクを日付キーでグループ化、月/週の日付配列生成
+- **scheduledAt フィールド**: TaskNode型拡張、新規タスク作成時に自動設定
+- **TaskDetailHeader**: DateTimePicker統合
+- **フィルタタブ**: incomplete/completed 切替
+- **AnalyticsView**: 基本統計（総タスク数、完了数、進行中数、フォルダ数、完了率）
+
+---
+
 ## Phase 6: バグ修正 + Noise Mixer音声再生 + ポリッシュ
 
 ### バグ修正・技術的負債 (Phase 1)

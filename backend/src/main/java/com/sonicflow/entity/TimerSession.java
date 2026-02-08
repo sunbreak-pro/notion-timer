@@ -11,7 +11,7 @@ public class TimerSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long taskId;
+    private String taskId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -40,11 +40,11 @@ public class TimerSession {
         this.id = id;
     }
 
-    public Long getTaskId() {
+    public String getTaskId() {
         return taskId;
     }
 
-    public void setTaskId(Long taskId) {
+    public void setTaskId(String taskId) {
         this.taskId = taskId;
     }
 

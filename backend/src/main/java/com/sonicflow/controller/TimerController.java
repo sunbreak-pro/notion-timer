@@ -52,8 +52,8 @@ public class TimerController {
             return ResponseEntity.badRequest().build();
         }
 
-        Long taskId = request.get("taskId") != null
-                ? ((Number) request.get("taskId")).longValue()
+        String taskId = request.get("taskId") != null
+                ? request.get("taskId").toString()
                 : null;
 
         TimerSession session = timerService.startSession(sessionType, taskId);
@@ -83,7 +83,7 @@ public class TimerController {
     }
 
     @GetMapping("/tasks/{taskId}/sessions")
-    public List<TimerSession> getSessionsByTask(@PathVariable Long taskId) {
+    public List<TimerSession> getSessionsByTask(@PathVariable String taskId) {
         return timerService.getSessionsByTaskId(taskId);
     }
 }

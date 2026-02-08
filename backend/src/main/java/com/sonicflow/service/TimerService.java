@@ -53,7 +53,7 @@ public class TimerService {
         return timerSettingsRepository.save(settings);
     }
 
-    public TimerSession startSession(SessionType sessionType, Long taskId) {
+    public TimerSession startSession(SessionType sessionType, String taskId) {
         TimerSession session = new TimerSession();
         session.setSessionType(sessionType);
         session.setTaskId(taskId);
@@ -75,7 +75,7 @@ public class TimerService {
         return timerSessionRepository.findAllByOrderByStartedAtDesc();
     }
 
-    public List<TimerSession> getSessionsByTaskId(Long taskId) {
+    public List<TimerSession> getSessionsByTaskId(String taskId) {
         return timerSessionRepository.findByTaskIdOrderByStartedAtDesc(taskId);
     }
 }

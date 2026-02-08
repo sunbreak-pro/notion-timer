@@ -3,8 +3,11 @@ import { Layout } from "./components/Layout";
 import { TaskDetail } from "./components/TaskDetail";
 import { WorkScreen } from "./components/WorkScreen";
 import { Settings } from "./components/Settings";
+import { CalendarView } from "./components/Calendar/CalendarView";
+import { AnalyticsView } from "./components/Analytics/AnalyticsView";
 import { useTimerContext } from "./hooks/useTimerContext";
 import { useTaskTreeContext } from "./hooks/useTaskTreeContext";
+import { useMigration } from "./hooks/useMigration";
 import type { SectionId } from "./types/navigation";
 import type { TaskNode } from "./types/taskTree";
 
@@ -14,6 +17,8 @@ function App() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const timer = useTimerContext();
   const { nodes, addNode, updateNode, softDelete } = useTaskTreeContext();
+
+  useMigration();
 
   const selectedTask = selectedTaskId
     ? nodes.find(n => n.id === selectedTaskId && n.type === 'task') ?? null
@@ -43,8 +48,12 @@ function App() {
 
   const handleDurationChange = (minutes: number) => {
     if (!selectedTaskId) return;
-    // 0 means "reset to global default"
     updateNode(selectedTaskId, { workDurationMinutes: minutes === 0 ? undefined : minutes });
+  };
+
+  const handleScheduledAtChange = (scheduledAt: string | undefined) => {
+    if (!selectedTaskId) return;
+    updateNode(selectedTaskId, { scheduledAt });
   };
 
   const handleOpenTimerModal = () => {
@@ -61,6 +70,11 @@ function App() {
 
   const handleCreateTask = (title: string) => {
     addNode('task', null, title);
+  };
+
+  const handleCalendarSelectTask = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setActiveSection('tasks');
   };
 
   const isInputFocused = useCallback(() => {
@@ -114,11 +128,16 @@ function App() {
             onDelete={handleDeleteSelectedTask}
             onUpdateContent={handleUpdateContent}
             onDurationChange={handleDurationChange}
+            onScheduledAtChange={handleScheduledAtChange}
             onNavigateToSettings={() => setActiveSection('settings')}
           />
         );
       case "session":
         return <WorkScreen />;
+      case "calendar":
+        return <CalendarView onSelectTask={handleCalendarSelectTask} />;
+      case "analytics":
+        return <AnalyticsView />;
       case "settings":
         return <Settings />;
       default:
