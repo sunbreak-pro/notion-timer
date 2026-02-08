@@ -2,200 +2,160 @@
 
 ## 概要
 
-Sonic Flow は React フロントエンド + Spring Boot バックエンドのフルスタックアプリケーション。ブラウザ上の React アプリが Axios 経由で REST API を呼び出し、Spring Boot が H2 Database にデータを永続化する。
+Sonic Flow はフロントエンド中心のSPAアプリケーション。React アプリが localStorage でデータを永続化し、Spring Boot バックエンドは構築済みだが未接続。将来的にバックエンド統合を予定。
 
-## フルスタック構成図
+## 現在のアーキテクチャ (Phase 2-3)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ Browser (localhost:5173)                                    │
 │                                                             │
 │  main.tsx                                                   │
-│    └─ App.tsx (中央オーケストレーター)                         │
-│        ├─ State: activeSection, focusMode, focusedTaskId    │
-│        ├─ useTasks() → tasksApi → apiClient                │
-│        ├─ useTimer() → timerApi → apiClient   (未接続)      │
-│        ├─ useSoundSettings() → soundApi → apiClient (未接続)│
-│        └─ Layout                                            │
-│            ├─ Sidebar (ナビゲーション)                       │
-│            └─ MainContent                                   │
-│                └─ TaskList / プレースホルダー                 │
+│    └─ ThemeProvider                                         │
+│        └─ TaskTreeProvider                                  │
+│            └─ TimerProvider                                 │
+│                └─ App.tsx (オーケストレーター)                 │
+│                    ├─ activeSection: tasks | session | settings │
+│                    ├─ selectedTaskId, selectedFolderId      │
+│                    ├─ isTimerModalOpen                      │
+│                    └─ Layout                                │
+│                        ├─ Sidebar (240px固定)               │
+│                        ├─ SubSidebar (160-400px)           │
+│                        │   └─ TaskTree                     │
+│                        └─ MainContent (flex-1)             │
+│                            └─ TaskDetail | WorkScreen | Settings │
 │                                                             │
-│  apiClient (Axios)                                          │
-│    baseURL: http://localhost:8080                            │
-│    Content-Type: application/json                           │
-└─────────────────┬───────────────────────────────────────────┘
-                  │ HTTP (JSON)
-                  │ CORS: localhost:5173 → localhost:8080
-┌─────────────────▼───────────────────────────────────────────┐
-│ Spring Boot (localhost:8080)                                │
+│  データ永続化: localStorage                                  │
+│    ├─ sonic-flow-task-tree     (TaskNode[])                │
+│    ├─ sonic-flow-work-duration (number)                    │
+│    ├─ sonic-flow-sound-mixer   (SoundMixerState)           │
+│    ├─ sonic-flow-theme         (light | dark)              │
+│    ├─ sonic-flow-font-size     (small | medium | large)    │
+│    └─ sonic-flow-subsidebar-width (number)                 │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ Spring Boot (localhost:8080) — 構築済み / 未接続             │
 │                                                             │
-│  WebConfig (CORS設定)                                       │
-│    └─ /api/** を localhost:5173 に許可                       │
-│                                                             │
-│  Controllers (REST受口)                                     │
-│    ├─ TaskController    /api/tasks/**                       │
-│    ├─ TimerController   /api/timer-settings, timer-sessions │
-│    └─ SoundController   /api/sound-settings, sound-presets  │
-│         │                                                   │
-│  Services (ビジネスロジック)                                  │
-│    ├─ TaskService   (@Transactional)                        │
-│    ├─ TimerService  (@Transactional)                        │
-│    └─ SoundService  (@Transactional)                        │
-│         │                                                   │
-│  Repositories (JPA)                                         │
-│    ├─ TaskRepository                                        │
-│    ├─ TimerSettingsRepository                               │
-│    ├─ TimerSessionRepository                                │
-│    ├─ SoundSettingsRepository                               │
-│    └─ SoundPresetRepository                                 │
-│         │                                                   │
-│  Entities                                                   │
-│    ├─ Task (tasks)                                          │
-│    ├─ TimerSettings (timer_settings)                        │
-│    ├─ TimerSession (timer_sessions)                         │
-│    ├─ SoundSettings (sound_settings)                        │
-│    └─ SoundPreset (sound_presets)                           │
-│                                                             │
-└─────────────────┬───────────────────────────────────────────┘
-                  │ JDBC
-┌─────────────────▼───────────────────────────────────────────┐
-│ H2 Database (file: ./data/sonicflow)                        │
-│  ddl-auto: update (スキーマ自動生成)                          │
-│  テーブル: tasks, timer_settings, timer_sessions,            │
-│           sound_settings, sound_presets                      │
+│  Controllers: Task, Timer, Sound                           │
+│  Services: TaskService, TimerService, SoundService         │
+│  Repositories: JPA auto-generated                          │
+│  Entities: Task, TimerSettings, TimerSession,              │
+│           SoundSettings, SoundPreset                       │
+│  Database: H2 (file: ./data/sonicflow)                     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ## フロントエンド層の構造
 
-### エントリポイントチェーン
+### Context Provider スタック
 
 ```
-main.tsx:6  createRoot(#root).render(<StrictMode><App/></StrictMode>)
-  └─ App.tsx:7  function App()
-       ├─ State 管理 (App.tsx:8-10)
-       │   ├─ activeSection: "tasks" | "sounds" | "timer" | "settings"
-       │   ├─ focusMode: boolean
-       │   └─ focusedTaskId: number | null
-       ├─ Hook 接続 (App.tsx:12-22)
-       │   └─ useTasks() → { incompleteTasks, completedTasks, loading, error, addTask, ... }
-       ├─ セクション切替 (App.tsx:35-101)
-       │   └─ switch(activeSection) → TaskList | プレースホルダー
-       └─ レイアウト (App.tsx:103-107)
-           └─ <Layout> → <Sidebar> + <MainContent>
+main.tsx
+  └─ ThemeProvider (テーマ・フォントサイズ)
+      └─ TaskTreeProvider (タスクツリーCRUD)
+          └─ TimerProvider (ポモドーロタイマー)
+              └─ App
 ```
+
+各Providerは`useLocalStorage`フックでlocalStorageに永続化。
 
 ### コンポーネント階層
 
 ```
 App
 ├─ Layout (Layout.tsx)
-│   ├─ Sidebar (Sidebar.tsx)
-│   │   └─ menuItems: tasks, sounds, timer, settings
-│   └─ MainContent (MainContent.tsx)
-│       └─ {children} → renderContent() の結果
-│
-└─ renderContent()
-    ├─ "tasks" → TaskList (TaskList.tsx)
-    │               ├─ TaskItem × N (TaskItem.tsx)
-    │               └─ TaskInput (TaskInput.tsx)
-    ├─ "sounds" → プレースホルダー
-    ├─ "timer" → プレースホルダー
-    └─ "settings" → プレースホルダー
+│   ├─ Sidebar (Sidebar.tsx) — 240px固定
+│   │   ├─ Tasks / Session / Settings ナビ
+│   │   └─ タイマー実行中表示 (タスク名+残り時間)
+│   ├─ SubSidebar (SubSidebar.tsx) — 160-400px リサイズ可
+│   │   └─ TaskTree (TaskTree.tsx)
+│   │       ├─ Inbox セクション
+│   │       ├─ Projects セクション (フォルダ別)
+│   │       ├─ Completed セクション
+│   │       └─ TaskTreeNode × N
+│   │           ├─ TaskNodeContent (表示)
+│   │           ├─ TaskNodeEditor (インライン編集)
+│   │           ├─ TaskNodeActions (アクションボタン)
+│   │           └─ TaskNodeTimer (タイマー表示)
+│   └─ MainContent (MainContent.tsx) — flex-1
+│       ├─ TaskDetail (タスク詳細+メモ編集)
+│       │   ├─ TaskDetailHeader
+│       │   ├─ MemoEditor (TipTap)
+│       │   └─ SlashCommandMenu
+│       ├─ WorkScreen (タイマー+サウンド)
+│       │   ├─ TimerDisplay
+│       │   ├─ TimerProgressBar
+│       │   ├─ DurationSelector
+│       │   ├─ TaskSelector
+│       │   └─ SoundMixer → SoundCard × 6
+│       └─ Settings
+└─ WorkScreen (モーダルオーバーレイモード)
 ```
 
 ## 状態管理パターン
 
-### App.tsx のローカル State
+### Context vs ローカル State
 
-| State | 型 | 用途 | 永続化 |
-|-------|---|------|--------|
-| `activeSection` | `string` | サイドバーの選択セクション | なし |
-| `focusMode` | `boolean` | フォーカスモードのON/OFF | なし |
-| `focusedTaskId` | `number \| null` | フォーカス中のタスクID | なし |
+| State | 管理場所 | 永続化 | スコープ |
+|-------|---------|--------|---------|
+| タスクツリー | TaskTreeContext | localStorage | グローバル |
+| タイマー | TimerContext | localStorage (duration) | グローバル |
+| テーマ | ThemeContext | localStorage | グローバル |
+| サウンドミキサー | useLocalSoundMixer (hook) | localStorage | WorkScreen |
+| activeSection | App.tsx ローカル | なし | App |
+| selectedTaskId | App.tsx ローカル | なし | App |
 
 ### カスタムフック
 
-| Hook | ファイル | 管理するデータ | API接続 |
-|------|---------|---------------|---------|
-| `useTasks` | `hooks/useTasks.ts` | tasks[], loading, error | `tasksApi` |
-| `useTimer` | `hooks/useTimer.ts` | settings, sessions[], timerState | `timerApi` |
-| `useSoundSettings` | `hooks/useSoundSettings.ts` | settings[], presets[] | `soundApi` |
+| Hook | ファイル | 管理データ | 永続化 |
+|------|---------|-----------|--------|
+| `useTaskTree` | hooks/useTaskTree.ts | TaskNode[], CRUD操作 | localStorage |
+| `useTaskTreeCRUD` | hooks/useTaskTreeCRUD.ts | 作成・更新操作 | — |
+| `useTaskTreeDeletion` | hooks/useTaskTreeDeletion.ts | ソフトデリート・復元 | — |
+| `useTaskTreeMovement` | hooks/useTaskTreeMovement.ts | DnD移動・並び替え | — |
+| `useLocalSoundMixer` | hooks/useLocalSoundMixer.ts | SoundMixerState | localStorage |
+| `useLocalStorage` | hooks/useLocalStorage.ts | 汎用localStorage | localStorage |
 
-各フックは同一のパターンに従う:
-1. `useState` でローカルステート管理
-2. `useEffect` でマウント時にデータfetch
-3. `useCallback` でCRUD操作を定義
-4. API成功後にローカルstateを直接更新（re-fetchしない = 楽観的更新）
-
-## APIクライアント層
-
-```
-api/client.ts       共有Axiosインスタンス (baseURL: http://localhost:8080)
-  ├─ api/tasks.ts         tasksApi.{getIncompleteTasks, getCompletedTasks, createTask, updateTask, deleteTask}
-  ├─ api/timerSettings.ts timerApi.{getSettings, updateSettings, startSession, endSession, getAllSessions, getSessionsByTask}
-  └─ api/soundSettings.ts soundApi.{getAllSettings, updateSettings, getAllPresets, createPreset, deletePreset}
-```
-
-共通パターン: 各APIモジュールは `XxxResponse` インターフェース + `mapXxxResponse()` 関数で、JSONの日付文字列を `Date` オブジェクトに変換する。
-
-## バックエンド層
+## バックエンド層（参考: 未接続）
 
 ### レイヤー構成
 
 ```
-Controller (REST受口、Map<String,Object>で受取)
-    │  バリデーション、HTTPステータス制御
+Controller (REST受口)
     ▼
-Service (@Transactional、ビジネスロジック)
-    │  completedAt自動管理、Upsert、シングルトン管理
+Service (@Transactional)
     ▼
-Repository (JpaRepository拡張、カスタムクエリメソッド)
-    │  Spring Data JPAが実装を自動生成
+Repository (JpaRepository)
     ▼
-Entity (@Entity、@PrePersist/@PreUpdateでタイムスタンプ管理)
-    │
+Entity (@Entity)
     ▼
 H2 Database (file: ./data/sonicflow)
 ```
 
-### 注目すべきパターン
+### エンティティ
 
-1. **DTOなし**: Controller は `Map<String, Object>` / `Map<String, String>` で受け取り、型付きDTOクラスを使わない
-2. **@PrePersist**: Entity の `createdAt` / `startedAt` は初回保存時に自動設定
-3. **@PreUpdate**: `updatedAt` は更新時に自動設定（TimerSettings, SoundSettings）
-4. **コンストラクタインジェクション**: 全Service/ControllerでDI
+| Entity | テーブル | 備考 |
+|--------|---------|------|
+| Task | tasks | Phase 1のフラットTask。フロントエンドのTaskNodeとは構造が異なる |
+| TimerSettings | timer_settings | シングルトン |
+| TimerSession | timer_sessions | taskIdはLong（FK制約なし） |
+| SoundSettings | sound_settings | soundType別に行を持つ |
+| SoundPreset | sound_presets | settingsJson でミキサー状態を保存 |
 
 ## エラーハンドリングパターン
 
-### フロントエンド
-
-```javaScript
-try {
-  const result = await api.someMethod();
-  setLocalState(result);      // 楽観的更新
-} catch (err) {
-  if (axios.isAxiosError(err) && !err.response) {
-    setError('サーバーに接続できません...');  // ネットワークエラー
-  } else {
-    setError('操作に失敗しました');            // その他エラー
-  }
-}
-```
+### フロントエンド (localStorage)
+現在はtry/catchなし（localStorageはほぼ常に成功する）。
+将来のBackend統合時にエラーハンドリングを追加予定。
 
 ### バックエンド
-
 ```java
 // Controller層
 try {
     Task task = taskService.updateTask(id, title, status);
     return ResponseEntity.ok(task);
 } catch (IllegalArgumentException e) {
-    return ResponseEntity.notFound().build();   // 404
+    return ResponseEntity.notFound().build();
 }
-
-// Service層
-Task task = taskRepository.findById(id)
-    .orElseThrow(() -> new IllegalArgumentException("Task not found: " + id));
 ```

@@ -2,6 +2,7 @@ import type { TaskNode } from '../../types/taskTree';
 import { TaskDetailHeader } from './TaskDetailHeader';
 import { MemoEditor } from './MemoEditor';
 import { EmptyState } from './EmptyState';
+import { AICoachPanel } from '../AICoach';
 
 interface TaskDetailProps {
   task: TaskNode | null;
@@ -11,6 +12,7 @@ interface TaskDetailProps {
   onDelete: () => void;
   onUpdateContent?: (content: string) => void;
   onDurationChange?: (minutes: number) => void;
+  onNavigateToSettings?: () => void;
 }
 
 export function TaskDetail({
@@ -21,6 +23,7 @@ export function TaskDetail({
   onDelete,
   onUpdateContent,
   onDurationChange,
+  onNavigateToSettings,
 }: TaskDetailProps) {
   if (!task) {
     return <EmptyState />;
@@ -45,6 +48,12 @@ export function TaskDetail({
             onUpdate={(content) => onUpdateContent?.(content)}
           />
         </div>
+        <AICoachPanel
+          key={`ai-${task.id}`}
+          taskTitle={task.title}
+          taskContent={task.content}
+          onNavigateToSettings={onNavigateToSettings}
+        />
       </div>
     </div>
   );

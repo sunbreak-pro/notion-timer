@@ -12,7 +12,7 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **サイドバータイマー表示**: タイマー実行中はサイドバーにタスク名・残り時間・編集ボタンを表示
 - **TaskTreeタイマー表示**: 実行中のタスク行に残り時間テキスト+ミニプログレスバーを表示
 - **ノイズミキサー**: 6種の環境音UI（Rain, Thunder, Wind, Ocean, Birds, Fire）※音声再生は開発中
-- **AIコーチング**: 開発予定
+- **AIコーチング**: Gemini API連携、タスク分解/励まし/レビューの3モード
 - **外観設定**: ダークモード/ライトモード切替、フォントサイズ設定（S/M/L）
 - **Settings画面**: 外観設定、ゴミ箱（削除タスクの復元・完全削除）
 
@@ -43,6 +43,11 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 | GET | `/api/timer-sessions` | 全セッション取得 |
 | GET | `/api/tasks/{taskId}/sessions` | タスク別セッション取得 |
 
+### AI (`/api/ai`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/ai/advice` | AIコーチングアドバイス取得 |
+
 ### Sound (`/api/sound-*`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -55,6 +60,20 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-08 (2) - AI Coach 429エラー修正 & モデル移行
+- **モデル変更**: `gemini-2.0-flash` → `gemini-2.5-flash-lite`（旧モデル廃止対応）
+- **DB自動マイグレーション**: `@PostConstruct migrateDeprecatedModel()` で既存DB内の旧モデル名を自動更新
+- **デバッグログ追加**: `RestClientResponseException` 発生時にHTTPステータス・モデル名・レスポンスボディをログ出力
+- **エラーメッセージ改善**: Gemini APIのエラー詳細（`message`フィールド）をユーザー向けメッセージに付加
+- **taskContentトランケート**: `buildPrompt()` で500文字上限を設定し、不要なトークン消費を防止
+- 変更ファイル: `AIService.java`, `AIConfig.java`, `AISettings.java`, `application.properties`, `AISettings.tsx`
+
+### 2026-02-08 - AI Coaching 実装 (Gemini API)
+- Backend: `AIConfig` + `AIService` + `AIController` で Gemini API (gemini-2.5-flash-lite) 連携
+- Frontend: `useAICoach` hook + `AICoachPanel` コンポーネントを TaskDetail に統合
+- 3種のリクエストタイプ: breakdown（ステップ分解）/ encouragement（励まし）/ review（レビュー）
+- Vite proxy (`/api` → `localhost:8080`) 追加
 
 ### 2026-02-07 (3) - Phase 2 重複排除 (D1-D4)
 

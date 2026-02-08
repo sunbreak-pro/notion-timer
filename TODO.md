@@ -13,5 +13,5 @@
 - [ ] カレンダー & アナリティクス — [feature_plans/005-calendar-analytics.md](.claude/feature_plans/005-calendar-analytics.md)
 - [ ] Backend再統合 — [feature_plans/004-backend-reintegration.md](.claude/feature_plans/004-backend-reintegration.md)
 
-## In Progress
-- [ ] ドキュメント同期 — [current_plans/001-documentation-sync.md](.claude/current_plans/001-documentation-sync.md)
+## Completed
+- [x] ドキュメント同期 — [archive/003-documentation-sync.md](.claude/archive/003-documentation-sync.md)

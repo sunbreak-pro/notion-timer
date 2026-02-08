@@ -1,141 +1,146 @@
 
 # Project Name: Sonic Flow
 ## 概要
-「Notionライクなタスク管理」に「環境音ミキサー」と「ポモドーロタイマー」を組み合わせた、没入型個人タスク管理アプリケーションを作成したい。
-フロントエンドにReact、バックエンドにJava (Spring Boot) を使用したSPA構成とする。
+「Notionライクなタスク管理」に「環境音ミキサー」と「ポモドーロタイマー」を組み合わせた、没入型個人タスク管理アプリケーション。
+フロントエンドにReact、バックエンドにJava (Spring Boot) を使用したSPA構成。
 
-## 1. 技術スタック要件
+## 1. 技術スタック
 
 ### Backend (API Server)
-* **Language:** Java 21 (LTS)
-* **Framework:** Spring Boot 3.x
+* **Language:** Java 23
+* **Framework:** Spring Boot 3.4.2
 * **Build Tool:** Gradle (Groovy DSL)
 * **Database:** H2 Database (ファイルベースモードで永続化)
-    * 開発の容易さを優先し、別途DBサーバーを立てずにアプリケーション起動で動作するようにする。
-* **AI Integration:** OpenAI API (または Gemini API) と通信するService層を作成。
-    * API Keyは環境変数または `application.properties` から読み込む。
+* **AI Integration:** OpenAI API / Gemini API (Backend Proxy経由)
 
 ### Frontend (UI/UX)
-* **Framework:** React 18+ (TypeScript)
-* **Build Tool:** Vite
-* **Styling:** Tailwind CSS (NotionライクなシンプルでモダンなUI構築のため)
-* **State Management:** React Context API または Zustand (オーディオ設定とタスク状態の管理)
+* **Framework:** React 19 (TypeScript)
+* **Build Tool:** Vite 7
+* **Styling:** Tailwind CSS v4
+* **State Management:** React Context API
 * **Icons:** Lucide React
-* **HTTP Client:** Axios
-* **Audio:** Web Audio API または `use-sound` (またはHTML5 Audio)
+* **HTTP Client:** native fetch (Axios削除済み)
+* **Audio:** Web Audio API (予定)
+* **Rich Text:** TipTap (@tiptap/react)
+* **Drag & Drop:** @dnd-kit
+
+### データ永続化（現状）
+**フロントエンドはlocalStorageのみで動作**。バックエンドREST APIは構築済みだが未接続。
+- タスクツリー: `localStorage("sonic-flow-task-tree")`
+- タイマー設定: `localStorage("sonic-flow-work-duration")`
+- サウンド設定: `localStorage("sonic-flow-sound-mixer")`
+- テーマ設定: `localStorage`経由
+
+将来の目標: すべてのユーザーデータをバックエンド (H2 DB) に移行し、デバイス間連携を実現。
 
 ## 2. アプリケーション機能要件
 
-### Feature A: タスク管理 (CRUD)
-* テキストベースのタスク追加、編集、削除。
-* タスクのステータス管理（TODO / DONE）。
-* **フォーカスモード:** 選択した1つのタスク以外をUIから隠す、または薄くする機能。
-* **履歴機能:** `DONE` ステータスのタスク一覧を表示する画面。
+### Feature A: タスク管理 (TaskTree)
+* 階層型タスクツリー（フォルダ/タスク、フラット配列 + parentId参照）
+* フォルダは5階層までネスト可能 (`MAX_FOLDER_DEPTH = 5`)
+* @dnd-kitによるドラッグ&ドロップ並び替え・階層移動
+* ソフトデリート (`isDeleted`フラグ) + ゴミ箱から復元
+* TipTapリッチテキストによるタスクメモ編集
+* Inbox + プロジェクト別フィルタリング
 
-### Feature B: ノイズミキサー (Frontend主導)
-* 複数の環境音（例: Rain, Fire, Cafe）を同時に再生可能にする。
-* 各環境音の音量を個別にスライダーで調整できる（0% - 100%）。
-* *※開発時はダミーのオーディオファイルまたはプレースホルダーを使用する想定でコードを生成すること。*
+### Feature B: ノイズミキサー (Frontend UI)
+* 6種の環境音UI（Rain, Thunder, Wind, Ocean, Birds, Fire）
+* 各環境音の音量を個別にスライダーで調整（0% - 100%）
+* ※音声再生は未実装（Web Audio API統合予定）
 
-### Feature C: 集中タイマー
-* 25分（作業）+ 5分（休憩）の基本カウントダウン機能。
-* 視覚的に邪魔にならないプログレスバー表示。
+### Feature C: 集中タイマー (TimerContext)
+* WORK → BREAK → LONG_BREAK の自動遷移
+* 作業時間カスタマイズ（5〜60分、5分刻み）
+* プログレスバー + ドットインジケータ
+* タスクと紐付けてタイマー実行（`activeTask`）
+* モーダル表示 / バックグラウンド継続
+* TaskTreeNode上にインライン残り時間表示
 
-### Feature D: AIコーチング (Backend Proxy)
-* フロントエンドから「タスク内容」や「完了報告」を送信。
-* バックエンドがAI APIを叩き、励ましの言葉や、タスク細分化のアドバイスを返す。
-* APIキーの漏洩を防ぐため、必ずバックエンドを経由させること。
+### Feature D: AIコーチング (Backend Proxy) — 未実装
+* タスク分解・励まし・振り返りのアドバイス
+* APIキーはバックエンド経由で管理
 
-## 3. API 定義 (RESTful)
+### 外観設定
+* ダークモード/ライトモード切替
+* フォントサイズ設定（S/M/L）
+* Settings画面（外観設定 + ゴミ箱）
+
+## 3. API 定義 (RESTful) — バックエンド構築済み / フロントエンド未接続
 
 ### Tasks
 * `GET /api/tasks`: 未完了タスク一覧取得
 * `GET /api/tasks/history`: 完了済みタスク一覧取得
 * `POST /api/tasks`: 新規タスク作成
-* `PUT /api/tasks/{id}`: タスク更新（完了フラグ含む）
+* `PUT /api/tasks/{id}`: タスク更新
 * `DELETE /api/tasks/{id}`: タスク削除
 
-### Sound Settings（環境音設定）
-* `GET /api/sound-settings`: 全サウンド設定取得
-* `PUT /api/sound-settings`: サウンド設定更新（soundType, volume, enabled）
-* `GET /api/sound-presets`: プリセット一覧取得
-* `POST /api/sound-presets`: プリセット作成（name, settingsJson）
-* `DELETE /api/sound-presets/{id}`: プリセット削除
+### Sound Settings
+* `GET /api/sound-settings` / `PUT /api/sound-settings`
+* `GET /api/sound-presets` / `POST /api/sound-presets` / `DELETE /api/sound-presets/{id}`
 
-### Timer（タイマー設定・セッション）
-* `GET /api/timer-settings`: タイマー設定取得
-* `PUT /api/timer-settings`: タイマー設定更新（workDuration, breakDuration等）
-* `POST /api/timer-sessions`: セッション開始記録（sessionType, taskId）
-* `PUT /api/timer-sessions/{id}`: セッション終了記録（duration, completed）
-* `GET /api/timer-sessions`: セッション履歴取得
-* `GET /api/tasks/{taskId}/sessions`: タスク別セッション履歴取得
+### Timer
+* `GET /api/timer-settings` / `PUT /api/timer-settings`
+* `POST /api/timer-sessions` / `PUT /api/timer-sessions/{id}`
+* `GET /api/timer-sessions` / `GET /api/tasks/{taskId}/sessions`
 
-### AI
-* `POST /api/ai/advice`: 現在のタスク内容を元にアドバイスを取得
+### AI — 未実装
+* `POST /api/ai/advice`
 
-## 4. データモデル (Schemaイメージ)
+## 4. データモデル
 
-### Task Entity
-* `id`: Long (Auto Increment)
-* `title`: String (Notionライクなプレーンテキスト)
-* `status`: Enum (TODO, DONE)
-* `createdAt`: LocalDateTime
-* `completedAt`: LocalDateTime
+### フロントエンド: TaskNode (`types/taskTree.ts`)
+```typescript
+interface TaskNode {
+  id: string;
+  type: 'folder' | 'task';
+  title: string;
+  parentId: string | null;
+  order: number;
+  status?: 'TODO' | 'DONE';
+  isExpanded?: boolean;
+  isDeleted?: boolean;
+  deletedAt?: string;
+  createdAt: string;
+  completedAt?: string;
+  content?: string;           // TipTap rich text (JSON)
+  workDurationMinutes?: number;
+}
+```
 
-### SoundSettings Entity
-* `id`: Long (Auto Increment)
-* `soundType`: String (rain, fire, cafe など)
-* `volume`: Integer (0-100)
-* `enabled`: Boolean
-* `updatedAt`: LocalDateTime
+### バックエンド: Task Entity (Phase 1 — フロントエンドとは未同期)
+* `id`: Long, `title`: String, `status`: Enum (TODO/DONE)
+* `createdAt`, `completedAt`: LocalDateTime
 
-### SoundPreset Entity
-* `id`: Long (Auto Increment)
-* `name`: String (プリセット名)
-* `settingsJson`: String (各音源の設定をJSON保存)
-* `createdAt`: LocalDateTime
+### その他バックエンドエンティティ
+* SoundSettings, SoundPreset, TimerSettings, TimerSession
 
-### TimerSettings Entity
-* `id`: Long (Auto Increment)
-* `workDuration`: Integer (作業時間・分、デフォルト25)
-* `breakDuration`: Integer (休憩時間・分、デフォルト5)
-* `longBreakDuration`: Integer (長休憩・分、デフォルト15)
-* `sessionsBeforeLongBreak`: Integer (長休憩までのセッション数)
-* `updatedAt`: LocalDateTime
+## 5. フロントエンド構成
 
-### TimerSession Entity
-* `id`: Long (Auto Increment)
-* `taskId`: Long (紐付けタスク、nullable)
-* `sessionType`: Enum (WORK, BREAK, LONG_BREAK)
-* `startedAt`: LocalDateTime
-* `completedAt`: LocalDateTime
-* `duration`: Integer (実際の経過時間・秒)
-* `completed`: Boolean (正常完了か中断か)
+### Context Provider スタック (`main.tsx`)
+```
+ThemeProvider → TaskTreeProvider → TimerProvider → App
+```
 
-## 5. 開発の進め方と制約事項
-1.  **CORS設定:** フロントエンド(通常 port 5173)からバックエンド(通常 port 8080)へのアクセスを許可する `WebMvcConfigurer` 設定を最初に行うこと。
-2.  **ディレクトリ構成:** フロントエンドとバックエンドは別々のルートディレクトリで管理する前提だが、統合して開発しやすい構造を提案すること。
-3.  **著作権配慮:** 音源ファイルはリポジトリに含めず、ユーザーがローカルの `public/sounds/` フォルダに配置する設計、またはフリー素材のURLを参照する設計にすること。
+### レイアウト (3カラム)
+```
+App (状態オーケストレーター)
+├── Sidebar (240px固定)
+├── SubSidebar (リサイズ可能160-400px)
+│   └── TaskTree (Inbox + Projects + Completed)
+└── MainContent (flex-1)
+    └── TaskDetail | WorkScreen | Settings
+```
 
-## 依頼事項
-上記の仕様に基づき、以下のステップを実行するためのコードとファイル構成を生成してください。
-1.  Spring Bootプロジェクトの `build.gradle` と主要なEntity, Controller, Repository, Serviceのコード。
-2.  Reactプロジェクトの `package.json` 構成案と、メインとなるAppコンポーネント、API通信部分のフック。
-3.  特に「環境音ミキサー」のReactコンポーネントの実装例。
+### 主要フック
+| Hook | 管理対象 | 永続化 |
+|------|---------|--------|
+| useTaskTree (+ CRUD/Deletion/Movement) | タスクツリー全体 | localStorage |
+| useLocalSoundMixer | サウンドミキサー設定 | localStorage |
+| useTimerContext | タイマー状態 | Context + localStorage |
+| useLocalStorage | 汎用localStorage永続化 | localStorage |
 
-
-
----
-
-### 今後のアドバイス（Java + React 連携の壁）
-
-この設計書で開発を始めると、最初に以下の壁にぶつかる可能性があります。ここさえクリアすればスムーズに進みます。
-
-1. **CORS (Cross-Origin Resource Sharing) エラー:**
-* ブラウザ（React: `localhost:5173`）とサーバー（Java: `localhost:8080`）のポート番号が違うため、セキュリティ機能で通信がブロックされます。
-* **対策:** Spring Boot側で「`localhost:5173` からのアクセスはOKだよ」と許可する設定クラスを書く必要があります（プロンプトに指示を入れていますが、エラーが出たらここを疑ってください）。
-
-
-2. **API通信の非同期処理:**
-* Javaはデータが来るまで待ってくれますが、JavaScript (React) は待たずに次へ進んでしまい、「データがない！」とエラーになることがあります。
-* **対策:** React側で `async/await` 構文をしっかり使い、データのロード中（Loading状態）を画面に表示する処理を入れることが大切です。
+## 6. 開発の進め方と制約事項
+1. **CORS設定:** `WebConfig.java`で`localhost:5173`のみ許可
+2. **音源ファイル:** リポジトリにコミット禁止（`public/sounds/`は`.gitignore`対象）
+3. **AIキー:** フロントエンドに直接記載禁止、バックエンド経由のみ
+4. **データ永続化:** 現在はlocalStorageのみ。Backend再統合は将来課題

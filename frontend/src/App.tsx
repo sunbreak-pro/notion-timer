@@ -75,6 +75,7 @@ function App() {
             onDelete={handleDeleteSelectedTask}
             onUpdateContent={handleUpdateContent}
             onDurationChange={handleDurationChange}
+            onNavigateToSettings={() => setActiveSection('settings')}
           />
         );
       case "session":

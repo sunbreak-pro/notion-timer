@@ -122,7 +122,7 @@ export function TaskTreeNode({
             onClick={() => toggleTaskStatus(node.id)}
             className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
               isDone
-                ? "bg-notion-accent border-notion-accent text-gray-700"
+                ? "bg-notion-accent border-notion-accent text-gray-900"
                 : "border-notion-border hover:border-notion-accent"
             }`}
           >

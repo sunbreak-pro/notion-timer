@@ -4,6 +4,43 @@
 
 ---
 
+## Phase 5: AI Coaching (Gemini API)
+
+### AI Coaching Backend
+- `AIConfig.java` — RestClient Bean + APIキー管理 (`SONICFLOW_AI_API_KEY` 環境変数)
+- `AIService.java` — Gemini API通信、日本語プロンプト(breakdown/encouragement/review)
+- `AIController.java` — `POST /api/ai/advice` エンドポイント
+- `application.properties` — `sonicflow.ai.api-key`, `sonicflow.ai.model` 設定追加
+
+### AI Coaching Frontend
+- `types/ai.ts` — AIAdviceRequest/Response 型定義
+- `api/aiClient.ts` — native fetch による API通信
+- `hooks/useAICoach.ts` — 状態管理フック (advice/loading/error)
+- `components/AICoach/` — AICoachPanel, AIRequestButtons, AIAdviceDisplay
+- `TaskDetail.tsx` — MemoEditor下部にAICoachPanel統合
+- `vite.config.ts` — `/api` プロキシ追加 (→ localhost:8080)
+
+### AI Coach 429エラー修正 & モデル移行
+- モデル `gemini-2.0-flash` → `gemini-2.5-flash-lite` に変更（旧モデル廃止対応）
+- `AIService.java` — `@PostConstruct migrateDeprecatedModel()` でDB自動マイグレーション
+- `AIService.java` — デバッグログ追加（HTTPステータス・モデル名・レスポンスボディ）
+- `AIService.java` — `extractGeminiError()` でAPIエラー詳細をユーザーに表示
+- `AIService.java` — `buildPrompt()` で taskContent を500文字に制限
+- `AIConfig.java`, `AISettings.java`, `application.properties`, `AISettings.tsx` — デフォルトモデル更新
+
+---
+
+## Phase 4: ドキュメント同期 & テスト基盤
+
+### ドキュメント同期 (Plan 001-documentation-sync)
+- `Application_Overview.md` — Java 21→23、フラットTask→TaskNodeツリー、Axios→native fetch、localStorage中心アーキテクチャに全面更新
+- `ADR 0001` — Java 23、React 19、Vite 7、Tailwind v4、native fetch、TipTap、@dnd-kit追記
+- `00-index.md` — Phase実装マトリクス全面更新（タイマー/サウンド/設定 ✅反映、接続状態カラム追加）
+- `01-architecture-overview.md` — localStorage中心アーキテクチャに書き換え、Context Provider構成・コンポーネント階層・状態管理パターン更新
+- `02-infrastructure.md` — Axiosクライアント削除、useLocalStorage/storageKeys説明追加、レイアウトシステム更新
+
+---
+
 ## Phase 3: リファクタリング & 改善
 
 ### SubSidebar & WorkScreen 改善 (Plan 003)
