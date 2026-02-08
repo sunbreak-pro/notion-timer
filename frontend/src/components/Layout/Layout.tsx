@@ -1,9 +1,10 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import type { ReactNode } from "react";
+import { PanelLeft, PanelRight } from "lucide-react";
 import type { SectionId } from "../../types/navigation";
 import type { TaskNode } from "../../types/taskTree";
-import { Sidebar } from "./Sidebar";
-import { SubSidebar } from "./SubSidebar";
+import { LeftSidebar } from "./LeftSidebar";
+import { RightSidebar } from "./RightSidebar";
 import { MainContent } from "./MainContent";
 import { STORAGE_KEYS } from "../../constants/storageKeys";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
@@ -15,6 +16,10 @@ const DEFAULT_WIDTH = 240;
 function deserializeWidth(raw: string): number {
   const val = parseInt(raw, 10);
   return (val >= MIN_WIDTH && val <= MAX_WIDTH) ? val : DEFAULT_WIDTH;
+}
+
+function deserializeBool(raw: string): boolean {
+  return raw !== "false";
 }
 
 interface LayoutProps {
@@ -29,8 +34,6 @@ interface LayoutProps {
   selectedTaskId?: string | null;
 }
 
-const SIDEBAR_WIDTH = 240; // Sidebar w-60 = 15rem = 240px
-
 export function Layout({
   children,
   activeSection,
@@ -42,10 +45,20 @@ export function Layout({
   onPlayTask,
   selectedTaskId,
 }: LayoutProps) {
-  const [subSidebarWidth, setSubSidebarWidth] = useLocalStorage<number>(
-    STORAGE_KEYS.SUBSIDEBAR_WIDTH,
+  const [rightSidebarWidth, setRightSidebarWidth] = useLocalStorage<number>(
+    STORAGE_KEYS.RIGHT_SIDEBAR_WIDTH,
     DEFAULT_WIDTH,
     { serialize: String, deserialize: deserializeWidth }
+  );
+  const [leftSidebarOpen, setLeftSidebarOpen] = useLocalStorage<boolean>(
+    STORAGE_KEYS.LEFT_SIDEBAR_OPEN,
+    true,
+    { serialize: String, deserialize: deserializeBool }
+  );
+  const [rightSidebarOpen, setRightSidebarOpen] = useLocalStorage<boolean>(
+    STORAGE_KEYS.RIGHT_SIDEBAR_OPEN,
+    true,
+    { serialize: String, deserialize: deserializeBool }
   );
   const isResizing = useRef(false);
   const [dragWidth, setDragWidth] = useState<number | null>(null);
@@ -60,7 +73,7 @@ export function Layout({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing.current) return;
-      const newWidth = e.clientX - SIDEBAR_WIDTH;
+      const newWidth = document.documentElement.clientWidth - e.clientX;
       const clamped = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
       setDragWidth(clamped);
     };
@@ -71,7 +84,7 @@ export function Layout({
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
         setDragWidth(prev => {
-          if (prev !== null) setSubSidebarWidth(prev);
+          if (prev !== null) setRightSidebarWidth(prev);
           return null;
         });
       }
@@ -83,32 +96,58 @@ export function Layout({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [setSubSidebarWidth]);
+  }, [setRightSidebarWidth]);
+
+  const showRightSidebar = activeSection === "tasks";
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar
-        activeSection={activeSection}
-        onSectionChange={onSectionChange}
-        onOpenTimerModal={onOpenTimerModal}
-      />
-      {activeSection === "tasks" && (
-        <div className="relative shrink-0" style={{ width: dragWidth ?? subSidebarWidth }}>
-          <SubSidebar
-            width={dragWidth ?? subSidebarWidth}
-            onCreateFolder={onCreateFolder}
-            onCreateTask={onCreateTask}
-            onSelectTask={onSelectTask}
-            onPlayTask={onPlayTask}
-            selectedTaskId={selectedTaskId}
-          />
-          <div
-            onMouseDown={handleMouseDown}
-            className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-notion-accent/30 transition-colors z-10"
-          />
+      {leftSidebarOpen ? (
+        <LeftSidebar
+          activeSection={activeSection}
+          onSectionChange={onSectionChange}
+          onOpenTimerModal={onOpenTimerModal}
+          onToggle={() => setLeftSidebarOpen(false)}
+        />
+      ) : (
+        <div className="w-12 h-screen bg-notion-bg-secondary border-r border-notion-border flex flex-col items-center pt-4 shrink-0">
+          <button
+            onClick={() => setLeftSidebarOpen(true)}
+            className="p-1.5 text-notion-text-secondary hover:text-notion-text rounded transition-colors"
+          >
+            <PanelLeft size={18} />
+          </button>
         </div>
       )}
       <MainContent>{children}</MainContent>
+      {showRightSidebar && (
+        rightSidebarOpen ? (
+          <div className="relative shrink-0" style={{ width: dragWidth ?? rightSidebarWidth }}>
+            <div
+              onMouseDown={handleMouseDown}
+              className="absolute top-0 left-0 w-1.5 h-full cursor-col-resize hover:bg-notion-accent/30 transition-colors z-10"
+            />
+            <RightSidebar
+              width={dragWidth ?? rightSidebarWidth}
+              onCreateFolder={onCreateFolder}
+              onCreateTask={onCreateTask}
+              onSelectTask={onSelectTask}
+              onPlayTask={onPlayTask}
+              selectedTaskId={selectedTaskId}
+              onToggle={() => setRightSidebarOpen(false)}
+            />
+          </div>
+        ) : (
+          <div className="w-12 h-screen bg-notion-bg-subsidebar border-l border-notion-border flex flex-col items-center pt-4 shrink-0">
+            <button
+              onClick={() => setRightSidebarOpen(true)}
+              className="p-1.5 text-notion-text-secondary hover:text-notion-text rounded transition-colors"
+            >
+              <PanelRight size={18} />
+            </button>
+          </div>
+        )
+      )}
     </div>
   );
 }

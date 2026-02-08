@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   DndContext,
   pointerWithin,
@@ -21,10 +21,21 @@ import {
   GripVertical,
   Inbox,
   FolderOpen,
+  CheckCircle2,
 } from "lucide-react";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { TaskTreeNode } from "./TaskTreeNode";
 import type { TaskNode } from "../../types/taskTree";
+
+function isFolderFullyCompleted(folderId: string, activeNodes: TaskNode[]): boolean {
+  const children = activeNodes.filter(n => n.parentId === folderId);
+  if (children.length === 0) return true;
+  return children.every(child => {
+    if (child.type === "task") return child.status === "DONE";
+    if (child.type === "folder") return isFolderFullyCompleted(child.id, activeNodes);
+    return false;
+  });
+}
 
 interface TaskTreeProps {
   onPlayTask?: (node: TaskNode) => void;
@@ -59,15 +70,19 @@ export function TaskTree({
   );
 
   const rootChildren = getChildren(null);
-  const inboxTasks = rootChildren.filter((n) => n.type === "task");
-  const folders = rootChildren.filter((n) => n.type === "folder");
+  const inboxTasks = rootChildren.filter((n) => n.type === "task" && n.status !== "DONE");
+  const folders = rootChildren.filter(
+    (n) => n.type === "folder" && !isFolderFullyCompleted(n.id, nodes)
+  );
 
-  const allTasks = nodes.filter((n) => n.type === "task");
-  const completedTasks = allTasks.filter((t) => t.status === "DONE");
-  const hasCompleted = completedTasks.length > 0;
+  const completedRootTasks = rootChildren.filter((n) => n.type === "task" && n.status === "DONE");
+  const completedFolders = rootChildren.filter(
+    (n) => n.type === "folder" && isFolderFullyCompleted(n.id, nodes)
+  );
+  const hasCompleted = completedRootTasks.length > 0 || completedFolders.length > 0;
 
-  const inboxIds = useMemo(() => inboxTasks.map((n) => n.id), [inboxTasks]);
-  const folderIds = useMemo(() => folders.map((n) => n.id), [folders]);
+  const inboxIds = inboxTasks.map((n) => n.id);
+  const folderIds = folders.map((n) => n.id);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -221,14 +236,24 @@ export function TaskTree({
             ) : (
               <ChevronRight size={14} />
             )}
-            <span>Completed ({completedTasks.length})</span>
+            <CheckCircle2 size={14} />
+            <span>Completed ({completedRootTasks.length + completedFolders.length})</span>
           </button>
           {showCompleted && (
             <div className="space-y-0.5 opacity-60">
-              {completedTasks.map((task) => (
+              {completedRootTasks.map((task) => (
                 <TaskTreeNode
                   key={task.id}
                   node={task}
+                  depth={0}
+                  onSelectTask={onSelectTask}
+                  selectedTaskId={selectedTaskId}
+                />
+              ))}
+              {completedFolders.map((folder) => (
+                <TaskTreeNode
+                  key={folder.id}
+                  node={folder}
                   depth={0}
                   onSelectTask={onSelectTask}
                   selectedTaskId={selectedTaskId}

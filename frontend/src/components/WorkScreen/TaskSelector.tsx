@@ -21,7 +21,7 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { nodes, getChildren, addNode } = useTaskTreeContext();
+  const { getChildren, addNode } = useTaskTreeContext();
   const timer = useTimerContext();
 
   // Close on outside click
@@ -85,7 +85,7 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
     });
 
     return result;
-  }, [nodes, getChildren]);
+  }, [getChildren]);
 
   const handleSelectTask = (task: TaskNode) => {
     timer.openForTask(task.id, task.title, task.workDurationMinutes);

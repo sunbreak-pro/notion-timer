@@ -1,11 +1,10 @@
-import { useRef } from "react";
-
 interface TaskNodeContentProps {
   title: string;
   isDone: boolean;
   isFolder: boolean;
   onSelectTask?: (id: string) => void;
   onStartEditing: () => void;
+  onToggleExpand?: () => void;
   nodeId: string;
 }
 
@@ -15,27 +14,20 @@ export function TaskNodeContent({
   isFolder,
   onSelectTask,
   onStartEditing,
+  onToggleExpand,
   nodeId,
 }: TaskNodeContentProps) {
-  const clickTimerRef = useRef<number | null>(null);
-
   return (
     <span
       onClick={() => {
         if (isFolder) {
-          onStartEditing();
+          onToggleExpand?.();
           return;
         }
-        if (clickTimerRef.current !== null) {
-          clearTimeout(clickTimerRef.current);
-          clickTimerRef.current = null;
-          onStartEditing();
-        } else {
-          clickTimerRef.current = window.setTimeout(() => {
-            clickTimerRef.current = null;
-            if (onSelectTask) onSelectTask(nodeId);
-          }, 300);
-        }
+        if (onSelectTask) onSelectTask(nodeId);
+      }}
+      onDoubleClick={() => {
+        onStartEditing();
       }}
       className={`flex-1 text-sm cursor-pointer truncate ${
         isDone

@@ -4,5 +4,8 @@ export const STORAGE_KEYS = {
   WORK_DURATION: 'sonic-flow-work-duration',
   THEME: 'sonic-flow-theme',
   FONT_SIZE: 'sonic-flow-font-size',
-  SUBSIDEBAR_WIDTH: 'sonic-flow-subsidebar-width',
+  RIGHT_SIDEBAR_WIDTH: 'sonic-flow-subsidebar-width',
+  NOTIFICATIONS_ENABLED: 'sonic-flow-notifications-enabled',
+  LEFT_SIDEBAR_OPEN: 'sonic-flow-left-sidebar-open',
+  RIGHT_SIDEBAR_OPEN: 'sonic-flow-right-sidebar-open',
 } as const;

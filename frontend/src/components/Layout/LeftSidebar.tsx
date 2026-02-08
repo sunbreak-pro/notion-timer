@@ -1,4 +1,10 @@
-import { CheckSquare, Headphones, Settings, Pencil } from "lucide-react";
+import {
+  CheckSquare,
+  Headphones,
+  Settings,
+  Pencil,
+  PanelLeft,
+} from "lucide-react";
 import type { SectionId } from "../../types/navigation";
 import { useTimerContext } from "../../hooks/useTimerContext";
 
@@ -6,6 +12,7 @@ interface SidebarProps {
   activeSection: SectionId;
   onSectionChange: (section: SectionId) => void;
   onOpenTimerModal: () => void;
+  onToggle: () => void;
 }
 
 const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] =
@@ -15,10 +22,11 @@ const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] =
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
-export function Sidebar({
+export function LeftSidebar({
   activeSection,
   onSectionChange,
   onOpenTimerModal,
+  onToggle,
 }: SidebarProps) {
   const timer = useTimerContext();
   const showTimer = timer.activeTask !== null || timer.isRunning;
@@ -27,6 +35,12 @@ export function Sidebar({
     <aside className="w-60 h-screen bg-notion-bg-secondary border-r border-notion-border flex flex-col">
       <div className="flex justify-between items-center p-4 border-b border-notion-border">
         <h1 className="text-lg font-semibold text-notion-text">Sonic Flow</h1>
+        <button
+          onClick={onToggle}
+          className="p-1 text-notion-text-secondary hover:text-notion-text rounded transition-colors"
+        >
+          <PanelLeft size={18} />
+        </button>
       </div>
       <nav className="flex-1 p-2">
         {menuItems.map((item) => {

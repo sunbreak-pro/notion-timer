@@ -25,7 +25,7 @@ export function TaskNodeActions({
       {node.type === "folder" && (
         <button
           onClick={() => makeTask(node)}
-          className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-danger transition-opacity"
+          className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-success transition-opacity"
         >
           <Plus size={14} />
         </button>
@@ -33,7 +33,7 @@ export function TaskNodeActions({
       {node.type === "folder" && (
         <button
           onClick={() => makeFolder(node)}
-          className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-danger transition-opacity"
+          className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-success transition-opacity"
         >
           <LucideFolderPlus size={14} />
         </button>

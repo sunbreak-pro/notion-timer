@@ -1,4 +1,5 @@
 import { AppearanceSettings } from './AppearanceSettings';
+import { NotificationSettings } from './NotificationSettings';
 import { AISettings } from './AISettings';
 import { TrashBin } from './TrashBin';
 
@@ -7,6 +8,8 @@ export function Settings() {
     <div className="space-y-8">
       <h2 className="text-2xl font-bold text-notion-text">Settings</h2>
       <AppearanceSettings />
+      <div className="border-t border-notion-border" />
+      <NotificationSettings />
       <div className="border-t border-notion-border" />
       <AISettings />
       <div className="border-t border-notion-border" />

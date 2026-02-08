@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useTimerContext } from '../../hooks/useTimerContext';
 import { useLocalSoundMixer } from '../../hooks/useLocalSoundMixer';
+import { useAudioEngine } from '../../hooks/useAudioEngine';
 import { TimerDisplay } from './TimerDisplay';
 import { TimerProgressBar } from './TimerProgressBar';
 import { DurationSelector } from './DurationSelector';
@@ -16,6 +17,7 @@ interface WorkScreenProps {
 export function WorkScreen({ isOverlay = false, onClose }: WorkScreenProps) {
   const timer = useTimerContext();
   const { mixer, toggleSound, setVolume } = useLocalSoundMixer();
+  useAudioEngine(mixer);
 
   const title = timer.activeTask?.title ?? 'Free Session';
 

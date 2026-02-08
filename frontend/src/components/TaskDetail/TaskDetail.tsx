@@ -1,8 +1,12 @@
-import type { TaskNode } from '../../types/taskTree';
-import { TaskDetailHeader } from './TaskDetailHeader';
-import { MemoEditor } from './MemoEditor';
-import { EmptyState } from './EmptyState';
-import { AICoachPanel } from '../AICoach';
+import { lazy, Suspense } from "react";
+import type { TaskNode } from "../../types/taskTree";
+import { TaskDetailHeader } from "./TaskDetailHeader";
+import { EmptyState } from "./EmptyState";
+import { AICoachPanel } from "../AICoach";
+
+const MemoEditor = lazy(() =>
+  import("./MemoEditor").then((m) => ({ default: m.MemoEditor })),
+);
 
 interface TaskDetailProps {
   task: TaskNode | null;
@@ -41,12 +45,14 @@ export function TaskDetail({
           onDurationChange={onDurationChange}
         />
         <div className="mt-6">
-          <MemoEditor
-            key={task.id}
-            taskId={task.id}
-            initialContent={task.content}
-            onUpdate={(content) => onUpdateContent?.(content)}
-          />
+          <Suspense fallback={<div className="min-h-50" />}>
+            <MemoEditor
+              key={task.id}
+              taskId={task.id}
+              initialContent={task.content}
+              onUpdate={(content) => onUpdateContent?.(content)}
+            />
+          </Suspense>
         </div>
         <AICoachPanel
           key={`ai-${task.id}`}

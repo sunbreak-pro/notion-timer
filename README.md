@@ -11,10 +11,12 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **タイマーモーダル**: タスクのPlayボタンでモーダル表示、閉じてもバックグラウンドでタイマー継続
 - **サイドバータイマー表示**: タイマー実行中はサイドバーにタスク名・残り時間・編集ボタンを表示
 - **TaskTreeタイマー表示**: 実行中のタスク行に残り時間テキスト+ミニプログレスバーを表示
-- **ノイズミキサー**: 6種の環境音UI（Rain, Thunder, Wind, Ocean, Birds, Fire）※音声再生は開発中
+- **ノイズミキサー**: 6種の環境音（Rain, Thunder, Wind, Ocean, Birds, Fire）、Web Audio APIによるリアルタイム再生・ミキシング
 - **AIコーチング**: Gemini API連携、タスク分解/励まし/レビューの3モード
 - **外観設定**: ダークモード/ライトモード切替、フォントサイズ設定（S/M/L）
-- **Settings画面**: 外観設定、ゴミ箱（削除タスクの復元・完全削除）
+- **デスクトップ通知**: タイマーセッション完了時にブラウザ通知
+- **キーボードショートカット**: Space（タイマー）、n（新規タスク）、Escape（モーダル閉じ）、Delete（タスク削除）
+- **Settings画面**: 外観設定、通知設定、ゴミ箱（削除タスクの復元・完全削除）
 
 ### 技術スタック
 - **Frontend**: React 19 (TypeScript) + Vite + Tailwind CSS v4 + @dnd-kit
@@ -60,6 +62,39 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-08 (3) - バグ修正 + Noise Mixer音声再生 + ポリッシュ
+
+#### バグ修正・技術的負債
+- **TimerContext stale closure修正**: `advanceSession`のクロージャ問題を`useRef`+`useEffect`パターンで解消
+- **TaskNodeContent 300msクリック遅延修正**: ネイティブ`onClick`/`onDoubleClick`に置き換え
+- **lint error全件修正**: React Compiler lint error 0件達成
+- **バンドルサイズ57%削減**: `MemoEditor`を`React.lazy()`で遅延読み込み（671KB→298KB）
+
+#### Noise Mixer 音声再生
+- `useAudioEngine` hook新規作成（Web Audio API, ループ再生, フェードイン/アウト）
+- `WorkScreen`で`useLocalSoundMixer`状態をオーディオエンジンに自動連携
+- タブ非表示時自動ミュート、アンマウント時リソース解放
+
+#### ポリッシュ
+- ブラウザ通知（`Notification API`）+ Settings画面にトグル追加
+- キーボードショートカット4種（Space/n/Escape/Delete）
+
+#### 新規ファイル
+- `frontend/src/hooks/useAudioEngine.ts` — Web Audio APIラッパー
+- `frontend/src/components/Settings/NotificationSettings.tsx` — 通知設定UI
+
+#### 変更ファイル
+- `context/TimerContext.tsx` — stale closure修正 + 通知ロジック追加
+- `components/TaskTree/TaskNodeContent.tsx` — クリックハンドラ簡素化
+- `components/TaskDetail/TaskDetail.tsx` — MemoEditor遅延読み込み
+- `components/WorkScreen/WorkScreen.tsx` — `useAudioEngine`統合
+- `components/WorkScreen/TaskSelector.tsx` — lint fix（unused `nodes`）
+- `components/Settings/Settings.tsx` — NotificationSettings追加
+- `constants/sounds.ts` — `file`フィールド追加
+- `constants/storageKeys.ts` — `NOTIFICATIONS_ENABLED`追加
+- `tsconfig.app.json` — testディレクトリ除外
+- `App.tsx` — キーボードショートカットハンドラ追加
 
 ### 2026-02-08 (2) - AI Coach 429エラー修正 & モデル移行
 - **モデル変更**: `gemini-2.0-flash` → `gemini-2.5-flash-lite`（旧モデル廃止対応）

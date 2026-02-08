@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { render, type RenderOptions } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { ThemeProvider } from '../context/ThemeContext'

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Layout } from "./components/Layout";
 import { TaskDetail } from "./components/TaskDetail";
 import { WorkScreen } from "./components/WorkScreen";
@@ -30,11 +30,11 @@ function App() {
     setIsTimerModalOpen(true);
   };
 
-  const handleDeleteSelectedTask = () => {
+  const handleDeleteSelectedTask = useCallback(() => {
     if (!selectedTask) return;
     softDelete(selectedTask.id);
     setSelectedTaskId(null);
-  };
+  }, [selectedTask, softDelete]);
 
   const handleUpdateContent = (content: string) => {
     if (!selectedTaskId) return;
@@ -62,6 +62,45 @@ function App() {
   const handleCreateTask = (title: string) => {
     addNode('task', null, title);
   };
+
+  const isInputFocused = useCallback(() => {
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
+    if (document.activeElement?.getAttribute('contenteditable') === 'true') return true;
+    return false;
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isInputFocused()) return;
+
+      if (e.key === ' ') {
+        e.preventDefault();
+        if (timer.isRunning) {
+          timer.pause();
+        } else {
+          timer.start();
+        }
+      }
+
+      if (e.key === 'n') {
+        e.preventDefault();
+        addNode('task', null, 'New Task');
+      }
+
+      if (e.key === 'Escape' && isTimerModalOpen) {
+        setIsTimerModalOpen(false);
+      }
+
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedTask) {
+        e.preventDefault();
+        handleDeleteSelectedTask();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [timer, isTimerModalOpen, selectedTask, addNode, isInputFocused, handleDeleteSelectedTask]);
 
   const renderContent = () => {
     switch (activeSection) {

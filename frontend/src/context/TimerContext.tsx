@@ -18,6 +18,15 @@ function deserializeWorkDuration(raw: string): number {
   return (val >= 5 && val <= 240) ? val : 25;
 }
 
+function sendNotification(body: string) {
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    const enabled = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED);
+    if (enabled === 'true') {
+      new Notification('Sonic Flow', { body });
+    }
+  }
+}
+
 function getDuration(sessionType: SessionType, config: TimerConfig): number {
   switch (sessionType) {
     case 'WORK': return config.workDuration;
@@ -47,6 +56,14 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const [activeTask, setActiveTask] = useState<ActiveTask | null>(null);
   const intervalRef = useRef<number | null>(null);
 
+  // Refs to avoid stale closures in setInterval callback
+  const sessionTypeRef = useRef(sessionType);
+  const completedSessionsRef = useRef(completedSessions);
+  const configRef = useRef(config);
+  useEffect(() => { sessionTypeRef.current = sessionType; }, [sessionType]);
+  useEffect(() => { completedSessionsRef.current = completedSessions; }, [completedSessions]);
+  useEffect(() => { configRef.current = config; }, [config]);
+
   const totalDuration = getDuration(sessionType, config);
   const progress = ((totalDuration - remainingSeconds) / totalDuration) * 100;
 
@@ -61,21 +78,28 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     clearTimer();
     setIsRunning(false);
 
-    if (sessionType === 'WORK') {
-      const newCompleted = completedSessions + 1;
+    const currentSessionType = sessionTypeRef.current;
+    const currentCompleted = completedSessionsRef.current;
+    const currentConfig = configRef.current;
+
+    if (currentSessionType === 'WORK') {
+      const newCompleted = currentCompleted + 1;
       setCompletedSessions(newCompleted);
-      if (newCompleted % config.sessionsBeforeLongBreak === 0) {
+      if (newCompleted % currentConfig.sessionsBeforeLongBreak === 0) {
         setSessionType('LONG_BREAK');
-        setRemainingSeconds(config.longBreakDuration);
+        setRemainingSeconds(currentConfig.longBreakDuration);
+        sendNotification('WORK完了！長めの休憩に入ります');
       } else {
         setSessionType('BREAK');
-        setRemainingSeconds(config.breakDuration);
+        setRemainingSeconds(currentConfig.breakDuration);
+        sendNotification('WORK完了！休憩に入ります');
       }
     } else {
       setSessionType('WORK');
-      setRemainingSeconds(config.workDuration);
+      setRemainingSeconds(currentConfig.workDuration);
+      sendNotification('休憩終了！作業を再開しましょう');
     }
-  }, [sessionType, completedSessions, config, clearTimer]);
+  }, [clearTimer]);
 
   useEffect(() => {
     if (!isRunning) {

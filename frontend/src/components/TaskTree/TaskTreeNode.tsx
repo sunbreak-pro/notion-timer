@@ -152,6 +152,7 @@ export function TaskTreeNode({
             isFolder={isFolder}
             onSelectTask={onSelectTask}
             onStartEditing={() => setIsEditing(true)}
+            onToggleExpand={() => toggleExpanded(node.id)}
             nodeId={node.id}
           />
         )}

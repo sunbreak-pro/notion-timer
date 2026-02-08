@@ -4,6 +4,26 @@
 
 ---
 
+## Phase 6: バグ修正 + Noise Mixer音声再生 + ポリッシュ
+
+### バグ修正・技術的負債 (Phase 1)
+- **TimerContext stale closure修正**: `advanceSession`の`sessionType`/`completedSessions`/`config`を`useRef`+`useEffect`で保持し、`setInterval`コールバック内のstale値参照を解消
+- **TaskNodeContent 300msクリック遅延修正**: `setTimeout`によるシングル/ダブルクリック区別を廃止、ネイティブ`onClick`/`onDoubleClick`に置き換え
+- **React lint error全件修正**: `react-hooks/exhaustive-deps`警告、`react-refresh/only-export-components`エラー、`react-hooks/refs`エラーを修正。TypeScript build error（test/setup.ts `beforeEach`未定義）を`tsconfig.app.json`のexcludeで解消
+- **バンドルサイズ最適化**: `MemoEditor`（TipTap）を`React.lazy()`+`Suspense`で遅延読み込み化。メインchunk 671KB→298KB（57%削減）
+
+### Noise Mixer 音声再生 (Phase 2)
+- **useAudioEngine hook新規作成**: Web Audio API (`AudioContext` + `HTMLAudioElement` + `MediaElementAudioSourceNode` + `GainNode`)をラップ。ループ再生、リアルタイム音量制御、200msフェードイン/アウト
+- **SoundMixer接続**: `WorkScreen`で`useAudioEngine(mixer)`を呼び出し、`useLocalSoundMixer`の状態変更を自動反映
+- **リソース管理**: アンマウント時の`AudioContext.close()`+全要素解放、タブ非表示時の自動ミュート/復帰
+- **sounds定数にfileパス追加**: `SOUND_TYPES`に`file`フィールド追加（`/sounds/*.mp3`）
+
+### ポリッシュ (Phase 3)
+- **ブラウザ通知**: タイマーセッション完了時に`Notification API`でデスクトップ通知。Settings画面にトグルUI追加
+- **キーボードショートカット**: `Space`（タイマー開始/停止）、`n`（新規タスク）、`Escape`（モーダル閉じ）、`Delete`/`Backspace`（タスク削除）。テキスト入力中は無効化
+
+---
+
 ## Phase 5: AI Coaching (Gemini API)
 
 ### AI Coaching Backend
