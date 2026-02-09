@@ -39,15 +39,16 @@ Username: sa / Password: (空)
 ## アーキテクチャ
 
 ### 現在のデータ永続化（重要）
-**タスクツリーはバックエンドAPI接続済み**（Phase 7）。Timer/SoundはlocalStorageのみで動作。
-- タスクツリー: `localStorage("sonic-flow-task-tree")` + バックエンドAPI同期（楽観的更新パターン）
-- タイマー設定: `localStorage("sonic-flow-work-duration")`（バックエンド未接続）
-- サウンド設定: `localStorage("sonic-flow-sound-mixer")`（バックエンド未接続）
-- テーマ設定: `localStorage`経由
+**タスクツリー・タイマー・サウンドはバックエンドAPI接続済み**。楽観的更新パターン（localStorage即時反映 → 500msデバウンスで非同期PUT）。
+- タスクツリー: `localStorage("sonic-flow-task-tree")` + バックエンドAPI同期
+- タイマー設定: `localStorage` + バックエンドAPI同期（work/break/longBreak/sessionsBeforeLongBreak）
+- タイマーセッション: バックエンドAPI記録（start→POST、pause/reset/完了→PUT）
+- サウンド設定: `localStorage("sonic-flow-sound-mixer")` + バックエンドAPI同期
+- テーマ設定: `localStorage`経由（バックエンド未接続）
 
 Phase 7で**楽観的更新パターン**を導入済み: UI→localStorage即時反映→バックエンドへ500msデバウンス非同期同期。バックエンド不可用時はlocalStorageフォールバック。
 
-⚠️ **`ddl-auto=create-drop`**: バックエンド再起動でDBスキーマが再作成される。本番移行時は`update`に変更必須。
+✅ **`ddl-auto=update`**: DBスキーマは永続化済み。バックエンド再起動でデータは保持される。
 
 ### フロントエンド構成
 

@@ -87,9 +87,9 @@ export function DayCell({
               onSelectMemo?.(memo.date);
             }}
             className="w-full flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] truncate transition-colors hover:opacity-80"
-            style={{ backgroundColor: '#FFF9C4', color: '#F59E0B' }}
+            style={{ backgroundColor: "#FFF9C4", color: "#F59E0B" }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
             <span className="truncate font-medium">Memo</span>
           </button>
         )}
@@ -115,7 +115,10 @@ export function DayCell({
           <div className="relative" ref={moreRef}>
             <button
               className="text-xs text-notion-text-secondary px-1 hover:text-notion-text transition-colors"
-              onClick={(e) => { e.stopPropagation(); setShowMore(!showMore); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMore(!showMore);
+              }}
             >
               +{remainingCount} more
             </button>
@@ -125,7 +128,10 @@ export function DayCell({
                   <CalendarTaskItem
                     key={task.id}
                     task={task}
-                    onClick={() => { onSelectTask(task.id); setShowMore(false); }}
+                    onClick={() => {
+                      onSelectTask(task.id);
+                      setShowMore(false);
+                    }}
                     color={getTaskColor?.(task.id)}
                     tag={getFolderTag?.(task.id)}
                   />

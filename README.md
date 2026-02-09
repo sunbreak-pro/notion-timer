@@ -15,7 +15,7 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **AIコーチング**: Gemini API連携、タスク分解/励まし/レビューの3モード
 - **外観設定**: ダークモード/ライトモード切替、フォントサイズ設定（S/M/L）
 - **デスクトップ通知**: タイマーセッション完了時にブラウザ通知
-- **キーボードショートカット**: Space（タイマー）、n（新規タスク）、Escape（モーダル閉じ）、Delete（タスク削除）、Cmd+.（左サイドバー開閉）、Cmd+Shift+.（右サイドバー開閉）、Cmd+,（Settings遷移）
+- **キーボードショートカット**: Space（タイマー）、n（新規タスク）、Escape（モーダル閉じ）、Delete（タスク削除）、Cmd+.（左サイドバー開閉）、Cmd+Shift+.（右サイドバー開閉）、Cmd+,（Settings遷移）、Cmd+1〜5（セクション切替）、↑/↓（タスク移動）、Tab/Shift+Tab（インデント）、r（タイマーリセット）、Cmd+Shift+T（モーダル）、j/k/t/m（カレンダー操作）
 - **Settings画面**: 外観設定、通知設定、ゴミ箱（削除タスクの復元・完全削除）
 - **Tips画面**: ショートカット一覧、タスク/タイマー/カレンダー/エディタの操作ガイド（5タブ構成）
 - **リッチテキストエディタ**: TipTap拡張（Toggle List/Table/Callout/Image）、スラッシュコマンド対応
@@ -67,6 +67,28 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-09 - Timer/Sound API連携 + キーボードショートカット拡張
+
+#### Timer/Sound バックエンドAPI接続
+- `ddl-auto` を `create-drop` → `update` に変更（DB永続化）
+- `timerClient.ts` / `soundClient.ts` 新規作成（fetch APIベース）
+- TimerContext: 楽観的更新パターンでバックエンド同期（設定 + セッション記録）
+- break/longBreak/sessionsBeforeLongBreak をハードコードから `useLocalStorage` + API同期に移行
+- Sound Mixer: サウンドタイプ別デバウンスPUTでバックエンド同期
+- バックエンド不可用時は localStorage フォールバック
+
+#### キーボードショートカット拡張 (Phase 1-4)
+- `Cmd+1〜5` — セクション切替（tasks/session/calendar/analytics/settings）
+- `↑/↓` — タスクツリー内フォーカス移動
+- `→/←` — フォルダ展開/折りたたみ
+- `Cmd+Enter` — タスク完了/未完了トグル
+- `Tab/Shift+Tab` — タスクインデント/アウトデント
+- `r` — タイマーリセット
+- `Cmd+Shift+T` — タイマーモーダル開閉
+- `j/k` — カレンダー前後移動
+- `t` — 今日にジャンプ
+- `m` — 月/週表示切替
 
 ### 2026-02-09 - Tips画面 + TipTapエディタ拡張 (Plan 008)
 
