@@ -15,8 +15,10 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **AIコーチング**: Gemini API連携、タスク分解/励まし/レビューの3モード
 - **外観設定**: ダークモード/ライトモード切替、フォントサイズ設定（S/M/L）
 - **デスクトップ通知**: タイマーセッション完了時にブラウザ通知
-- **キーボードショートカット**: Space（タイマー）、n（新規タスク）、Escape（モーダル閉じ）、Delete（タスク削除）
+- **キーボードショートカット**: Space（タイマー）、n（新規タスク）、Escape（モーダル閉じ）、Delete（タスク削除）、Cmd+.（左サイドバー開閉）、Cmd+Shift+.（右サイドバー開閉）、Cmd+,（Settings遷移）
 - **Settings画面**: 外観設定、通知設定、ゴミ箱（削除タスクの復元・完全削除）
+- **Tips画面**: ショートカット一覧、タスク/タイマー/カレンダー/エディタの操作ガイド（5タブ構成）
+- **リッチテキストエディタ**: TipTap拡張（Toggle List/Table/Callout/Image）、スラッシュコマンド対応
 - **カレンダー**: 月/週表示切替、タスクを日付別に表示、フィルタリング（incomplete/completed）
 - **アナリティクス**: 基本統計（総タスク数、完了率、フォルダ数）
 - **Backend連携**: localStorage→H2 DB自動マイグレーション、Optimistic Update、オフラインフォールバック
@@ -65,6 +67,30 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-09 - Tips画面 + TipTapエディタ拡張 (Plan 008)
+
+#### Tips画面
+- LeftSidebarに6つ目のセクション「Tips」追加（Lightbulbアイコン）
+- 5タブ構成: Shortcuts / Tasks / Timer / Calendar / Editor
+- 全キーボードショートカット一覧、各画面の操作ガイド、スラッシュコマンド一覧を表示
+
+#### TipTapエディタ拡張（4ブロックタイプ追加）
+- **Toggle List**: カスタムNode拡張（HTML `<details>`/`<summary>` ベース、開閉可能）
+- **Table**: 公式 `@tiptap/extension-table` 系（3×3デフォルト、ヘッダー行付き）
+- **Callout**: カスタムNode拡張（💡絵文字 + 背景色付きボックス）
+- **Image**: 公式 `@tiptap/extension-image`（URL prompt入力）
+- スラッシュコマンドメニューに4コマンド追加、CSSスタイリング追加
+
+### 2026-02-09 - Keyboard Shortcuts 追加
+
+#### 新規ショートカット
+- `Cmd+.` — Left Sidebar 開閉トグル（Layout.tsx）
+- `Cmd+Shift+.` — Right Sidebar 開閉トグル（Layout.tsx）
+- `Cmd+,` — Settings画面に遷移（App.tsx、入力中でも動作）
+
+#### Feature Plan
+- `.claude/feature_plans/007-keyboard-shortcuts.md` 作成（セクション切替、タスク操作、タイマー制御、カレンダー操作、コマンドパレットの将来ショートカット提案）
 
 ### 2026-02-09 - Calendar Enhancement (Plan 006)
 

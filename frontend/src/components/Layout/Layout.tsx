@@ -63,6 +63,21 @@ export function Layout({
   const isResizing = useRef(false);
   const [dragWidth, setDragWidth] = useState<number | null>(null);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey && e.code === 'Period') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          setRightSidebarOpen(prev => !prev);
+        } else {
+          setLeftSidebarOpen(prev => !prev);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setLeftSidebarOpen, setRightSidebarOpen]);
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     isResizing.current = true;

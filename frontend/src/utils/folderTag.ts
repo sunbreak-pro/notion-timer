@@ -15,5 +15,7 @@ export function getFolderTag(taskId: string, nodes: TaskNode[]): string {
     current = parent;
   }
 
+  if (ancestors.length === 0 && node.type === 'task') return 'Inbox';
+
   return ancestors.join('/');
 }

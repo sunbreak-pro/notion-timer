@@ -11,6 +11,10 @@ import {
   Quote,
   Minus,
   CheckSquare,
+  ChevronRight,
+  Table2,
+  Lightbulb,
+  ImageIcon,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { useSlashCommand } from "../../hooks/useSlashCommand";
@@ -74,6 +78,55 @@ const COMMANDS: CommandItem[] = [
     title: "Task List",
     icon: CheckSquare,
     command: (editor) => editor.chain().focus().toggleTaskList().run(),
+  },
+  {
+    title: "Toggle List",
+    icon: ChevronRight,
+    command: (editor) => {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: 'toggleList',
+          content: [
+            { type: 'toggleSummary', content: [{ type: 'text', text: 'Toggle' }] },
+            { type: 'toggleContent', content: [{ type: 'paragraph' }] },
+          ],
+        })
+        .run();
+    },
+  },
+  {
+    title: "Table",
+    icon: Table2,
+    command: (editor) => {
+      editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    },
+  },
+  {
+    title: "Callout",
+    icon: Lightbulb,
+    command: (editor) => {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: 'callout',
+          attrs: { emoji: '\u{1F4A1}' },
+          content: [{ type: 'text', text: 'Callout text...' }],
+        })
+        .run();
+    },
+  },
+  {
+    title: "Image",
+    icon: ImageIcon,
+    command: (editor) => {
+      const url = window.prompt('Image URL');
+      if (url) {
+        editor.chain().focus().setImage({ src: url }).run();
+      }
+    },
   },
 ];
 

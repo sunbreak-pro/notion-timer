@@ -6,6 +6,7 @@ import {
   Settings,
   Pencil,
   PanelLeft,
+  Lightbulb,
 } from "lucide-react";
 import type { SectionId } from "../../types/navigation";
 import { useTimerContext } from "../../hooks/useTimerContext";
@@ -24,6 +25,7 @@ const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] =
     { id: "calendar", label: "Calendar", icon: Calendar },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "settings", label: "Settings", icon: Settings },
+    { id: "tips", label: "Tips", icon: Lightbulb },
   ];
 
 export function LeftSidebar({

@@ -13,6 +13,7 @@ interface SectionItem {
   node?: TaskNode;
   label: string;
   depth: number;
+  folderId?: string;
 }
 
 export function TaskSelector({ currentTitle }: TaskSelectorProps) {
@@ -43,18 +44,67 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
     }
   }, [isOpen]);
 
+  // Parse "FolderName/taskName" input pattern
+  const parsedInput = useMemo(() => {
+    const idx = newTaskValue.indexOf('/');
+    if (idx < 0) return { folderName: '', taskName: newTaskValue, folder: null as TaskNode | null };
+    const folderName = newTaskValue.substring(0, idx).trim();
+    const taskName = newTaskValue.substring(idx + 1).trim();
+    const rootChildren = getChildren(null);
+    const folder = rootChildren.find(
+      n => n.type === 'folder' && n.title.toLowerCase() === folderName.toLowerCase()
+    ) ?? null;
+    return { folderName, taskName, folder };
+  }, [newTaskValue, getChildren]);
+
   // Build hierarchical list of TODO tasks
   const items = useMemo(() => {
     const result: SectionItem[] = [];
+    const rootChildren = getChildren(null);
+
+    // If a folder is matched, show only that folder's tasks
+    if (parsedInput.folder) {
+      const collectTasks = (parentId: string): TaskNode[] => {
+        const children = getChildren(parentId);
+        const tasks: TaskNode[] = [];
+        children.forEach((child) => {
+          if (child.type === "task" && child.status === "TODO") {
+            tasks.push(child);
+          } else if (child.type === "folder") {
+            tasks.push(...collectTasks(child.id));
+          }
+        });
+        return tasks;
+      };
+
+      const folderTasks = collectTasks(parsedInput.folder.id);
+      const filterText = parsedInput.taskName.toLowerCase();
+      const filtered = filterText
+        ? folderTasks.filter(t => t.title.toLowerCase().includes(filterText))
+        : folderTasks;
+
+      if (filtered.length > 0) {
+        result.push({ type: "header", label: parsedInput.folder.title, depth: 0, folderId: parsedInput.folder.id });
+        filtered.forEach((t) =>
+          result.push({ type: "task", node: t, label: t.title, depth: 1 })
+        );
+      }
+      return result;
+    }
+
+    // Default: show all tasks, optionally filtered by input text
+    const filterText = newTaskValue.trim().toLowerCase();
 
     // Inbox tasks
-    const rootChildren = getChildren(null);
     const inboxTasks = rootChildren.filter(
       (n) => n.type === "task" && n.status === "TODO"
     );
-    if (inboxTasks.length > 0) {
+    const filteredInbox = filterText
+      ? inboxTasks.filter(t => t.title.toLowerCase().includes(filterText))
+      : inboxTasks;
+    if (filteredInbox.length > 0) {
       result.push({ type: "header", label: "Inbox", depth: 0 });
-      inboxTasks.forEach((t) =>
+      filteredInbox.forEach((t) =>
         result.push({ type: "task", node: t, label: t.title, depth: 1 })
       );
     }
@@ -76,36 +126,55 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
       };
 
       const folderTasks = collectTasks(folder.id);
-      if (folderTasks.length > 0) {
-        result.push({ type: "header", label: folder.title, depth: 0 });
-        folderTasks.forEach((t) =>
+      const filtered = filterText
+        ? folderTasks.filter(t => t.title.toLowerCase().includes(filterText))
+        : folderTasks;
+      if (filtered.length > 0) {
+        result.push({ type: "header", label: folder.title, depth: 0, folderId: folder.id });
+        filtered.forEach((t) =>
           result.push({ type: "task", node: t, label: t.title, depth: 1 })
         );
       }
     });
 
     return result;
-  }, [getChildren]);
+  }, [getChildren, parsedInput, newTaskValue]);
 
   const handleSelectTask = (task: TaskNode) => {
     timer.openForTask(task.id, task.title, task.workDurationMinutes);
+    setNewTaskValue("");
     setIsOpen(false);
   };
 
   const handleCreateTask = () => {
-    const trimmed = newTaskValue.trim();
-    if (!trimmed) return;
-    const newNode = addNode("task", null, trimmed);
-    if (!newNode) return;
-    timer.openForTask(newNode.id, newNode.title);
+    if (parsedInput.folder && parsedInput.taskName) {
+      const newNode = addNode("task", parsedInput.folder.id, parsedInput.taskName);
+      if (!newNode) return;
+      timer.openForTask(newNode.id, newNode.title);
+    } else {
+      const trimmed = newTaskValue.trim();
+      if (!trimmed) return;
+      const newNode = addNode("task", null, trimmed);
+      if (!newNode) return;
+      timer.openForTask(newNode.id, newNode.title);
+    }
     setNewTaskValue("");
     setIsOpen(false);
+  };
+
+  const handleHeaderClick = (folderName: string) => {
+    setNewTaskValue(`${folderName}/`);
+    inputRef.current?.focus();
   };
 
   const handleClearTask = () => {
     timer.clearTask();
     setIsOpen(false);
   };
+
+  const placeholder = parsedInput.folder
+    ? `New task in ${parsedInput.folder.title}...`
+    : "Create new task...";
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -134,7 +203,7 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
                 if (e.key === "Enter") handleCreateTask();
                 if (e.key === "Escape") setIsOpen(false);
               }}
-              placeholder="Create new task..."
+              placeholder={placeholder}
               className="flex-1 bg-transparent outline-none text-sm text-notion-text placeholder:text-notion-text-secondary"
             />
           </div>
@@ -144,9 +213,12 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
             {items.map((item, idx) => {
               if (item.type === "header") {
                 return (
-                  <div
+                  <button
                     key={`header-${idx}`}
-                    className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-notion-text-secondary"
+                    onClick={() => item.folderId && handleHeaderClick(item.label)}
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-notion-text-secondary ${
+                      item.folderId ? 'hover:bg-notion-hover cursor-pointer' : ''
+                    }`}
                   >
                     {item.label === "Inbox" ? (
                       <Inbox size={12} />
@@ -154,7 +226,7 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
                       <Folder size={12} />
                     )}
                     <span>{item.label}</span>
-                  </div>
+                  </button>
                 );
               }
 

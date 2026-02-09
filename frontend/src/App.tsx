@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout";
 import { TaskDetail } from "./components/TaskDetail";
 import { WorkScreen } from "./components/WorkScreen";
 import { Settings } from "./components/Settings";
+import { Tips } from "./components/Tips";
 import { CalendarView } from "./components/Calendar/CalendarView";
 import { AnalyticsView } from "./components/Analytics/AnalyticsView";
 import { useTimerContext } from "./hooks/useTimerContext";
@@ -56,6 +57,10 @@ function App() {
     updateNode(selectedTaskId, { scheduledAt });
   };
 
+  const handleFolderColorChange = (folderId: string, color: string) => {
+    updateNode(folderId, { color });
+  };
+
   const handleOpenTimerModal = () => {
     setIsTimerModalOpen(true);
   };
@@ -95,6 +100,13 @@ function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+, → Settings (works even when input is focused)
+      if (e.metaKey && e.code === 'Comma') {
+        e.preventDefault();
+        setActiveSection('settings');
+        return;
+      }
+
       if (isInputFocused()) return;
 
       if (e.key === ' ') {
@@ -138,6 +150,7 @@ function App() {
             onUpdateContent={handleUpdateContent}
             onDurationChange={handleDurationChange}
             onScheduledAtChange={handleScheduledAtChange}
+            onFolderColorChange={handleFolderColorChange}
             onNavigateToSettings={() => setActiveSection('settings')}
             folderTag={selectedTask ? getFolderTagForTask(selectedTask.id) : undefined}
             taskColor={selectedTask ? getTaskColor(selectedTask.id) : undefined}
@@ -151,6 +164,8 @@ function App() {
         return <AnalyticsView />;
       case "settings":
         return <Settings />;
+      case "tips":
+        return <Tips />;
       default:
         return null;
     }

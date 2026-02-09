@@ -14,12 +14,23 @@ export function AnalyticsView() {
       ? Math.round((completed.length / tasks.length) * 100)
       : 0;
 
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const todayTasks = tasks.filter(t => (t.scheduledAt ?? t.createdAt)?.substring(0, 10) === todayStr);
+    const todayCompleted = todayTasks.filter(t => t.status === 'DONE');
+    const todayCompletionRate = todayTasks.length > 0
+      ? Math.round((todayCompleted.length / todayTasks.length) * 100)
+      : 0;
+
     return {
       totalTasks: tasks.length,
       completedTasks: completed.length,
       incompleteTasks: incomplete.length,
       totalFolders: folders.length,
       completionRate,
+      todayTotal: todayTasks.length,
+      todayCompleted: todayCompleted.length,
+      todayCompletionRate,
     };
   }, [nodes]);
 
@@ -55,10 +66,29 @@ export function AnalyticsView() {
           />
         </div>
 
-        {/* Completion rate bar */}
+        {/* Today's completion rate */}
+        <div className="bg-notion-bg-secondary rounded-lg p-4 mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-notion-text">Today&apos;s Completion Rate</span>
+            <span className="text-sm font-bold text-notion-success">
+              {stats.todayCompletionRate}%
+              <span className="text-xs font-normal text-notion-text-secondary ml-1">
+                ({stats.todayCompleted}/{stats.todayTotal})
+              </span>
+            </span>
+          </div>
+          <div className="w-full h-3 bg-notion-border rounded-full overflow-hidden">
+            <div
+              className="h-full bg-notion-success rounded-full transition-all duration-500"
+              style={{ width: `${stats.todayCompletionRate}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Total completion rate */}
         <div className="bg-notion-bg-secondary rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-notion-text">Completion Rate</span>
+            <span className="text-sm font-medium text-notion-text">Total Completion Rate</span>
             <span className="text-sm font-bold text-notion-accent">{stats.completionRate}%</span>
           </div>
           <div className="w-full h-3 bg-notion-border rounded-full overflow-hidden">

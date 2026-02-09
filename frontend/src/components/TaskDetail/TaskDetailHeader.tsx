@@ -6,6 +6,7 @@ import { DurationPicker } from '../shared/DurationPicker';
 import { formatDuration } from '../../utils/duration';
 import { DateTimePicker } from '../Calendar/DateTimePicker';
 import { FolderTag } from '../shared/FolderTag';
+import { ColorPicker } from '../shared/ColorPicker';
 
 interface TaskDetailHeaderProps {
   task: TaskNode;
@@ -15,6 +16,7 @@ interface TaskDetailHeaderProps {
   onDelete: () => void;
   onDurationChange?: (minutes: number) => void;
   onScheduledAtChange?: (scheduledAt: string | undefined) => void;
+  onFolderColorChange?: (folderId: string, color: string) => void;
   folderTag?: string;
   taskColor?: string;
 }
@@ -27,10 +29,12 @@ export function TaskDetailHeader({
   onDelete,
   onDurationChange,
   onScheduledAtChange,
+  onFolderColorChange,
   folderTag,
   taskColor,
 }: TaskDetailHeaderProps) {
   const [showDurationPicker, setShowDurationPicker] = useState(false);
+  const [colorPickerAncestorId, setColorPickerAncestorId] = useState<string | null>(null);
   const ancestors = getAncestors(task.id, allNodes);
   const duration = task.workDurationMinutes ?? globalWorkDuration;
   const isCustomDuration = task.workDurationMinutes != null;
@@ -40,13 +44,31 @@ export function TaskDetailHeader({
       {ancestors.length > 0 && (
         <div className="flex items-center gap-1.5 text-xs text-notion-text-secondary">
           {ancestors.map((ancestor, i) => (
-            <span key={ancestor.id} className="flex items-center gap-1.5">
+            <span key={ancestor.id} className="flex items-center gap-1.5 relative">
               {i > 0 && <span>/</span>}
-              <span>{ancestor.title}</span>
+              {ancestor.type === 'folder' && onFolderColorChange ? (
+                <>
+                  <button
+                    onClick={() => setColorPickerAncestorId(
+                      colorPickerAncestorId === ancestor.id ? null : ancestor.id
+                    )}
+                    className="hover:text-notion-text transition-colors cursor-pointer"
+                  >
+                    {ancestor.title}
+                  </button>
+                  {colorPickerAncestorId === ancestor.id && (
+                    <ColorPicker
+                      currentColor={ancestor.color}
+                      onSelect={(color) => onFolderColorChange(ancestor.id, color)}
+                      onClose={() => setColorPickerAncestorId(null)}
+                    />
+                  )}
+                </>
+              ) : (
+                <span>{ancestor.title}</span>
+              )}
             </span>
           ))}
-          <span>/</span>
-          {folderTag && <FolderTag tag={folderTag} color={taskColor} />}
         </div>
       )}
       {!ancestors.length && folderTag && (

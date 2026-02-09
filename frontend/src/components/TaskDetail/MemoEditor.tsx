@@ -2,6 +2,13 @@ import { useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { Image } from '@tiptap/extension-image';
+import { ToggleList, ToggleSummary, ToggleContent } from '../../extensions/ToggleList';
+import { Callout } from '../../extensions/Callout';
 import { SlashCommandMenu } from './SlashCommandMenu';
 
 interface MemoEditorProps {
@@ -34,6 +41,15 @@ export function MemoEditor({ taskId, initialContent, onUpdate }: MemoEditorProps
       Placeholder.configure({
         placeholder: "Type '/' for commands...",
       }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableCell,
+      TableHeader,
+      Image,
+      ToggleList,
+      ToggleSummary,
+      ToggleContent,
+      Callout,
     ],
     content: initialContent ? tryParseJSON(initialContent) : undefined,
     onUpdate: ({ editor }) => {

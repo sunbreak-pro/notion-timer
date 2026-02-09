@@ -4,8 +4,9 @@ interface CalendarHeaderProps {
   year: number;
   month: number;
   viewMode: 'month' | 'week';
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
+  weekStartDate?: Date;
+  onPrev: () => void;
+  onNext: () => void;
   onToday: () => void;
   onViewModeChange: (mode: 'month' | 'week') => void;
 }
@@ -15,30 +16,60 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
+const SHORT_MONTH_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+function formatWeekRange(weekStart: Date): string {
+  const end = new Date(weekStart);
+  end.setDate(end.getDate() + 6);
+
+  const sMonth = SHORT_MONTH_NAMES[weekStart.getMonth()];
+  const eMonth = SHORT_MONTH_NAMES[end.getMonth()];
+  const sDay = weekStart.getDate();
+  const eDay = end.getDate();
+  const sYear = weekStart.getFullYear();
+  const eYear = end.getFullYear();
+
+  if (sYear !== eYear) {
+    return `${sMonth} ${sDay}, ${sYear} - ${eMonth} ${eDay}, ${eYear}`;
+  }
+  if (weekStart.getMonth() !== end.getMonth()) {
+    return `${sMonth} ${sDay} - ${eMonth} ${eDay}, ${sYear}`;
+  }
+  return `${sMonth} ${sDay} - ${eDay}, ${sYear}`;
+}
+
 export function CalendarHeader({
   year,
   month,
   viewMode,
-  onPrevMonth,
-  onNextMonth,
+  weekStartDate,
+  onPrev,
+  onNext,
   onToday,
   onViewModeChange,
 }: CalendarHeaderProps) {
+  const title = viewMode === 'week' && weekStartDate
+    ? formatWeekRange(weekStartDate)
+    : `${MONTH_NAMES[month]} ${year}`;
+
   return (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-3">
         <h2 className="text-xl font-bold text-notion-text">
-          {MONTH_NAMES[month]} {year}
+          {title}
         </h2>
         <div className="flex items-center gap-1">
           <button
-            onClick={onPrevMonth}
+            onClick={onPrev}
             className="p-1 rounded-md text-notion-text-secondary hover:bg-notion-hover hover:text-notion-text transition-colors"
           >
             <ChevronLeft size={18} />
           </button>
           <button
-            onClick={onNextMonth}
+            onClick={onNext}
             className="p-1 rounded-md text-notion-text-secondary hover:bg-notion-hover hover:text-notion-text transition-colors"
           >
             <ChevronRight size={18} />

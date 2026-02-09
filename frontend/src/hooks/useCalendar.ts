@@ -1,7 +1,13 @@
 import { useMemo } from 'react';
 import type { TaskNode } from '../types/taskTree';
 
-export function useCalendar(nodes: TaskNode[], year: number, month: number, filter: 'incomplete' | 'completed') {
+export function useCalendar(
+  nodes: TaskNode[],
+  year: number,
+  month: number,
+  filter: 'incomplete' | 'completed',
+  weekStartDate?: Date,
+) {
   const tasksByDate = useMemo(() => {
     const map = new Map<string, TaskNode[]>();
     const filtered = filter === 'completed'
@@ -50,17 +56,17 @@ export function useCalendar(nodes: TaskNode[], year: number, month: number, filt
   }, [year, month]);
 
   const weekDays = useMemo(() => {
-    const today = new Date(year, month);
-    const startOfWeek = new Date(today);
-    const day = startOfWeek.getDay();
-    startOfWeek.setDate(startOfWeek.getDate() - day);
+    const anchor = weekStartDate ?? new Date();
+    const startOfWeek = new Date(anchor);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
 
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(startOfWeek);
       d.setDate(d.getDate() + i);
       return { date: d, isCurrentMonth: d.getMonth() === month };
     });
-  }, [year, month]);
+  }, [weekStartDate, month]);
 
   return { tasksByDate, calendarDays, weekDays };
 }
