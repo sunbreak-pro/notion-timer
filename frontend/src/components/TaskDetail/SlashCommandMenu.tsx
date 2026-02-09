@@ -1,6 +1,6 @@
-import { useRef } from 'react';
-import { Extension } from '@tiptap/core';
-import type { Editor } from '@tiptap/react';
+import { useRef } from "react";
+import { Extension } from "@tiptap/core";
+import type { Editor } from "@tiptap/react";
 import {
   Heading1,
   Heading2,
@@ -10,9 +10,10 @@ import {
   Code2,
   Quote,
   Minus,
-} from 'lucide-react';
-import type { ComponentType } from 'react';
-import { useSlashCommand } from '../../hooks/useSlashCommand';
+  CheckSquare,
+} from "lucide-react";
+import type { ComponentType } from "react";
+import { useSlashCommand } from "../../hooks/useSlashCommand";
 
 interface CommandItem {
   title: string;
@@ -22,44 +23,57 @@ interface CommandItem {
 
 const COMMANDS: CommandItem[] = [
   {
-    title: 'Heading 1',
+    title: "Heading 1",
     icon: Heading1,
-    command: (editor) => editor.chain().focus().toggleHeading({ level: 1 }).run(),
+    command: (editor) =>
+      editor.chain().focus().toggleHeading({ level: 1 }).run(),
   },
   {
-    title: 'Heading 2',
+    title: "Heading 2",
     icon: Heading2,
-    command: (editor) => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+    command: (editor) =>
+      editor.chain().focus().toggleHeading({ level: 2 }).run(),
   },
   {
-    title: 'Heading 3',
+    title: "Heading 3",
     icon: Heading3,
-    command: (editor) => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+    command: (editor) =>
+      editor.chain().focus().toggleHeading({ level: 3 }).run(),
   },
   {
-    title: 'Bullet List',
+    title: "Bullet List",
     icon: List,
     command: (editor) => editor.chain().focus().toggleBulletList().run(),
   },
   {
-    title: 'Ordered List',
+    title: "Ordered List",
     icon: ListOrdered,
     command: (editor) => editor.chain().focus().toggleOrderedList().run(),
   },
   {
-    title: 'Code Block',
+    title: "Code Block",
     icon: Code2,
     command: (editor) => editor.chain().focus().toggleCodeBlock().run(),
   },
   {
-    title: 'Blockquote',
+    title: "Blockquote",
     icon: Quote,
     command: (editor) => editor.chain().focus().toggleBlockquote().run(),
   },
   {
-    title: 'Horizontal Rule',
+    title: "Horizontal Rule",
     icon: Minus,
     command: (editor) => editor.chain().focus().setHorizontalRule().run(),
+  },
+  {
+    title: "Paragraph",
+    icon: Minus,
+    command: (editor) => editor.chain().focus().setParagraph().run(),
+  },
+  {
+    title: "Task List",
+    icon: CheckSquare,
+    command: (editor) => editor.chain().focus().toggleTaskList().run(),
   },
 ];
 
@@ -90,7 +104,7 @@ export function SlashCommandMenu({ editor }: SlashCommandMenuProps) {
               executeCommand(i);
             }}
             className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-notion-text hover:bg-notion-hover transition-colors ${
-              i === selectedIndex ? 'bg-notion-hover' : ''
+              i === selectedIndex ? "bg-notion-hover" : ""
             }`}
           >
             <Icon size={16} />
@@ -103,5 +117,5 @@ export function SlashCommandMenu({ editor }: SlashCommandMenuProps) {
 }
 
 export const SlashCommandExtension = Extension.create({
-  name: 'slashCommand',
+  name: "slashCommand",
 });

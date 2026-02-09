@@ -18,6 +18,8 @@ interface TaskDetailProps {
   onDurationChange?: (minutes: number) => void;
   onScheduledAtChange?: (scheduledAt: string | undefined) => void;
   onNavigateToSettings?: () => void;
+  folderTag?: string;
+  taskColor?: string;
 }
 
 export function TaskDetail({
@@ -30,6 +32,8 @@ export function TaskDetail({
   onDurationChange,
   onScheduledAtChange,
   onNavigateToSettings,
+  folderTag,
+  taskColor,
 }: TaskDetailProps) {
   if (!task) {
     return <EmptyState />;
@@ -46,6 +50,8 @@ export function TaskDetail({
           onDelete={onDelete}
           onDurationChange={onDurationChange}
           onScheduledAtChange={onScheduledAtChange}
+          folderTag={folderTag}
+          taskColor={taskColor}
         />
         <div className="mt-6">
           <Suspense fallback={<div className="min-h-50" />}>

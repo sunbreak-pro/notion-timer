@@ -5,6 +5,7 @@ import { getAncestors } from '../../utils/breadcrumb';
 import { DurationPicker } from '../shared/DurationPicker';
 import { formatDuration } from '../../utils/duration';
 import { DateTimePicker } from '../Calendar/DateTimePicker';
+import { FolderTag } from '../shared/FolderTag';
 
 interface TaskDetailHeaderProps {
   task: TaskNode;
@@ -14,6 +15,8 @@ interface TaskDetailHeaderProps {
   onDelete: () => void;
   onDurationChange?: (minutes: number) => void;
   onScheduledAtChange?: (scheduledAt: string | undefined) => void;
+  folderTag?: string;
+  taskColor?: string;
 }
 
 export function TaskDetailHeader({
@@ -24,6 +27,8 @@ export function TaskDetailHeader({
   onDelete,
   onDurationChange,
   onScheduledAtChange,
+  folderTag,
+  taskColor,
 }: TaskDetailHeaderProps) {
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const ancestors = getAncestors(task.id, allNodes);
@@ -41,6 +46,12 @@ export function TaskDetailHeader({
             </span>
           ))}
           <span>/</span>
+          {folderTag && <FolderTag tag={folderTag} color={taskColor} />}
+        </div>
+      )}
+      {!ancestors.length && folderTag && (
+        <div className="flex items-center">
+          <FolderTag tag={folderTag} color={taskColor} />
         </div>
       )}
 

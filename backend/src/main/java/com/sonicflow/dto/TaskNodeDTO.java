@@ -14,5 +14,6 @@ public record TaskNodeDTO(
     String completedAt,
     String scheduledAt,
     String content,
-    Integer workDurationMinutes
+    Integer workDurationMinutes,
+    String color
 ) {}

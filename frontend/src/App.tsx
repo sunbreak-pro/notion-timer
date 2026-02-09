@@ -16,7 +16,7 @@ function App() {
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const timer = useTimerContext();
-  const { nodes, addNode, updateNode, softDelete } = useTaskTreeContext();
+  const { nodes, addNode, updateNode, softDelete, getTaskColor, getFolderTagForTask } = useTaskTreeContext();
 
   useMigration();
 
@@ -77,6 +77,15 @@ function App() {
     setActiveSection('tasks');
   };
 
+  const handleCalendarCreateTask = useCallback((date: Date) => {
+    const scheduledDate = new Date(date);
+    scheduledDate.setHours(12, 0, 0, 0);
+    const newNode = addNode('task', null, 'Untitled', { scheduledAt: scheduledDate.toISOString() });
+    if (!newNode) return;
+    timer.openForTask(newNode.id, newNode.title, newNode.workDurationMinutes);
+    setIsTimerModalOpen(true);
+  }, [addNode, timer]);
+
   const isInputFocused = useCallback(() => {
     const tag = document.activeElement?.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
@@ -130,12 +139,14 @@ function App() {
             onDurationChange={handleDurationChange}
             onScheduledAtChange={handleScheduledAtChange}
             onNavigateToSettings={() => setActiveSection('settings')}
+            folderTag={selectedTask ? getFolderTagForTask(selectedTask.id) : undefined}
+            taskColor={selectedTask ? getTaskColor(selectedTask.id) : undefined}
           />
         );
       case "session":
         return <WorkScreen />;
       case "calendar":
-        return <CalendarView onSelectTask={handleCalendarSelectTask} />;
+        return <CalendarView onSelectTask={handleCalendarSelectTask} onCreateTask={handleCalendarCreateTask} />;
       case "analytics":
         return <AnalyticsView />;
       case "settings":

@@ -43,6 +43,8 @@ public class Task {
     @Column
     private Integer workDurationMinutes;
 
+    private String color;
+
     public String getId() {
         return id;
     }
@@ -153,5 +155,13 @@ public class Task {
 
     public void setWorkDurationMinutes(Integer workDurationMinutes) {
         this.workDurationMinutes = workDurationMinutes;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 }

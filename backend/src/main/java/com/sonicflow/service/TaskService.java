@@ -49,6 +49,7 @@ public class TaskService {
         if (dto.content() != null) task.setContent(dto.content());
         if (dto.workDurationMinutes() != null) task.setWorkDurationMinutes(dto.workDurationMinutes());
         if (dto.scheduledAt() != null) task.setScheduledAt(parseDateTime(dto.scheduledAt()));
+        if (dto.color() != null) task.setColor(dto.color().isEmpty() ? null : dto.color());
 
         if (dto.status() != null) {
             TaskStatus newStatus = TaskStatus.valueOf(dto.status());
@@ -144,7 +145,8 @@ public class TaskService {
                 formatDateTime(t.getCompletedAt()),
                 formatDateTime(t.getScheduledAt()),
                 t.getContent(),
-                t.getWorkDurationMinutes()
+                t.getWorkDurationMinutes(),
+                t.getColor()
         );
     }
 
@@ -164,6 +166,7 @@ public class TaskService {
         t.setScheduledAt(parseDateTime(dto.scheduledAt()));
         t.setContent(dto.content());
         t.setWorkDurationMinutes(dto.workDurationMinutes());
+        t.setColor(dto.color());
         return t;
     }
 

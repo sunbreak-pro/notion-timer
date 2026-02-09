@@ -1,6 +1,11 @@
 import { useCallback } from 'react';
 import type { TaskNode, NodeType, TaskStatus } from '../types/taskTree';
 import { MAX_FOLDER_DEPTH } from '../types/taskTree';
+import { getColorByIndex } from '../constants/folderColors';
+
+interface AddNodeOptions {
+  scheduledAt?: string;
+}
 
 export function useTaskTreeCRUD(
   nodes: TaskNode[],
@@ -8,13 +13,17 @@ export function useTaskTreeCRUD(
   getNodeDepth: (nodeId: string) => number,
   generateId: (type: NodeType) => string,
 ) {
-  const addNode = useCallback((type: NodeType, parentId: string | null, title: string) => {
+  const addNode = useCallback((type: NodeType, parentId: string | null, title: string, options?: AddNodeOptions) => {
     if (type === 'folder' && parentId !== null) {
       const parentDepth = getNodeDepth(parentId);
       if (parentDepth + 1 >= MAX_FOLDER_DEPTH) return null;
     }
 
     const siblings = nodes.filter(n => !n.isDeleted && n.parentId === parentId);
+    const folderColor = type === 'folder'
+      ? getColorByIndex(nodes.filter(n => n.type === 'folder' && !n.isDeleted).length)
+      : undefined;
+
     const newNode: TaskNode = {
       id: generateId(type),
       type,
@@ -24,7 +33,8 @@ export function useTaskTreeCRUD(
       status: type === 'task' ? 'TODO' : undefined,
       isExpanded: type !== 'task' ? true : undefined,
       createdAt: new Date().toISOString(),
-      scheduledAt: type === 'task' ? new Date().toISOString() : undefined,
+      scheduledAt: type === 'task' ? (options?.scheduledAt ?? new Date().toISOString()) : undefined,
+      color: folderColor,
     };
     persist([...nodes, newNode]);
     return newNode;

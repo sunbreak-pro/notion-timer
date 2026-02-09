@@ -17,6 +17,7 @@ interface TaskNodeDTO {
   scheduledAt: string | null;
   content: string | null;
   workDurationMinutes: number | null;
+  color: string | null;
 }
 
 function toDTO(node: TaskNode): TaskNodeDTO {
@@ -35,6 +36,7 @@ function toDTO(node: TaskNode): TaskNodeDTO {
     scheduledAt: node.scheduledAt ?? null,
     content: node.content ?? null,
     workDurationMinutes: node.workDurationMinutes ?? null,
+    color: node.color ?? null,
   };
 }
 
@@ -54,6 +56,7 @@ function fromDTO(dto: TaskNodeDTO): TaskNode {
     scheduledAt: dto.scheduledAt ?? undefined,
     content: dto.content ?? undefined,
     workDurationMinutes: dto.workDurationMinutes ?? undefined,
+    color: dto.color ?? undefined,
   };
 }
 

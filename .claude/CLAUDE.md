@@ -25,18 +25,29 @@ cd backend && ./gradlew build       # ビルド
 
 両方同時に起動が必要（CORS: localhost:5173 → localhost:8080）
 
+Viteが`/api`リクエストをバックエンド(8080)にプロキシするため、フロントエンドからは相対パス(`/api/...`)でアクセス可能。
+
+### H2 データベースコンソール
+```
+http://localhost:8080/h2-console
+JDBC URL: jdbc:h2:file:./data/sonicflow
+Username: sa / Password: (空)
+```
+
 ---
 
 ## アーキテクチャ
 
 ### 現在のデータ永続化（重要）
-**フロントエンドはlocalStorageのみで動作**。バックエンドREST APIは構築済みだが未接続。
-- タスクツリー: `localStorage("sonic-flow-task-tree")`
-- タイマー設定: `localStorage("sonic-flow-work-duration")`
-- サウンド設定: `localStorage("sonic-flow-sound-mixer")`
+**タスクツリーはバックエンドAPI接続済み**（Phase 7）。Timer/SoundはlocalStorageのみで動作。
+- タスクツリー: `localStorage("sonic-flow-task-tree")` + バックエンドAPI同期（楽観的更新パターン）
+- タイマー設定: `localStorage("sonic-flow-work-duration")`（バックエンド未接続）
+- サウンド設定: `localStorage("sonic-flow-sound-mixer")`（バックエンド未接続）
 - テーマ設定: `localStorage`経由
 
-将来の設計目標: すべてのユーザーデータをバックエンド（H2 DB）に移行し、デバイス間連携を実現する。
+Phase 7で**楽観的更新パターン**を導入済み: UI→localStorage即時反映→バックエンドへ500msデバウンス非同期同期。バックエンド不可用時はlocalStorageフォールバック。
+
+⚠️ **`ddl-auto=create-drop`**: バックエンド再起動でDBスキーマが再作成される。本番移行時は`update`に変更必須。
 
 ### フロントエンド構成
 
@@ -45,7 +56,7 @@ cd backend && ./gradlew build       # ビルド
 ThemeProvider → TaskTreeProvider → TimerProvider → App
 ```
 
-**ルーティング**: React Routerなし。`App.tsx`が`activeSection`状態で3セクション（tasks/session/settings）を切り替え。
+**ルーティング**: React Routerなし。`App.tsx`が`activeSection`状態で5セクション（tasks/session/calendar/analytics/settings）を切り替え。
 
 **レイアウト構成** (3カラム):
 ```
@@ -54,7 +65,7 @@ App (状態オーケストレーター)
 ├── SubSidebar (リサイズ可能160-400px)
 │   └── TaskTree (Inbox + Projects + Completed)
 └── MainContent (flex-1)
-    └── TaskDetail | WorkScreen | Settings
+    └── TaskDetail | WorkScreen | CalendarView | AnalyticsView | Settings
 ```
 WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerModalOpen`）。
 
@@ -78,7 +89,10 @@ WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerMo
 
 **ドラッグ&ドロップ**: `@dnd-kit`使用。`moveNode`（並び替え）と`moveNodeInto`（階層移動）は別操作。循環参照防止あり。
 
-**リッチテキスト**: TipTap (`@tiptap/react`) でタスクメモ編集（MemoEditor）
+**リッチテキスト**: TipTap (`@tiptap/react`) でタスクメモ編集（MemoEditor）。`React.lazy`で遅延ロード（バンドル57%削減）。
+
+**localStorage キー** (`constants/storageKeys.ts`):
+`sonic-flow-task-tree`, `sonic-flow-work-duration`, `sonic-flow-break-duration`, `sonic-flow-long-break-duration`, `sonic-flow-sessions-before-long-break`, `sonic-flow-sound-mixer`, `sonic-flow-theme`, `sonic-flow-left-sidebar-open`, `sonic-flow-right-sidebar-open`, `sonic-flow-right-sidebar-width`, `sonic-flow-notifications-enabled`
 
 ### バックエンド構成
 
@@ -88,7 +102,14 @@ WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerMo
 - JPA関連なし（TimerSession.taskIdは素のLong、ForeignKeyではない）
 - `@PrePersist`でタイムスタンプ自動設定
 
-**API**: Tasks(`/api/tasks`), Timer(`/api/timer-*`), Sound(`/api/sound-*`) の3ドメイン。AI(`/api/ai/advice`)は未実装。
+**API**:
+- Tasks: `GET /api/tasks/tree`, `PUT /api/tasks/tree`(一括同期), `POST /api/tasks`, `PUT /api/tasks/{id}`, `DELETE /api/tasks/{id}/soft`, `POST /api/tasks/{id}/restore`, `DELETE /api/tasks/{id}`
+- Timer: `/api/timer-sessions`, `/api/timer-settings`
+- Sound: `/api/sound-settings`, `/api/sound-presets`
+- AI: `POST /api/ai/advice`, `GET/PUT /api/ai/settings` — Gemini API (`SONICFLOW_AI_API_KEY`環境変数必須)
+- Migration: `POST /api/migrate/tasks` (localStorage→DB一括インポート)
+
+**IDはString型**: フロントエンドの`"task-xxx"`/`"folder-xxx"`形式に統一済み（Phase 7）。
 
 ---
 

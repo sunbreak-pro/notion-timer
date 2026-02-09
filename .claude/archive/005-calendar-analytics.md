@@ -105,28 +105,32 @@ components/Calendar/
 
 ## 実装フェーズ
 
-### Phase 1: カレンダーUI骨格
+### Phase 1: カレンダーUI骨格 ✅
 - `SectionId` 拡張、Sidebar / MainContent にルーティング追加
 - `CalendarView`, `CalendarHeader`, `MonthlyView` の基本レイアウト
 - 月表示グリッドの描画（タスク表示なし）
 - 週表示の基本レイアウト
 
-### Phase 2: `scheduledAt` フィールド追加
+### Phase 2: `scheduledAt` フィールド追加 ✅
 - `TaskNode` 型に `scheduledAt` 追加
 - `useTaskTree.addNode` でデフォルト値設定（`new Date().toISOString()`）
 - `DateTimePicker` コンポーネント作成
 - `TaskDetail` に DateTimePicker 統合
 
-### Phase 3: カレンダーへのタスク表示
+### Phase 3: カレンダーへのタスク表示 ✅
 - `useCalendar` フック作成（日付範囲のタスク抽出・グループ化）
 - `DayCell` にタスクリスト表示（最大2件 + 「+N件」）
 - `CalendarTaskItem` の省略表示・完了状態スタイリング
 - 週表示へのタスク配置
 
-### Phase 4: フィルタリング + Analytics スタブ
+### Phase 4: フィルタリング + Analytics スタブ ✅
 - 完了/未完了タブの実装
 - タブ切替によるフィルタロジック
-- `AnalyticsView` スタブ画面作成
+- `AnalyticsView` スタブ画面作成（基本統計: 総タスク数、完了数、進行中数、フォルダ数、完了率）
+
+### 設計との乖離点
+- DayCell: 設計では1日3件以上で「+N件」表示だが、実装では最大2件表示 + "+N more"
+- WeeklyView: 設計では時間軸ありだが、実装ではシンプルな1行×7列（時間軸なし）
 
 ## 技術的考慮事項
 

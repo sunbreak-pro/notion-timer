@@ -4,6 +4,8 @@ import { STORAGE_KEYS } from '../constants/storageKeys';
 import { useTaskTreeCRUD } from './useTaskTreeCRUD';
 import { useTaskTreeDeletion } from './useTaskTreeDeletion';
 import { useTaskTreeMovement } from './useTaskTreeMovement';
+import { resolveTaskColor } from '../utils/folderColor';
+import { getFolderTag } from '../utils/folderTag';
 import * as api from '../api/taskClient';
 
 const STORAGE_KEY = STORAGE_KEYS.TASK_TREE;
@@ -106,6 +108,9 @@ export function useTaskTreeAPI() {
   const deletion = useTaskTreeDeletion(nodes, persist);
   const movement = useTaskTreeMovement(nodes, persist, getNodeDepth);
 
+  const getTaskColor = useCallback((taskId: string) => resolveTaskColor(taskId, nodes), [nodes]);
+  const getFolderTagForTask = useCallback((taskId: string) => getFolderTag(taskId, nodes), [nodes]);
+
   return {
     nodes: activeNodes,
     deletedNodes,
@@ -113,6 +118,8 @@ export function useTaskTreeAPI() {
     isLoading,
     error,
     isBackendAvailable,
+    getTaskColor,
+    getFolderTagForTask,
     ...crud,
     ...deletion,
     ...movement,

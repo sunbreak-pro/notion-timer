@@ -18,4 +18,5 @@ export interface TaskNode {
   scheduledAt?: string;
   content?: string;
   workDurationMinutes?: number;
+  color?: string;
 }

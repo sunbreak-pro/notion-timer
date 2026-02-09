@@ -20,21 +20,22 @@ Phase 2でlocalStorage中心に移行したデータ永続化を、Spring Boot +
 ### データマイグレーション
 - localStorage → Backend への初回データ移行
 
-## 現状
+## 現状（Phase 7 実装後）
 
-- Backend側: 基本的なCRUD API実装済み（Phase 1のフラットTask構造）
-- Frontend側: 全てlocalStorage依存（`useTaskTree.ts`, `TimerContext.tsx`, `useLocalSoundMixer.ts`）
+- Backend側: Task Entity全面改修済み（String ID、ツリー構造対応、ソフトデリート）
+- Frontend側: **タスクツリーはAPI接続済み**（楽観的更新パターン + localStorageフォールバック）。Timer/SoundはlocalStorage依存のまま
 - CORS設定: 実装済み
+- データマイグレーション: `POST /api/migrate/tasks` 実装済み
 
 ## 主要タスク
 
-- [ ] Task Entityのツリー構造対応
-- [ ] Backend APIの更新（階層CRUD）
-- [ ] Axiosクライアント再導入
-- [ ] useTaskTree → API版フックへの置換
-- [ ] TimerContext → API版への置換
-- [ ] SoundMixer → API版への置換
-- [ ] データマイグレーション機能
+- [x] Task Entityのツリー構造対応
+- [x] Backend APIの更新（階層CRUD）
+- [x] Axiosクライアント再導入 → fetch APIで実装（方針変更）
+- [x] useTaskTree → API版フックへの置換
+- [ ] TimerContext → API版への置換（未実装）
+- [ ] SoundMixer → API版への置換（未実装）
+- [x] データマイグレーション機能
 
 ## 技術的考慮事項
 

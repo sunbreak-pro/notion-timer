@@ -3,14 +3,15 @@ import { useTaskTreeContext } from '../../hooks/useTaskTreeContext';
 import { useCalendar } from '../../hooks/useCalendar';
 import { CalendarHeader } from './CalendarHeader';
 import { MonthlyView } from './MonthlyView';
-import { WeeklyView } from './WeeklyView';
+import { WeeklyTimeGrid } from './WeeklyTimeGrid';
 
 interface CalendarViewProps {
   onSelectTask: (taskId: string) => void;
+  onCreateTask?: (date: Date) => void;
 }
 
-export function CalendarView({ onSelectTask }: CalendarViewProps) {
-  const { nodes } = useTaskTreeContext();
+export function CalendarView({ onSelectTask, onCreateTask }: CalendarViewProps) {
+  const { nodes, getTaskColor, getFolderTagForTask } = useTaskTreeContext();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -77,12 +78,18 @@ export function CalendarView({ onSelectTask }: CalendarViewProps) {
             days={calendarDays}
             tasksByDate={tasksByDate}
             onSelectTask={onSelectTask}
+            onCreateTask={onCreateTask}
+            getTaskColor={getTaskColor}
+            getFolderTag={getFolderTagForTask}
           />
         ) : (
-          <WeeklyView
+          <WeeklyTimeGrid
             days={weekDays}
             tasksByDate={tasksByDate}
             onSelectTask={onSelectTask}
+            onCreateTask={onCreateTask}
+            getTaskColor={getTaskColor}
+            getFolderTag={getFolderTagForTask}
           />
         )}
       </div>

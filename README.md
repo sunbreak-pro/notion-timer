@@ -66,6 +66,42 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 
 ## 開発ジャーナル
 
+### 2026-02-09 - Calendar Enhancement (Plan 006)
+
+#### フォルダカラーシステム
+- フォルダ作成時に10色パステルパレットから自動カラー割当
+- タスクは親フォルダのカラーを継承（`resolveTaskColor`）
+- バックエンド: Task entity + DTO に `color` カラム追加
+
+#### フォルダタグ
+- 親フォルダ階層パスをタグとして表示（例: `Projects/frontend`）
+- `FolderTag` コンポーネント（パステルカラーpill/badge）
+- TaskDetailHeader + CalendarTaskItem に表示
+
+#### カレンダーからタスク作成
+- DayCell hover時に `+` ボタン表示
+- クリック → 無題タスク作成（scheduledAt=クリック日付 12:00）→ WorkScreen モーダル即時表示
+- `addNode` に `options?: { scheduledAt?: string }` 引数追加
+
+#### Weekly表示 時間軸UI
+- Google Calendar風 `WeeklyTimeGrid` コンポーネント新規作成
+- 24時間タイムライン + 時刻ラベル + 水平グリッド線
+- フォルダカラー付きタスクブロック（`TimeGridTaskBlock`）
+- 現在時刻インジケーター（赤い水平線、毎分更新）
+- 重複タスクの横並びレイアウト（最大5列）
+- 空きスロットクリックで15分刻みスナップ付きタスク作成
+
+#### 新規ファイル
+- `frontend/src/constants/folderColors.ts` - カラーパレット
+- `frontend/src/constants/timeGrid.ts` - 時間グリッド定数
+- `frontend/src/utils/folderColor.ts` - カラー解決ユーティリティ
+- `frontend/src/utils/folderTag.ts` - タグパス計算ユーティリティ
+- `frontend/src/components/shared/FolderTag.tsx` - フォルダタグbadge
+- `frontend/src/components/Calendar/WeeklyTimeGrid.tsx` - 時間軸付き週表示
+- `frontend/src/components/Calendar/TimeGridTaskBlock.tsx` - タスクブロック
+
+---
+
 ### 2026-02-08 (3) - バグ修正 + Noise Mixer音声再生 + ポリッシュ
 
 #### バグ修正・技術的負債

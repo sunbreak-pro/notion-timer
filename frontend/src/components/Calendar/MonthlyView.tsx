@@ -8,9 +8,12 @@ interface MonthlyViewProps {
   days: { date: Date; isCurrentMonth: boolean }[];
   tasksByDate: Map<string, TaskNode[]>;
   onSelectTask: (taskId: string) => void;
+  onCreateTask?: (date: Date) => void;
+  getTaskColor?: (taskId: string) => string | undefined;
+  getFolderTag?: (taskId: string) => string;
 }
 
-export function MonthlyView({ days, tasksByDate, onSelectTask }: MonthlyViewProps) {
+export function MonthlyView({ days, tasksByDate, onSelectTask, onCreateTask, getTaskColor, getFolderTag }: MonthlyViewProps) {
   const today = new Date();
   const todayKey = formatDateKey(today);
 
@@ -34,6 +37,9 @@ export function MonthlyView({ days, tasksByDate, onSelectTask }: MonthlyViewProp
               isToday={key === todayKey}
               tasks={tasksByDate.get(key) ?? []}
               onSelectTask={onSelectTask}
+              onCreateTask={onCreateTask}
+              getTaskColor={getTaskColor}
+              getFolderTag={getFolderTag}
             />
           );
         })}
