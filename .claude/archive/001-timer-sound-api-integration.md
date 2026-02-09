@@ -1,6 +1,6 @@
 # 001: Timer/Sound バックエンドAPI接続
 
-> **Status**: `PENDING`
+> **Status**: `COMPLETED`
 > **Origin**: `feature_plans/004-backend-reintegration.md` の残タスク
 > **Goal**: Timer設定・セッション記録 と Sound設定 をバックエンドAPIに接続し、楽観的更新パターンで永続化する
 

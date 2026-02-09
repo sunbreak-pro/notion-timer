@@ -1,7 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { SOUND_TYPES } from '../constants/sounds';
 import { STORAGE_KEYS } from '../constants/storageKeys';
 import { useLocalStorage } from './useLocalStorage';
+import * as soundApi from '../api/soundClient';
 
 export interface SoundState {
   enabled: boolean;
@@ -24,13 +25,55 @@ export function useLocalSoundMixer() {
     getDefaultMixerState()
   );
 
+  // Load from backend on mount
+  useEffect(() => {
+    let cancelled = false;
+    soundApi.fetchSoundSettings()
+      .then((settings) => {
+        if (cancelled || settings.length === 0) return;
+        setMixer(prev => {
+          const next = { ...prev };
+          for (const s of settings) {
+            if (next[s.soundType]) {
+              next[s.soundType] = { enabled: s.enabled, volume: s.volume };
+            }
+          }
+          return next;
+        });
+      })
+      .catch(() => {
+        // Backend unavailable, use localStorage values
+      });
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Per-soundType debounce refs
+  const syncTimeoutRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  const syncSoundSetting = useCallback((soundType: string, volume: number, enabled: boolean) => {
+    clearTimeout(syncTimeoutRef.current[soundType]);
+    syncTimeoutRef.current[soundType] = setTimeout(() => {
+      soundApi.updateSoundSetting(soundType, volume, enabled).catch(() => {});
+    }, 500);
+  }, []);
+
   const toggleSound = useCallback((id: string) => {
-    setMixer(prev => ({ ...prev, [id]: { ...prev[id], enabled: !prev[id].enabled } }));
-  }, [setMixer]);
+    setMixer(prev => {
+      const current = prev[id];
+      const newEnabled = !current.enabled;
+      // Schedule sync after state update
+      queueMicrotask(() => syncSoundSetting(id, current.volume, newEnabled));
+      return { ...prev, [id]: { ...current, enabled: newEnabled } };
+    });
+  }, [setMixer, syncSoundSetting]);
 
   const setVolume = useCallback((id: string, volume: number) => {
-    setMixer(prev => ({ ...prev, [id]: { ...prev[id], volume } }));
-  }, [setMixer]);
+    setMixer(prev => {
+      const current = prev[id];
+      queueMicrotask(() => syncSoundSetting(id, volume, current.enabled));
+      return { ...prev, [id]: { ...current, volume } };
+    });
+  }, [setMixer, syncSoundSetting]);
 
   return { mixer, toggleSound, setVolume };
 }

@@ -4,6 +4,36 @@
 
 ---
 
+## Timer/Sound API連携 + キーボードショートカット拡張
+
+### Timer/Sound バックエンドAPI接続 (004残タスク → 001)
+- **ddl-auto変更**: `create-drop` → `update` でDB永続化
+- **型修正**: `TimerSession.taskId` を `number` → `string | null` に修正
+- **localStorage キー追加**: `BREAK_DURATION`, `LONG_BREAK_DURATION`, `SESSIONS_BEFORE_LONG_BREAK`
+- **timerClient.ts (新規)**: Timer Settings/Sessions API クライアント（fetch API）
+- **soundClient.ts (新規)**: Sound Settings/Presets API クライアント（fetch API）
+- **TimerContext バックエンド同期**: 楽観的更新パターン（localStorage即時 → 500msデバウンスPUT）
+  - マウント時に `fetchTimerSettings()` → localStorage上書き（フォールバック対応）
+  - `break/longBreak/sessionsBeforeLongBreak` をハードコードから `useLocalStorage` に移行
+  - セッション記録: `start()` → POST、`pause()/reset()` → PUT（部分完了）、タイマー完了 → PUT（完了）
+- **Sound Mixer バックエンド同期**: `useLocalSoundMixer` に同パターン追加
+  - マウント時にバックエンドから設定取得
+  - `toggleSound`/`setVolume` 時にサウンドタイプ別デバウンスPUT
+- **TimerContextValue 拡張**: `breakDurationMinutes`, `longBreakDurationMinutes`, `setBreakDurationMinutes`, `setLongBreakDurationMinutes`, `setSessionsBeforeLongBreak` 追加
+
+### キーボードショートカット拡張 (007 Phase 1-4)
+- **Phase 1 セクション切替**: `Cmd+1`〜`Cmd+5` で tasks/session/calendar/analytics/settings に切替
+- **Phase 2 タスク操作**: `↑/↓` フォーカス移動、`→/←` フォルダ展開/折りたたみ、`Cmd+Enter` 完了トグル、`Tab/Shift+Tab` インデント/アウトデント
+- **Phase 3 タイマー制御**: `r` リセット、`Cmd+Shift+T` モーダル開閉
+- **Phase 4 カレンダーナビゲーション**: `j/k` 前後移動、`t` 今日、`m` 月/週切替
+
+### プラン整理
+- `006-calendar-enhancement.md` → archive (COMPLETED)
+- `008-tips-and-editor-enhancements.md` → archive (COMPLETED)
+- Backend テスト修正: TaskNodeDTO コンストラクタに `color` パラメータ追加
+
+---
+
 ## Phase 7: Backend再統合 + Calendar & Analytics
 
 ### Backend再統合 (004)

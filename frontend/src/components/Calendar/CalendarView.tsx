@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTaskTreeContext } from '../../hooks/useTaskTreeContext';
 import { useMemoContext } from '../../hooks/useMemoContext';
 import { useCalendar } from '../../hooks/useCalendar';
@@ -42,7 +42,7 @@ export function CalendarView({ onSelectTask, onCreateTask, onSelectMemo }: Calen
     return map;
   }, [memos]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (viewMode === 'week') {
       setWeekStartDate(prev => {
         const d = new Date(prev);
@@ -53,9 +53,9 @@ export function CalendarView({ onSelectTask, onCreateTask, onSelectMemo }: Calen
       if (month === 0) { setMonth(11); setYear(y => y - 1); }
       else setMonth(m => m - 1);
     }
-  };
+  }, [viewMode, month]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (viewMode === 'week') {
       setWeekStartDate(prev => {
         const d = new Date(prev);
@@ -66,14 +66,14 @@ export function CalendarView({ onSelectTask, onCreateTask, onSelectMemo }: Calen
       if (month === 11) { setMonth(0); setYear(y => y + 1); }
       else setMonth(m => m + 1);
     }
-  };
+  }, [viewMode, month]);
 
-  const handleToday = () => {
+  const handleToday = useCallback(() => {
     const now = new Date();
     setYear(now.getFullYear());
     setMonth(now.getMonth());
     setWeekStartDate(getInitialWeekStart());
-  };
+  }, []);
 
   // Collect available tags from visible tasks
   const availableTags = useMemo(() => {
@@ -88,6 +88,43 @@ export function CalendarView({ onSelectTask, onCreateTask, onSelectMemo }: Calen
     }
     return Array.from(tagSet).sort();
   }, [tasksByDate, getFolderTagForTask, memosByDate]);
+
+  // Calendar keyboard shortcuts
+  const handleToggleViewMode = useCallback(() => {
+    setViewMode(v => v === 'month' ? 'week' : 'month');
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (document.activeElement?.getAttribute('contenteditable') === 'true') return;
+
+      if (e.key === 'j') {
+        e.preventDefault();
+        handleNext();
+        return;
+      }
+      if (e.key === 'k') {
+        e.preventDefault();
+        handlePrev();
+        return;
+      }
+      if (e.key === 't') {
+        e.preventDefault();
+        handleToday();
+        return;
+      }
+      if (e.key === 'm') {
+        e.preventDefault();
+        handleToggleViewMode();
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleNext, handlePrev, handleToday, handleToggleViewMode]);
 
   // Filter tasksByDate by tag
   const filteredTasksByDate = useMemo(() => {

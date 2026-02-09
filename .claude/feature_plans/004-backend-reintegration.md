@@ -33,8 +33,8 @@ Phase 2でlocalStorage中心に移行したデータ永続化を、Spring Boot +
 - [x] Backend APIの更新（階層CRUD）
 - [x] Axiosクライアント再導入 → fetch APIで実装（方針変更）
 - [x] useTaskTree → API版フックへの置換
-- [ ] TimerContext → API版への置換（未実装）
-- [ ] SoundMixer → API版への置換（未実装）
+- [x] TimerContext → API版への置換
+- [x] SoundMixer → API版への置換
 - [x] データマイグレーション機能
 
 ## 技術的考慮事項

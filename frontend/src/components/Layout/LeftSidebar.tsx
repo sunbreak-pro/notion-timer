@@ -42,7 +42,7 @@ export function LeftSidebar({
   return (
     <aside className="w-60 h-screen bg-notion-bg-secondary border-r border-notion-border flex flex-col">
       <div className="flex justify-between items-center p-4 border-b border-notion-border">
-        <h1 className="text-lg font-semibold text-notion-text">Sonic Flow</h1>
+        <h1 className="text-2xl font-semibold text-notion-text">Sonic Flow</h1>
         <button
           onClick={onToggle}
           className="p-1 text-notion-text-secondary hover:text-notion-text rounded transition-colors"
@@ -50,7 +50,7 @@ export function LeftSidebar({
           <PanelLeft size={18} />
         </button>
       </div>
-      <nav className="flex-1 p-2">
+      <nav className="flex-1 p-2 space-y-2.5">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeSection === item.id;

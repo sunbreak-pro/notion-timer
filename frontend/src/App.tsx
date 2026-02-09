@@ -107,11 +107,29 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const sectionMap: Record<string, SectionId> = {
+      '1': 'tasks', '2': 'session', '3': 'calendar', '4': 'analytics', '5': 'settings',
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd+, → Settings (works even when input is focused)
       if (e.metaKey && e.code === 'Comma') {
         e.preventDefault();
         setActiveSection('settings');
+        return;
+      }
+
+      // Cmd+1-5 → Section switching (works even when input is focused)
+      if (e.metaKey && !e.shiftKey && sectionMap[e.key]) {
+        e.preventDefault();
+        setActiveSection(sectionMap[e.key]);
+        return;
+      }
+
+      // Cmd+Shift+T → Timer modal toggle (works even when input is focused)
+      if (e.metaKey && e.shiftKey && e.code === 'KeyT') {
+        e.preventDefault();
+        setIsTimerModalOpen(prev => !prev);
         return;
       }
 
@@ -129,6 +147,12 @@ function App() {
       if (e.key === 'n') {
         e.preventDefault();
         addNode('task', null, 'New Task');
+      }
+
+      // r → Timer reset
+      if (e.key === 'r') {
+        e.preventDefault();
+        timer.reset();
       }
 
       if (e.key === 'Escape' && isTimerModalOpen) {

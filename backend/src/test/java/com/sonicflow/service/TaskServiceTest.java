@@ -47,7 +47,7 @@ class TaskServiceTest {
         TaskNodeDTO dto = new TaskNodeDTO(
                 "task-1", "task", "Test Task", null, 0,
                 "TODO", null, false, null,
-                "2026-02-09T00:00:00", null, null, null, null
+                "2026-02-09T00:00:00", null, null, null, null, null
         );
         TaskNodeDTO result = taskService.createTask(dto);
 
@@ -73,7 +73,7 @@ class TaskServiceTest {
 
         TaskNodeDTO dto = new TaskNodeDTO(
                 null, null, null, null, null,
-                "DONE", null, null, null, null, null, null, null, null
+                "DONE", null, null, null, null, null, null, null, null, null
         );
         TaskNodeDTO result = taskService.updateTask("task-1", dto);
 
@@ -89,7 +89,7 @@ class TaskServiceTest {
 
         TaskNodeDTO dto = new TaskNodeDTO(
                 null, null, null, null, null,
-                "TODO", null, null, null, null, null, null, null, null
+                "TODO", null, null, null, null, null, null, null, null, null
         );
         TaskNodeDTO result = taskService.updateTask("task-1", dto);
 
@@ -103,7 +103,7 @@ class TaskServiceTest {
 
         TaskNodeDTO dto = new TaskNodeDTO(
                 null, null, "title", null, null,
-                null, null, null, null, null, null, null, null, null
+                null, null, null, null, null, null, null, null, null, null
         );
         assertThatThrownBy(() -> taskService.updateTask("task-999", dto))
                 .isInstanceOf(IllegalArgumentException.class)
