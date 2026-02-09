@@ -5,6 +5,7 @@ import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './context/ThemeContext'
 import { TaskTreeProvider } from './context/TaskTreeContext'
+import { MemoProvider } from './context/MemoContext'
 import { TimerProvider } from './context/TimerContext'
 
 createRoot(document.getElementById('root')!).render(
@@ -12,9 +13,11 @@ createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <ThemeProvider>
         <TaskTreeProvider>
-          <TimerProvider>
-            <App />
-          </TimerProvider>
+          <MemoProvider>
+            <TimerProvider>
+              <App />
+            </TimerProvider>
+          </MemoProvider>
         </TaskTreeProvider>
       </ThemeProvider>
     </ErrorBoundary>

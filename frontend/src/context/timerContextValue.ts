@@ -15,6 +15,8 @@ export interface TimerContextValue {
   totalDuration: number;
   sessionsBeforeLongBreak: number;
   workDurationMinutes: number;
+  breakDurationMinutes: number;
+  longBreakDurationMinutes: number;
   activeTask: ActiveTask | null;
   start: () => void;
   pause: () => void;
@@ -24,6 +26,9 @@ export interface TimerContextValue {
   openForTask: (id: string, title: string, durationMinutes?: number) => void;
   clearTask: () => void;
   setWorkDurationMinutes: (min: number) => void;
+  setBreakDurationMinutes: (min: number) => void;
+  setLongBreakDurationMinutes: (min: number) => void;
+  setSessionsBeforeLongBreak: (count: number) => void;
 }
 
 export const TimerContext = createContext<TimerContextValue | null>(null);

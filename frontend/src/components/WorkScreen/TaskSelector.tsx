@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { ChevronDown, Plus, Inbox, Folder, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Inbox, Folder, X } from "lucide-react";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useTimerContext } from "../../hooks/useTimerContext";
 import type { TaskNode } from "../../types/taskTree";
@@ -14,11 +14,13 @@ interface SectionItem {
   label: string;
   depth: number;
   folderId?: string;
+  taskCount?: number;
 }
 
 export function TaskSelector({ currentTitle }: TaskSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [newTaskValue, setNewTaskValue] = useState("");
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -61,39 +63,37 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
   const items = useMemo(() => {
     const result: SectionItem[] = [];
     const rootChildren = getChildren(null);
+    const filterText = newTaskValue.trim().toLowerCase();
 
-    // If a folder is matched, show only that folder's tasks
+    const collectTasks = (parentId: string): TaskNode[] => {
+      const children = getChildren(parentId);
+      const tasks: TaskNode[] = [];
+      children.forEach((child) => {
+        if (child.type === "task" && child.status === "TODO") {
+          tasks.push(child);
+        } else if (child.type === "folder") {
+          tasks.push(...collectTasks(child.id));
+        }
+      });
+      return tasks;
+    };
+
+    // If a folder is matched via "FolderName/" input, show only that folder
     if (parsedInput.folder) {
-      const collectTasks = (parentId: string): TaskNode[] => {
-        const children = getChildren(parentId);
-        const tasks: TaskNode[] = [];
-        children.forEach((child) => {
-          if (child.type === "task" && child.status === "TODO") {
-            tasks.push(child);
-          } else if (child.type === "folder") {
-            tasks.push(...collectTasks(child.id));
-          }
-        });
-        return tasks;
-      };
-
       const folderTasks = collectTasks(parsedInput.folder.id);
-      const filterText = parsedInput.taskName.toLowerCase();
-      const filtered = filterText
-        ? folderTasks.filter(t => t.title.toLowerCase().includes(filterText))
+      const searchText = parsedInput.taskName.toLowerCase();
+      const filtered = searchText
+        ? folderTasks.filter(t => t.title.toLowerCase().includes(searchText))
         : folderTasks;
 
       if (filtered.length > 0) {
-        result.push({ type: "header", label: parsedInput.folder.title, depth: 0, folderId: parsedInput.folder.id });
+        result.push({ type: "header", label: parsedInput.folder.title, depth: 0, folderId: parsedInput.folder.id, taskCount: filtered.length });
         filtered.forEach((t) =>
           result.push({ type: "task", node: t, label: t.title, depth: 1 })
         );
       }
       return result;
     }
-
-    // Default: show all tasks, optionally filtered by input text
-    const filterText = newTaskValue.trim().toLowerCase();
 
     // Inbox tasks
     const inboxTasks = rootChildren.filter(
@@ -112,33 +112,23 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
     // Folders with their tasks
     const folders = rootChildren.filter((n) => n.type === "folder");
     folders.forEach((folder) => {
-      const collectTasks = (parentId: string): TaskNode[] => {
-        const children = getChildren(parentId);
-        const tasks: TaskNode[] = [];
-        children.forEach((child) => {
-          if (child.type === "task" && child.status === "TODO") {
-            tasks.push(child);
-          } else if (child.type === "folder") {
-            tasks.push(...collectTasks(child.id));
-          }
-        });
-        return tasks;
-      };
-
       const folderTasks = collectTasks(folder.id);
       const filtered = filterText
         ? folderTasks.filter(t => t.title.toLowerCase().includes(filterText))
         : folderTasks;
       if (filtered.length > 0) {
-        result.push({ type: "header", label: folder.title, depth: 0, folderId: folder.id });
-        filtered.forEach((t) =>
-          result.push({ type: "task", node: t, label: t.title, depth: 1 })
-        );
+        result.push({ type: "header", label: folder.title, depth: 0, folderId: folder.id, taskCount: filtered.length });
+        // Show tasks if expanded OR if user is searching
+        if (expandedFolders.has(folder.id) || filterText) {
+          filtered.forEach((t) =>
+            result.push({ type: "task", node: t, label: t.title, depth: 1 })
+          );
+        }
       }
     });
 
     return result;
-  }, [getChildren, parsedInput, newTaskValue]);
+  }, [getChildren, parsedInput, newTaskValue, expandedFolders]);
 
   const handleSelectTask = (task: TaskNode) => {
     timer.openForTask(task.id, task.title, task.workDurationMinutes);
@@ -162,9 +152,13 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
     setIsOpen(false);
   };
 
-  const handleHeaderClick = (folderName: string) => {
-    setNewTaskValue(`${folderName}/`);
-    inputRef.current?.focus();
+  const handleHeaderClick = (folderId: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
+      return next;
+    });
   };
 
   const handleClearTask = () => {
@@ -212,20 +206,33 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
           <div className="max-h-64 overflow-y-auto py-1">
             {items.map((item, idx) => {
               if (item.type === "header") {
+                const isFolder = !!item.folderId;
+                const isExpanded = item.folderId ? expandedFolders.has(item.folderId) : true;
                 return (
                   <button
                     key={`header-${idx}`}
-                    onClick={() => item.folderId && handleHeaderClick(item.label)}
+                    onClick={() => isFolder && item.folderId && handleHeaderClick(item.folderId)}
                     className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-notion-text-secondary ${
-                      item.folderId ? 'hover:bg-notion-hover cursor-pointer' : ''
+                      isFolder ? 'hover:bg-notion-hover cursor-pointer' : ''
                     }`}
                   >
                     {item.label === "Inbox" ? (
                       <Inbox size={12} />
                     ) : (
-                      <Folder size={12} />
+                      <>
+                        {isExpanded
+                          ? <ChevronDown size={12} />
+                          : <ChevronRight size={12} />
+                        }
+                        <Folder size={12} />
+                      </>
                     )}
                     <span>{item.label}</span>
+                    {isFolder && item.taskCount != null && (
+                      <span className="ml-auto text-[10px] text-notion-text-secondary font-normal">
+                        {item.taskCount}
+                      </span>
+                    )}
                   </button>
                 );
               }

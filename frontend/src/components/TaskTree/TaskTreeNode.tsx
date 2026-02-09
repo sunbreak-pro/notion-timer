@@ -14,6 +14,7 @@ import {
   GripVertical,
 } from "lucide-react";
 import type { TaskNode } from "../../types/taskTree";
+import { getTextColorForBg } from "../../constants/folderColors";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useTimerContext } from "../../hooks/useTimerContext";
 import { TaskNodeEditor } from "./TaskNodeEditor";
@@ -61,18 +62,21 @@ export function TaskTreeNode({
     isOver,
   } = useSortable({ id: node.id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
   const children = getChildren(node.id);
   const childIds = useMemo(() => children.map((c) => c.id), [children]);
   const isFolder = node.type === "folder";
   const isDone = node.type === "task" && node.status === "DONE";
   const isTimerActive = timer.activeTask?.id === node.id && timer.isRunning;
   const isSelected = node.type === "task" && selectedTaskId === node.id;
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    ...(isFolder && node.color && !isSelected
+      ? { backgroundColor: `${node.color}30` }
+      : {}),
+  };
 
   return (
     <div>
@@ -97,7 +101,7 @@ export function TaskTreeNode({
             {Array.from({ length: depth }, (_, i) => (
               <div key={i} className="w-5 flex justify-center">
                 <div
-                  className={`w-px h-full ${i === depth - 1 && isLastChild ? "h-1/2 self-start" : ""} bg-gray-800`}
+                  className={`w-px h-full ${i === depth - 1 && isLastChild ? "h-1/2 self-start" : ""} bg-notion-text`}
                 />
               </div>
             ))}
@@ -131,7 +135,12 @@ export function TaskTreeNode({
         )}
 
         {isFolder && (
-          <span className="text-notion-text-secondary">
+          <span
+            className="text-notion-text-secondary"
+            style={
+              node.color ? { color: getTextColorForBg(node.color) } : undefined
+            }
+          >
             {node.isExpanded ? <FolderOpen size={14} /> : <Folder size={14} />}
           </span>
         )}

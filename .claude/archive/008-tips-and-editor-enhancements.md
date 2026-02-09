@@ -1,6 +1,6 @@
 # 008: Tips画面 + TipTapエディタ拡張
 
-**Status**: IN_PROGRESS
+**Status**: COMPLETED
 **Created**: 2026-02-09
 
 ---

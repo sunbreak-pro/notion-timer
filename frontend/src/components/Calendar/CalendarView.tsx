@@ -1,13 +1,16 @@
 import { useState, useMemo } from 'react';
 import { useTaskTreeContext } from '../../hooks/useTaskTreeContext';
+import { useMemoContext } from '../../hooks/useMemoContext';
 import { useCalendar } from '../../hooks/useCalendar';
 import { CalendarHeader } from './CalendarHeader';
 import { MonthlyView } from './MonthlyView';
 import { WeeklyTimeGrid } from './WeeklyTimeGrid';
+import type { MemoNode } from '../../types/memo';
 
 interface CalendarViewProps {
   onSelectTask: (taskId: string) => void;
   onCreateTask?: (date: Date) => void;
+  onSelectMemo?: (date: string) => void;
 }
 
 function getInitialWeekStart(): Date {
@@ -17,8 +20,9 @@ function getInitialWeekStart(): Date {
   return d;
 }
 
-export function CalendarView({ onSelectTask, onCreateTask }: CalendarViewProps) {
+export function CalendarView({ onSelectTask, onCreateTask, onSelectMemo }: CalendarViewProps) {
   const { nodes, getTaskColor, getFolderTagForTask } = useTaskTreeContext();
+  const { memos } = useMemoContext();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -28,6 +32,15 @@ export function CalendarView({ onSelectTask, onCreateTask }: CalendarViewProps) 
   const [tagFilter, setTagFilter] = useState<string>('');
 
   const { tasksByDate, calendarDays, weekDays } = useCalendar(nodes, year, month, filter, weekStartDate);
+
+  // Build memos lookup by date
+  const memosByDate = useMemo(() => {
+    const map = new Map<string, MemoNode>();
+    for (const memo of memos) {
+      map.set(memo.date, memo);
+    }
+    return map;
+  }, [memos]);
 
   const handlePrev = () => {
     if (viewMode === 'week') {
@@ -70,12 +83,16 @@ export function CalendarView({ onSelectTask, onCreateTask }: CalendarViewProps) 
         tagSet.add(getFolderTagForTask(task.id) || 'Inbox');
       }
     }
+    if (memosByDate.size > 0) {
+      tagSet.add('Memo');
+    }
     return Array.from(tagSet).sort();
-  }, [tasksByDate, getFolderTagForTask]);
+  }, [tasksByDate, getFolderTagForTask, memosByDate]);
 
   // Filter tasksByDate by tag
   const filteredTasksByDate = useMemo(() => {
     if (!tagFilter) return tasksByDate;
+    if (tagFilter === 'Memo') return new Map<string, typeof nodes>();
     const map = new Map<string, typeof nodes>();
     for (const [date, tasks] of tasksByDate) {
       const matching = tasks.filter(t => (getFolderTagForTask(t.id) || 'Inbox') === tagFilter);
@@ -159,6 +176,8 @@ export function CalendarView({ onSelectTask, onCreateTask }: CalendarViewProps) 
             onCreateTask={onCreateTask}
             getTaskColor={getTaskColor}
             getFolderTag={getFolderTagForTask}
+            memosByDate={memosByDate}
+            onSelectMemo={onSelectMemo}
           />
         ) : (
           <WeeklyTimeGrid
@@ -168,6 +187,8 @@ export function CalendarView({ onSelectTask, onCreateTask }: CalendarViewProps) 
             onCreateTask={onCreateTask}
             getTaskColor={getTaskColor}
             getFolderTag={getFolderTagForTask}
+            memosByDate={memosByDate}
+            onSelectMemo={onSelectMemo}
           />
         )}
       </div>

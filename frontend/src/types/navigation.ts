@@ -1,1 +1,1 @@
-export type SectionId = 'tasks' | 'session' | 'calendar' | 'analytics' | 'settings' | 'tips';
+export type SectionId = 'tasks' | 'memo' | 'session' | 'calendar' | 'analytics' | 'settings' | 'tips';

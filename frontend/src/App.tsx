@@ -6,8 +6,10 @@ import { Settings } from "./components/Settings";
 import { Tips } from "./components/Tips";
 import { CalendarView } from "./components/Calendar/CalendarView";
 import { AnalyticsView } from "./components/Analytics/AnalyticsView";
+import { MemoView } from "./components/Memo";
 import { useTimerContext } from "./hooks/useTimerContext";
 import { useTaskTreeContext } from "./hooks/useTaskTreeContext";
+import { useMemoContext } from "./hooks/useMemoContext";
 import { useMigration } from "./hooks/useMigration";
 import type { SectionId } from "./types/navigation";
 import type { TaskNode } from "./types/taskTree";
@@ -18,6 +20,7 @@ function App() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const timer = useTimerContext();
   const { nodes, addNode, updateNode, softDelete, getTaskColor, getFolderTagForTask } = useTaskTreeContext();
+  const { setSelectedDate: setMemoDate } = useMemoContext();
 
   useMigration();
 
@@ -91,6 +94,11 @@ function App() {
     setIsTimerModalOpen(true);
   }, [addNode, timer]);
 
+  const handleCalendarSelectMemo = useCallback((date: string) => {
+    setMemoDate(date);
+    setActiveSection('memo');
+  }, [setMemoDate]);
+
   const isInputFocused = useCallback(() => {
     const tag = document.activeElement?.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
@@ -156,10 +164,12 @@ function App() {
             taskColor={selectedTask ? getTaskColor(selectedTask.id) : undefined}
           />
         );
+      case "memo":
+        return <MemoView />;
       case "session":
         return <WorkScreen />;
       case "calendar":
-        return <CalendarView onSelectTask={handleCalendarSelectTask} onCreateTask={handleCalendarCreateTask} />;
+        return <CalendarView onSelectTask={handleCalendarSelectTask} onCreateTask={handleCalendarCreateTask} onSelectMemo={handleCalendarSelectMemo} />;
       case "analytics":
         return <AnalyticsView />;
       case "settings":

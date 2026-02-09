@@ -1,4 +1,5 @@
 import type { TaskNode } from '../../types/taskTree';
+import type { MemoNode } from '../../types/memo';
 import { DayCell } from './DayCell';
 import { formatDateKey } from '../../hooks/useCalendar';
 
@@ -11,9 +12,11 @@ interface MonthlyViewProps {
   onCreateTask?: (date: Date) => void;
   getTaskColor?: (taskId: string) => string | undefined;
   getFolderTag?: (taskId: string) => string;
+  memosByDate?: Map<string, MemoNode>;
+  onSelectMemo?: (date: string) => void;
 }
 
-export function MonthlyView({ days, tasksByDate, onSelectTask, onCreateTask, getTaskColor, getFolderTag }: MonthlyViewProps) {
+export function MonthlyView({ days, tasksByDate, onSelectTask, onCreateTask, getTaskColor, getFolderTag, memosByDate, onSelectMemo }: MonthlyViewProps) {
   const today = new Date();
   const todayKey = formatDateKey(today);
 
@@ -40,6 +43,8 @@ export function MonthlyView({ days, tasksByDate, onSelectTask, onCreateTask, get
               onCreateTask={onCreateTask}
               getTaskColor={getTaskColor}
               getFolderTag={getFolderTag}
+              memo={memosByDate?.get(key)}
+              onSelectMemo={onSelectMemo}
             />
           );
         })}

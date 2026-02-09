@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import type { TaskNode } from '../../types/taskTree';
+import type { MemoNode } from '../../types/memo';
 import { TIME_GRID } from '../../constants/timeGrid';
 import { TimeGridTaskBlock } from './TimeGridTaskBlock';
 import { formatDateKey } from '../../hooks/useCalendar';
@@ -15,6 +16,8 @@ interface WeeklyTimeGridProps {
   onCreateTask?: (date: Date) => void;
   getTaskColor?: (taskId: string) => string | undefined;
   getFolderTag?: (taskId: string) => string;
+  memosByDate?: Map<string, MemoNode>;
+  onSelectMemo?: (date: string) => void;
 }
 
 interface PositionedTask {
@@ -77,7 +80,7 @@ function formatHour(hour: number): string {
   return `${hour - 12} PM`;
 }
 
-export function WeeklyTimeGrid({ days, tasksByDate, onSelectTask, onCreateTask, getTaskColor, getFolderTag }: WeeklyTimeGridProps) {
+export function WeeklyTimeGrid({ days, tasksByDate, onSelectTask, onCreateTask, getTaskColor, getFolderTag, memosByDate, onSelectMemo }: WeeklyTimeGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const todayKey = formatDateKey(new Date());
@@ -133,12 +136,22 @@ export function WeeklyTimeGrid({ days, tasksByDate, onSelectTask, onCreateTask, 
           return (
             <div key={i} className="flex-1 text-center py-2 border-l border-notion-border">
               <div className="text-xs text-notion-text-secondary">{DAY_NAMES[day.date.getDay()]}</div>
-              <div className={`text-sm font-medium ${
-                isToday
-                  ? 'w-7 h-7 mx-auto flex items-center justify-center rounded-full bg-notion-accent text-white'
-                  : 'text-notion-text'
-              }`}>
-                {day.date.getDate()}
+              <div className="flex items-center justify-center gap-1">
+                <div className={`text-sm font-medium ${
+                  isToday
+                    ? 'w-7 h-7 flex items-center justify-center rounded-full bg-notion-accent text-white'
+                    : 'text-notion-text'
+                }`}>
+                  {day.date.getDate()}
+                </div>
+                {memosByDate?.has(key) && (
+                  <button
+                    onClick={() => onSelectMemo?.(key)}
+                    className="w-2 h-2 rounded-full flex-shrink-0 hover:scale-125 transition-transform"
+                    style={{ backgroundColor: '#F59E0B' }}
+                    title="Memo"
+                  />
+                )}
               </div>
             </div>
           );

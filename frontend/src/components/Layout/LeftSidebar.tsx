@@ -1,5 +1,6 @@
 import {
   CheckSquare,
+  BookOpen,
   Headphones,
   Calendar,
   BarChart3,
@@ -21,6 +22,7 @@ interface SidebarProps {
 const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] =
   [
     { id: "tasks", label: "Tasks", icon: CheckSquare },
+    { id: "memo", label: "Memo", icon: BookOpen },
     { id: "session", label: "Session", icon: Headphones },
     { id: "calendar", label: "Calendar", icon: Calendar },
     { id: "analytics", label: "Analytics", icon: BarChart3 },

@@ -1,4 +1,5 @@
 export const FOLDER_COLORS = [
+  // === Pastel (10) ===
   '#E8D5F5', // lavender
   '#D5E8F5', // sky blue
   '#D5F5E8', // mint
@@ -9,9 +10,21 @@ export const FOLDER_COLORS = [
   '#D5F5F0', // teal
   '#F5D5D5', // rose
   '#D5D5F5', // periwinkle
+  // === Vivid (10) ===
+  '#D8B4FE', // violet
+  '#93C5FD', // blue
+  '#6EE7B7', // emerald
+  '#FDBA74', // orange
+  '#F9A8D4', // pink
+  '#BEF264', // lime
+  '#FDE047', // yellow
+  '#5EEAD4', // teal
+  '#FCA5A5', // red
+  '#A5B4FC', // indigo
 ] as const;
 
 export const FOLDER_COLORS_TEXT = [
+  // === Pastel (10) ===
   '#7C3AED', // lavender
   '#2563EB', // sky blue
   '#059669', // mint
@@ -22,6 +35,17 @@ export const FOLDER_COLORS_TEXT = [
   '#0D9488', // teal
   '#DC2626', // rose
   '#4F46E5', // periwinkle
+  // === Vivid (10) ===
+  '#6D28D9', // violet
+  '#1D4ED8', // blue
+  '#047857', // emerald
+  '#C2410C', // orange
+  '#BE185D', // pink
+  '#4D7C0F', // lime
+  '#A16207', // yellow
+  '#0F766E', // teal
+  '#B91C1C', // red
+  '#4338CA', // indigo
 ] as const;
 
 export function getColorByIndex(index: number): string {

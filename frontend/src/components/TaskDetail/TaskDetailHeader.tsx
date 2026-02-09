@@ -42,33 +42,41 @@ export function TaskDetailHeader({
   return (
     <div className="space-y-3 pb-4 border-b border-notion-border">
       {ancestors.length > 0 && (
-        <div className="flex items-center gap-1.5 text-xs text-notion-text-secondary">
-          {ancestors.map((ancestor, i) => (
-            <span key={ancestor.id} className="flex items-center gap-1.5 relative">
-              {i > 0 && <span>/</span>}
-              {ancestor.type === 'folder' && onFolderColorChange ? (
-                <>
-                  <button
-                    onClick={() => setColorPickerAncestorId(
-                      colorPickerAncestorId === ancestor.id ? null : ancestor.id
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 text-xs text-notion-text-secondary">
+            {ancestors.map((ancestor, i) => (
+              <span key={ancestor.id} className="flex items-center gap-1.5 relative">
+                {i > 0 && <span>/</span>}
+                {ancestor.type === 'folder' && onFolderColorChange ? (
+                  <>
+                    <button
+                      onClick={() => setColorPickerAncestorId(
+                        colorPickerAncestorId === ancestor.id ? null : ancestor.id
+                      )}
+                      className="hover:text-notion-text transition-colors cursor-pointer"
+                    >
+                      {ancestor.title}
+                    </button>
+                    {colorPickerAncestorId === ancestor.id && (
+                      <ColorPicker
+                        currentColor={ancestor.color}
+                        onSelect={(color) => onFolderColorChange(ancestor.id, color)}
+                        onClose={() => setColorPickerAncestorId(null)}
+                      />
                     )}
-                    className="hover:text-notion-text transition-colors cursor-pointer"
-                  >
-                    {ancestor.title}
-                  </button>
-                  {colorPickerAncestorId === ancestor.id && (
-                    <ColorPicker
-                      currentColor={ancestor.color}
-                      onSelect={(color) => onFolderColorChange(ancestor.id, color)}
-                      onClose={() => setColorPickerAncestorId(null)}
-                    />
-                  )}
-                </>
-              ) : (
-                <span>{ancestor.title}</span>
-              )}
-            </span>
-          ))}
+                  </>
+                ) : (
+                  <span>{ancestor.title}</span>
+                )}
+              </span>
+            ))}
+          </div>
+          {(() => {
+            const parentFolder = [...ancestors].reverse().find(a => a.type === 'folder');
+            return parentFolder ? (
+              <FolderTag tag={parentFolder.title} color={parentFolder.color} />
+            ) : null;
+          })()}
         </div>
       )}
       {!ancestors.length && folderTag && (

@@ -8,5 +8,9 @@ export const STORAGE_KEYS = {
   NOTIFICATIONS_ENABLED: 'sonic-flow-notifications-enabled',
   LEFT_SIDEBAR_OPEN: 'sonic-flow-left-sidebar-open',
   RIGHT_SIDEBAR_OPEN: 'sonic-flow-right-sidebar-open',
+  BREAK_DURATION: 'sonic-flow-break-duration',
+  LONG_BREAK_DURATION: 'sonic-flow-long-break-duration',
+  SESSIONS_BEFORE_LONG_BREAK: 'sonic-flow-sessions-before-long-break',
   MIGRATION_DONE: 'sonic-flow-migration-done',
+  MEMOS: 'sonic-flow-memos',
 } as const;
