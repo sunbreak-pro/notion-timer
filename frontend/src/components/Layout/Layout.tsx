@@ -1,7 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import type { ReactNode } from "react";
 import { PanelLeft, PanelRight } from "lucide-react";
-import type { SectionId } from "../../types/navigation";
+import type { SectionId } from "../../types/taskTree";
 import type { TaskNode } from "../../types/taskTree";
 import { LeftSidebar } from "./LeftSidebar";
 import { RightSidebar } from "./RightSidebar";

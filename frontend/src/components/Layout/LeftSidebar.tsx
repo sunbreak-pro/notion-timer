@@ -9,7 +9,7 @@ import {
   PanelLeft,
   Lightbulb,
 } from "lucide-react";
-import type { SectionId } from "../../types/navigation";
+import type { SectionId } from "../../types/taskTree";
 import { useTimerContext } from "../../hooks/useTimerContext";
 
 interface SidebarProps {

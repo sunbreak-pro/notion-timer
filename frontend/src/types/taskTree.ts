@@ -1,3 +1,5 @@
+export type SectionId = 'tasks' | 'memo' | 'session' | 'calendar' | 'analytics' | 'settings' | 'tips';
+
 export type NodeType = 'folder' | 'task';
 export type TaskStatus = 'TODO' | 'DONE';
 

@@ -11,7 +11,7 @@ import { useTimerContext } from "./hooks/useTimerContext";
 import { useTaskTreeContext } from "./hooks/useTaskTreeContext";
 import { useMemoContext } from "./hooks/useMemoContext";
 import { useMigration } from "./hooks/useMigration";
-import type { SectionId } from "./types/navigation";
+import type { SectionId } from "./types/taskTree";
 import type { TaskNode } from "./types/taskTree";
 
 function App() {
