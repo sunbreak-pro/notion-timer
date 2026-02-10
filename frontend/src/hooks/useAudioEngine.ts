@@ -1,5 +1,4 @@
 import { useRef, useCallback, useEffect } from 'react';
-import { SOUND_TYPES } from '../constants/sounds';
 import type { SoundMixerState } from './useLocalSoundMixer';
 
 interface AudioChannel {
@@ -10,11 +9,17 @@ interface AudioChannel {
 
 const FADE_DURATION = 0.2;
 
-export function useAudioEngine(mixer: SoundMixerState) {
+export function useAudioEngine(mixer: SoundMixerState, soundSources: Record<string, string>, shouldPlay: boolean = true) {
   const contextRef = useRef<AudioContext | null>(null);
   const channelsRef = useRef<Map<string, AudioChannel>>(new Map());
   const mixerRef = useRef(mixer);
   useEffect(() => { mixerRef.current = mixer; }, [mixer]);
+
+  const soundSourcesRef = useRef(soundSources);
+  useEffect(() => { soundSourcesRef.current = soundSources; }, [soundSources]);
+
+  const shouldPlayRef = useRef(shouldPlay);
+  useEffect(() => { shouldPlayRef.current = shouldPlay; }, [shouldPlay]);
 
   const pauseTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
@@ -32,13 +37,13 @@ export function useAudioEngine(mixer: SoundMixerState) {
     const existing = channelsRef.current.get(soundId);
     if (existing) return existing;
 
-    const soundType = SOUND_TYPES.find(s => s.id === soundId);
-    if (!soundType) return null;
+    const url = soundSourcesRef.current[soundId];
+    if (!url) return null;
 
     const ctx = ensureContext();
     const audio = new Audio();
     audio.loop = true;
-    audio.src = soundType.file;
+    audio.src = url;
 
     let source: MediaElementAudioSourceNode;
     try {
@@ -74,19 +79,42 @@ export function useAudioEngine(mixer: SoundMixerState) {
 
   // Sync mixer state to audio channels
   useEffect(() => {
-    for (const soundType of SOUND_TYPES) {
-      const state = mixer[soundType.id];
+    // When shouldPlay is false, fade out & pause ALL active channels
+    if (!shouldPlay) {
+      const ctx = contextRef.current;
+      if (ctx) {
+        for (const [soundId, channel] of channelsRef.current.entries()) {
+          channel.gain.gain.cancelScheduledValues(ctx.currentTime);
+          channel.gain.gain.setValueAtTime(channel.gain.gain.value, ctx.currentTime);
+          channel.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + FADE_DURATION);
+
+          const audio = channel.audio;
+          const timeoutId = setTimeout(() => {
+            pauseTimeoutsRef.current.delete(soundId);
+            audio.pause();
+          }, FADE_DURATION * 1000 + 50);
+          pauseTimeoutsRef.current.set(soundId, timeoutId);
+        }
+      }
+      return;
+    }
+
+    for (const soundId of Object.keys(mixer)) {
+      const state = mixer[soundId];
       if (!state) continue;
+
+      // Skip if no source URL available for this sound
+      if (!soundSources[soundId]) continue;
 
       if (state.enabled) {
         // Cancel any pending pause timeout to prevent play/pause race
-        const pendingPause = pauseTimeoutsRef.current.get(soundType.id);
+        const pendingPause = pauseTimeoutsRef.current.get(soundId);
         if (pendingPause) {
           clearTimeout(pendingPause);
-          pauseTimeoutsRef.current.delete(soundType.id);
+          pauseTimeoutsRef.current.delete(soundId);
         }
 
-        const channel = getOrCreateChannel(soundType.id);
+        const channel = getOrCreateChannel(soundId);
         if (!channel) continue;
 
         const ctx = contextRef.current;
@@ -101,11 +129,11 @@ export function useAudioEngine(mixer: SoundMixerState) {
         // Start playback if paused
         if (channel.audio.paused) {
           channel.audio.play().catch((e) => {
-            console.warn(`[AudioEngine] Playback blocked for ${soundType.id}:`, e.message);
+            console.warn(`[AudioEngine] Playback blocked for ${soundId}:`, e.message);
           });
         }
       } else {
-        const channel = channelsRef.current.get(soundType.id);
+        const channel = channelsRef.current.get(soundId);
         if (!channel) continue;
 
         const ctx = contextRef.current;
@@ -118,15 +146,27 @@ export function useAudioEngine(mixer: SoundMixerState) {
 
         const audio = channel.audio;
         const timeoutId = setTimeout(() => {
-          pauseTimeoutsRef.current.delete(soundType.id);
-          if (!mixerRef.current[soundType.id]?.enabled) {
+          pauseTimeoutsRef.current.delete(soundId);
+          if (!mixerRef.current[soundId]?.enabled) {
             audio.pause();
           }
         }, FADE_DURATION * 1000 + 50);
-        pauseTimeoutsRef.current.set(soundType.id, timeoutId);
+        pauseTimeoutsRef.current.set(soundId, timeoutId);
       }
     }
-  }, [mixer, getOrCreateChannel]);
+  }, [mixer, soundSources, shouldPlay, getOrCreateChannel]);
+
+  // Cleanup channels whose source URLs have been removed
+  useEffect(() => {
+    for (const [soundId, channel] of channelsRef.current.entries()) {
+      if (!soundSources[soundId]) {
+        channel.gain.gain.value = 0;
+        channel.audio.pause();
+        channel.audio.src = '';
+        channelsRef.current.delete(soundId);
+      }
+    }
+  }, [soundSources]);
 
   // Handle tab visibility changes
   useEffect(() => {
@@ -142,7 +182,8 @@ export function useAudioEngine(mixer: SoundMixerState) {
           channel.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.05);
         }
       } else {
-        // Restore volumes when tab visible
+        // Restore volumes when tab visible (only if shouldPlay is true)
+        if (!shouldPlayRef.current) return;
         const currentMixer = mixerRef.current;
         for (const [id, channel] of channelsRef.current.entries()) {
           const state = currentMixer[id];
