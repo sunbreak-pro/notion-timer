@@ -1,6 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Bold from '@tiptap/extension-bold';
+import Italic from '@tiptap/extension-italic';
+import Strike from '@tiptap/extension-strike';
+import Code from '@tiptap/extension-code';
+import Link from '@tiptap/extension-link';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
@@ -10,6 +17,13 @@ import { Image } from '@tiptap/extension-image';
 import { ToggleList, ToggleSummary, ToggleContent } from '../../extensions/ToggleList';
 import { Callout } from '../../extensions/Callout';
 import { SlashCommandMenu } from './SlashCommandMenu';
+import { BubbleToolbar } from './BubbleToolbar';
+
+// Disable markdown input rules so ** / * / ~~ / ` don't auto-convert
+const BoldNoInputRules = Bold.extend({ addInputRules() { return []; } });
+const ItalicNoInputRules = Italic.extend({ addInputRules() { return []; } });
+const StrikeNoInputRules = Strike.extend({ addInputRules() { return []; } });
+const CodeNoInputRules = Code.extend({ addInputRules() { return []; } });
 
 interface MemoEditorProps {
   taskId: string;
@@ -37,7 +51,18 @@ export function MemoEditor({ taskId, initialContent, onUpdate }: MemoEditorProps
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
+        bold: false,
+        italic: false,
+        strike: false,
+        code: false,
       }),
+      BoldNoInputRules,
+      ItalicNoInputRules,
+      StrikeNoInputRules,
+      CodeNoInputRules,
+      Link.configure({ openOnClick: false }),
+      TextStyle,
+      Color,
       Placeholder.configure({
         placeholder: "Type '/' for commands...",
       }),
@@ -71,6 +96,7 @@ export function MemoEditor({ taskId, initialContent, onUpdate }: MemoEditorProps
   return (
     <div className="relative">
       <EditorContent editor={editor} />
+      {editor && <BubbleToolbar editor={editor} />}
       {editor && <SlashCommandMenu editor={editor} />}
     </div>
   );

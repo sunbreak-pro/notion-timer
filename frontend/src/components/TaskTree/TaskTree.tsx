@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { TaskTreeNode } from "./TaskTreeNode";
+import { InlineCreateInput } from "./InlineCreateInput";
 import type { TaskNode } from "../../types/taskTree";
 
 function isFolderFullyCompleted(
@@ -68,6 +69,7 @@ export function TaskTree({
   const {
     nodes,
     getChildren,
+    addNode,
     moveNode,
     moveNodeInto,
     moveToRoot,
@@ -76,31 +78,43 @@ export function TaskTree({
   } = useTaskTreeContext();
   const [showCompleted, setShowCompleted] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [isCreatingInboxTask, setIsCreatingInboxTask] = useState(false);
+  const [isCreatingProjectFolder, setIsCreatingProjectFolder] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor),
   );
 
-  const rootChildren = getChildren(null);
-  const inboxTasks = rootChildren.filter(
-    (n) => n.type === "task" && n.status !== "DONE",
+  const rootChildren = useMemo(() => getChildren(null), [getChildren]);
+  const inboxTasks = useMemo(
+    () => rootChildren.filter((n) => n.type === "task" && n.status !== "DONE"),
+    [rootChildren],
   );
-  const folders = rootChildren.filter(
-    (n) => n.type === "folder" && !isFolderFullyCompleted(n.id, nodes),
+  const folders = useMemo(
+    () =>
+      rootChildren.filter(
+        (n) => n.type === "folder" && !isFolderFullyCompleted(n.id, nodes),
+      ),
+    [rootChildren, nodes],
   );
 
-  const completedRootTasks = rootChildren.filter(
-    (n) => n.type === "task" && n.status === "DONE",
+  const completedRootTasks = useMemo(
+    () => rootChildren.filter((n) => n.type === "task" && n.status === "DONE"),
+    [rootChildren],
   );
-  const completedFolders = rootChildren.filter(
-    (n) => n.type === "folder" && isFolderFullyCompleted(n.id, nodes),
+  const completedFolders = useMemo(
+    () =>
+      rootChildren.filter(
+        (n) => n.type === "folder" && isFolderFullyCompleted(n.id, nodes),
+      ),
+    [rootChildren, nodes],
   );
   const hasCompleted =
     completedRootTasks.length > 0 || completedFolders.length > 0;
 
-  const inboxIds = inboxTasks.map((n) => n.id);
-  const folderIds = folders.map((n) => n.id);
+  const inboxIds = useMemo(() => inboxTasks.map((n) => n.id), [inboxTasks]);
+  const folderIds = useMemo(() => folders.map((n) => n.id), [folders]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -317,7 +331,15 @@ export function TaskTree({
                       <div className="font-normal">({inboxTasks.length})</div>
                     )}
                   </div>
-                  <Plus size={14} />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsCreatingInboxTask(true);
+                    }}
+                    className="hover:text-notion-text transition-colors"
+                  >
+                    <Plus size={14} />
+                  </button>
                 </div>
               </div>
               <SortableContext
@@ -337,6 +359,13 @@ export function TaskTree({
                   ))}
                 </div>
               </SortableContext>
+              {isCreatingInboxTask && (
+                <InlineCreateInput
+                  placeholder="New task..."
+                  onSubmit={(title) => addNode("task", null, title)}
+                  onCancel={() => setIsCreatingInboxTask(false)}
+                />
+              )}
             </div>
           )}
         </DroppableSection>
@@ -362,7 +391,13 @@ export function TaskTree({
                   }
                 >
                   Projects
-                  <button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsCreatingProjectFolder(true);
+                    }}
+                    className="hover:text-notion-text transition-colors"
+                  >
                     <LucideFolderPlus size={14} />
                   </button>
                 </div>
@@ -384,6 +419,13 @@ export function TaskTree({
                   ))}
                 </div>
               </SortableContext>
+              {isCreatingProjectFolder && (
+                <InlineCreateInput
+                  placeholder="New folder..."
+                  onSubmit={(title) => addNode("folder", null, title)}
+                  onCancel={() => setIsCreatingProjectFolder(false)}
+                />
+              )}
             </div>
           )}
         </DroppableSection>

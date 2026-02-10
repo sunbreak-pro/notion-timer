@@ -1,0 +1,218 @@
+import { useState, useCallback } from 'react';
+import { BubbleMenu } from '@tiptap/react/menus';
+import type { Editor } from '@tiptap/react';
+import {
+  Bold,
+  Italic,
+  Strikethrough,
+  Code,
+  Link as LinkIcon,
+  Palette,
+  X,
+  Check,
+} from 'lucide-react';
+
+const TEXT_COLORS = [
+  { label: 'Default', value: null },
+  { label: 'Gray', value: '#9B9A97' },
+  { label: 'Brown', value: '#96694C' },
+  { label: 'Orange', value: '#D9730D' },
+  { label: 'Yellow', value: '#DFAB01' },
+  { label: 'Green', value: '#0F7B6C' },
+  { label: 'Blue', value: '#2EAADC' },
+  { label: 'Purple', value: '#9065D0' },
+  { label: 'Pink', value: '#D44C8F' },
+  { label: 'Red', value: '#E03E3E' },
+];
+
+interface BubbleToolbarProps {
+  editor: Editor;
+}
+
+export function BubbleToolbar({ editor }: BubbleToolbarProps) {
+  const [linkMode, setLinkMode] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [showColorPicker, setShowColorPicker] = useState(false);
+
+  const shouldShow = useCallback(
+    ({ editor: ed, from, to }: { editor: Editor; from: number; to: number }) => {
+      if (from === to) return false;
+      if (ed.isActive('codeBlock')) return false;
+      const { node } = ed.state.selection as unknown as { node?: { type: { name: string } } };
+      if (node && node.type.name === 'image') return false;
+      return true;
+    },
+    [],
+  );
+
+  const handleLinkOpen = () => {
+    const existing = editor.getAttributes('link').href ?? '';
+    setLinkUrl(existing);
+    setLinkMode(true);
+  };
+
+  const handleLinkApply = () => {
+    if (linkUrl.trim()) {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.trim() }).run();
+    }
+    setLinkMode(false);
+    setLinkUrl('');
+  };
+
+  const handleLinkRemove = () => {
+    editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    setLinkMode(false);
+    setLinkUrl('');
+  };
+
+  const handleLinkCancel = () => {
+    setLinkMode(false);
+    setLinkUrl('');
+  };
+
+  const handleLinkKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleLinkApply();
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      handleLinkCancel();
+    }
+  };
+
+  const handleColorSelect = (color: string | null) => {
+    if (color) {
+      editor.chain().focus().setColor(color).run();
+    } else {
+      editor.chain().focus().unsetColor().run();
+    }
+    setShowColorPicker(false);
+  };
+
+  // Reset sub-states when bubble menu re-appears
+  const handleHide = () => {
+    setLinkMode(false);
+    setLinkUrl('');
+    setShowColorPicker(false);
+  };
+
+  if (linkMode) {
+    return (
+      <BubbleMenu
+        editor={editor}
+        shouldShow={shouldShow}
+        updateDelay={100}
+      >
+        <div className="bubble-toolbar" onMouseLeave={handleHide}>
+          <input
+            className="bubble-toolbar-link-input"
+            type="url"
+            placeholder="Paste URL..."
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            onKeyDown={handleLinkKeyDown}
+            autoFocus
+          />
+          <button
+            className="bubble-toolbar-btn"
+            onMouseDown={(e) => { e.preventDefault(); handleLinkApply(); }}
+            title="Apply"
+          >
+            <Check size={14} />
+          </button>
+          {editor.isActive('link') && (
+            <button
+              className="bubble-toolbar-btn"
+              onMouseDown={(e) => { e.preventDefault(); handleLinkRemove(); }}
+              title="Remove link"
+            >
+              <X size={14} />
+            </button>
+          )}
+          <button
+            className="bubble-toolbar-btn"
+            onMouseDown={(e) => { e.preventDefault(); handleLinkCancel(); }}
+            title="Cancel (Esc)"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      </BubbleMenu>
+    );
+  }
+
+  return (
+    <BubbleMenu
+      editor={editor}
+      shouldShow={shouldShow}
+      updateDelay={100}
+    >
+      <div className="bubble-toolbar" onMouseLeave={() => setShowColorPicker(false)}>
+        <button
+          className={`bubble-toolbar-btn ${editor.isActive('bold') ? 'is-active' : ''}`}
+          onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBold().run(); }}
+          title="Bold (⌘B)"
+        >
+          <Bold size={14} />
+        </button>
+        <button
+          className={`bubble-toolbar-btn ${editor.isActive('italic') ? 'is-active' : ''}`}
+          onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleItalic().run(); }}
+          title="Italic (⌘I)"
+        >
+          <Italic size={14} />
+        </button>
+        <button
+          className={`bubble-toolbar-btn ${editor.isActive('strike') ? 'is-active' : ''}`}
+          onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleStrike().run(); }}
+          title="Strikethrough (⌘⇧S)"
+        >
+          <Strikethrough size={14} />
+        </button>
+        <button
+          className={`bubble-toolbar-btn ${editor.isActive('code') ? 'is-active' : ''}`}
+          onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleCode().run(); }}
+          title="Code (⌘E)"
+        >
+          <Code size={14} />
+        </button>
+
+        <div className="bubble-toolbar-divider" />
+
+        <button
+          className={`bubble-toolbar-btn ${editor.isActive('link') ? 'is-active' : ''}`}
+          onMouseDown={(e) => { e.preventDefault(); handleLinkOpen(); }}
+          title="Link (⌘K)"
+        >
+          <LinkIcon size={14} />
+        </button>
+
+        <div className="bubble-toolbar-divider" />
+
+        <div className="relative">
+          <button
+            className="bubble-toolbar-btn"
+            onMouseDown={(e) => { e.preventDefault(); setShowColorPicker(!showColorPicker); }}
+            title="Text color"
+          >
+            <Palette size={14} />
+          </button>
+          {showColorPicker && (
+            <div className="bubble-toolbar-color-picker">
+              {TEXT_COLORS.map((c) => (
+                <button
+                  key={c.label}
+                  className="bubble-toolbar-color-swatch"
+                  style={{ backgroundColor: c.value ?? 'var(--color-text-primary)' }}
+                  onMouseDown={(e) => { e.preventDefault(); handleColorSelect(c.value); }}
+                  title={c.label}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </BubbleMenu>
+  );
+}

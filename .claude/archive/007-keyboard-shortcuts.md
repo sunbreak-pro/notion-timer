@@ -1,6 +1,6 @@
 # 007 - Keyboard Shortcuts 拡張
 
-**Status**: IN_PROGRESS (Phase 0-4 COMPLETED, Phase 5 PENDING)
+**Status**: COMPLETED (Phase 0-5 ALL COMPLETED)
 **Created**: 2026-02-09
 
 ## Overview

@@ -18,7 +18,8 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **キーボードショートカット**: Space（タイマー）、n（新規タスク）、Escape（モーダル閉じ）、Delete（タスク削除）、Cmd+.（左サイドバー開閉）、Cmd+Shift+.（右サイドバー開閉）、Cmd+,（Settings遷移）、Cmd+1〜5（セクション切替）、↑/↓（タスク移動）、Tab/Shift+Tab（インデント）、r（タイマーリセット）、Cmd+Shift+T（モーダル）、j/k/t/m（カレンダー操作）
 - **Settings画面**: 外観設定、通知設定、ゴミ箱（削除タスクの復元・完全削除）
 - **Tips画面**: ショートカット一覧、タスク/タイマー/カレンダー/エディタの操作ガイド（5タブ構成）
-- **リッチテキストエディタ**: TipTap拡張（Toggle List/Table/Callout/Image）、スラッシュコマンド対応
+- **リッチテキストエディタ**: TipTap拡張（Toggle List/Table/Callout/Image）、スラッシュコマンド対応、テキスト選択時Bubbleツールバー（Bold/Italic/Strikethrough/Code/Link/TextColor）
+- **コマンドパレット**: ⌘Kで起動、16コマンド（Navigation/Task/Timer/View）をリアルタイム検索・実行
 - **カレンダー**: 月/週表示切替、タスクを日付別に表示、フィルタリング（incomplete/completed）
 - **アナリティクス**: 基本統計（総タスク数、完了率、フォルダ数）
 - **Backend連携**: localStorage→H2 DB自動マイグレーション、Optimistic Update、オフラインフォールバック
@@ -67,6 +68,23 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-10 - Bubble Toolbar + Command Palette
+
+#### 概要
+テキスト選択時のNotionスタイルフローティングツールバーと、`⌘K`コマンドパレットを実装。
+
+#### 変更内容
+- **BubbleToolbar**: テキスト選択時にBold/Italic/Strikethrough/Code/Link/TextColorのフローティングツールバー表示
+- **Markdown入力ルール無効化**: `**`, `*`, `~~`, `` ` ``の自動変換をOFF（キーボードショートカットは維持）
+- **Link UI**: インラインURL入力、既存リンク編集・解除
+- **テキスト色**: 10色プリセットのカラーピッカー
+- **CommandPalette**: `⌘K`でNavigation/Task/Timer/View計16コマンドを検索・実行
+- **`⌘K`競合解決**: エディタ内テキスト選択中はTipTap Linkに委譲
+
+#### 新規ファイル
+- `frontend/src/components/TaskDetail/BubbleToolbar.tsx`
+- `frontend/src/components/CommandPalette/CommandPalette.tsx`
 
 ### 2026-02-10 - コードクリーンアップ & ディレクトリ構造整理
 

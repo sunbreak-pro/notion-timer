@@ -1,26 +1,21 @@
-import { useState, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  ChevronRight,
-  ChevronDown,
-  Folder,
-  FolderOpen,
-  Check,
-  GripVertical,
-} from "lucide-react";
+import { GripVertical } from "lucide-react";
 import type { TaskNode } from "../../types/taskTree";
-import { getTextColorForBg } from "../../constants/folderColors";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useTimerContext } from "../../hooks/useTimerContext";
+import { TaskNodeIndent } from "./TaskNodeIndent";
+import { TaskNodeCheckbox } from "./TaskNodeCheckbox";
 import { TaskNodeEditor } from "./TaskNodeEditor";
 import { TaskNodeContent } from "./TaskNodeContent";
 import { TaskNodeActions } from "./TaskNodeActions";
 import { TaskNodeTimer, TaskNodeTimerBar } from "./TaskNodeTimer";
+import { TaskNodeContextMenu } from "./TaskNodeContextMenu";
 
 interface TaskTreeNodeProps {
   node: TaskNode;
@@ -46,11 +41,16 @@ export function TaskTreeNode({
     toggleTaskStatus,
     softDelete,
     addNode,
+    moveToRoot,
   } = useTaskTreeContext();
 
   const timer = useTimerContext();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   const {
     attributes,
@@ -78,12 +78,21 @@ export function TaskTreeNode({
       : {}),
   };
 
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setContextMenu({ x: e.clientX, y: e.clientY });
+    },
+    [],
+  );
+
   return (
     <div>
       <div
         ref={setNodeRef}
         style={style}
-        className={`group flex items-center gap-0.5 rounded-md hover:bg-notion-hover transition-colors ${isSelected ? "bg-notion-hover" : ""} ${isFolder && isOver && !isDragging ? "ring-2 ring-notion-accent/50" : ""}`}
+        className={`group flex items-center gap-0.5 rounded-md hover:bg-notion-hover transition-colors border-l-2 ${isSelected ? "bg-notion-hover border-l-notion-accent" : "border-l-transparent"} ${isFolder && isOver && !isDragging ? "ring-2 ring-notion-accent/50" : ""}`}
+        onContextMenu={handleContextMenu}
         {...attributes}
       >
         <button
@@ -93,57 +102,16 @@ export function TaskTreeNode({
           <GripVertical size={18} />
         </button>
 
-        {depth > 0 && (
-          <div
-            className="flex shrink-0 self-stretch"
-            style={{ width: `${depth * 12}px` }}
-          >
-            {Array.from({ length: depth }, (_, i) => (
-              <div key={i} className="w-5 flex justify-center">
-                <div
-                  className={`w-px h-full ${i === depth - 1 && isLastChild ? "h-1/2 self-start" : ""} bg-notion-text`}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+        <TaskNodeIndent depth={depth} isLastChild={isLastChild} />
 
-        {isFolder && (
-          <button
-            onClick={() => toggleExpanded(node.id)}
-            className="text-notion-text-secondary hover:text-notion-text"
-          >
-            {node.isExpanded ? (
-              <ChevronDown size={14} />
-            ) : (
-              <ChevronRight size={14} />
-            )}
-          </button>
-        )}
-
-        {!isFolder && (
-          <button
-            onClick={() => toggleTaskStatus(node.id)}
-            className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
-              isDone
-                ? "bg-notion-accent border-notion-accent text-gray-900"
-                : "border-notion-border hover:border-notion-accent"
-            }`}
-          >
-            {isDone && <Check size={10} />}
-          </button>
-        )}
-
-        {isFolder && (
-          <span
-            className="text-notion-text-secondary"
-            style={
-              node.color ? { color: getTextColorForBg(node.color) } : undefined
-            }
-          >
-            {node.isExpanded ? <FolderOpen size={14} /> : <Folder size={14} />}
-          </span>
-        )}
+        <TaskNodeCheckbox
+          isFolder={isFolder}
+          isDone={isDone}
+          isExpanded={node.isExpanded}
+          color={node.color}
+          onToggleExpand={() => toggleExpanded(node.id)}
+          onToggleStatus={() => toggleTaskStatus(node.id)}
+        />
 
         {isEditing ? (
           <TaskNodeEditor
@@ -182,6 +150,23 @@ export function TaskTreeNode({
           onDelete={softDelete}
         />
       </div>
+
+      {contextMenu && (
+        <TaskNodeContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          isFolder={isFolder}
+          isDone={isDone}
+          hasParent={node.parentId !== null}
+          onRename={() => setIsEditing(true)}
+          onAddTask={() => addNode("task", node.id, "New Task")}
+          onAddFolder={() => addNode("folder", node.id, "New Folder")}
+          onStartTimer={() => onPlayTask?.(node)}
+          onMoveToRoot={() => moveToRoot(node.id)}
+          onDelete={() => softDelete(node.id)}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
 
       <TaskNodeTimerBar
         isActive={isTimerActive}

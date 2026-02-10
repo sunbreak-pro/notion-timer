@@ -4,6 +4,25 @@
 
 ---
 
+## Bubble Toolbar + Command Palette
+
+### Floating Bubble Toolbar (Feature A)
+- テキスト選択時にNotionスタイルのフローティングツールバーを表示
+- Bold / Italic / Strikethrough / Code / Link / Text Color ボタン
+- Markdown入力ルール（`**`, `*`, `~~`, `` ` ``）を無効化、キーボードショートカットは維持
+- Link挿入・編集・解除のインラインUI
+- 10色テキストカラーピッカー（ダーク/ライト両テーマ対応）
+- npm追加: `@tiptap/extension-color`, `@tiptap/extension-text-style`, `@tiptap/extension-link`
+
+### Command Palette (Feature B)
+- `⌘K` でコマンドパレット起動
+- リアルタイム検索フィルタリング（タイトル + カテゴリ）
+- Arrow Up/Down + Enter キーボードナビゲーション
+- Navigation / Task / Timer / View の4カテゴリ、計16コマンド
+- エディタ内テキスト選択中は TipTap Link に `⌘K` を委譲
+
+---
+
 ## コードクリーンアップ & ディレクトリ構造整理 (009)
 
 ### Phase 1: ディレクトリ構造整理

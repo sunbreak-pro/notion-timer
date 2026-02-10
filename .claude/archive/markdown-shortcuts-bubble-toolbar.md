@@ -1,6 +1,6 @@
 # Feature Plan: Markdown Shortcuts → Floating Bubble Toolbar
 
-**Status**: PLANNED
+**Status**: COMPLETED
 **Created**: 2026-02-10
 
 ---

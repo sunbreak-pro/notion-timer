@@ -21,11 +21,11 @@ export function TaskNodeActions({
   makeTask,
 }: TaskNodeActionsProps) {
   return (
-    <>
+    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
       {node.type === "folder" && (
         <button
           onClick={() => makeTask(node)}
-          className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-success transition-opacity"
+          className="p-1 text-notion-text-secondary hover:text-notion-success"
         >
           <Plus size={14} />
         </button>
@@ -33,7 +33,7 @@ export function TaskNodeActions({
       {node.type === "folder" && (
         <button
           onClick={() => makeFolder(node)}
-          className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-success transition-opacity"
+          className="p-1 text-notion-text-secondary hover:text-notion-success"
         >
           <LucideFolderPlus size={14} />
         </button>
@@ -41,17 +41,17 @@ export function TaskNodeActions({
       {!isDone && onPlayTask && (
         <button
           onClick={() => onPlayTask(node)}
-          className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-accent transition-opacity"
+          className="p-1 text-notion-text-secondary hover:text-notion-accent"
         >
           {isTimerActive ? <Pause size={14} /> : <Play size={14} />}
         </button>
       )}
       <button
         onClick={() => onDelete(node.id)}
-        className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-danger transition-opacity"
+        className="p-1 text-notion-text-secondary hover:text-notion-danger"
       >
         <Trash2 size={14} />
       </button>
-    </>
+    </div>
   );
 }
