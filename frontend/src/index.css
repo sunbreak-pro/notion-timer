@@ -152,34 +152,45 @@ body {
   height: 0;
 }
 
-/* Toggle List (details/summary) */
-.memo-editor details {
+/* Toggle List */
+.memo-editor .toggle-list {
+  display: flex;
+  align-items: flex-start;
   border: 1px solid var(--color-border);
   border-radius: 0.375rem;
   padding: 0.5rem 0.75rem;
   margin-bottom: 0.75rem;
 }
 
-.memo-editor details summary {
+.memo-editor .toggle-arrow {
+  all: unset;
   cursor: pointer;
-  font-weight: 500;
-  list-style: none;
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.memo-editor details summary::before {
-  content: '\25B6';
   font-size: 0.625rem;
+  line-height: 1.7;
+  padding: 0 0.375rem 0 0;
+  flex-shrink: 0;
   transition: transform 0.15s;
+  user-select: none;
 }
 
-.memo-editor details[open] summary::before {
+.memo-editor .toggle-list[data-open="true"] .toggle-arrow {
   transform: rotate(90deg);
 }
 
-.memo-editor details[open] [data-toggle-content] {
+.memo-editor .toggle-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.memo-editor [data-toggle-summary] {
+  font-weight: 500;
+}
+
+.memo-editor .toggle-list[data-open="false"] [data-toggle-content] {
+  display: none;
+}
+
+.memo-editor .toggle-list[data-open="true"] [data-toggle-content] {
   padding-top: 0.5rem;
   border-top: 1px solid var(--color-border);
   margin-top: 0.5rem;

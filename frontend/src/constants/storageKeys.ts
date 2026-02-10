@@ -13,4 +13,5 @@ export const STORAGE_KEYS = {
   SESSIONS_BEFORE_LONG_BREAK: 'sonic-flow-sessions-before-long-break',
   MIGRATION_DONE: 'sonic-flow-migration-done',
   MEMOS: 'sonic-flow-memos',
+  CUSTOM_SOUNDS: 'sonic-flow-custom-sounds',
 } as const;

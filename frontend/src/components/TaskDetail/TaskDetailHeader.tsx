@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { Play, Trash2, Clock } from 'lucide-react';
-import type { TaskNode } from '../../types/taskTree';
-import { getAncestors } from '../../utils/breadcrumb';
-import { DurationPicker } from '../shared/DurationPicker';
-import { formatDuration } from '../../utils/duration';
-import { DateTimePicker } from '../Calendar/DateTimePicker';
-import { FolderTag } from '../shared/FolderTag';
-import { ColorPicker } from '../shared/ColorPicker';
+import { useState } from "react";
+import { Play, Trash2, Clock } from "lucide-react";
+import type { TaskNode } from "../../types/taskTree";
+import { getAncestors } from "../../utils/breadcrumb";
+import { DurationPicker } from "../shared/DurationPicker";
+import { formatDuration } from "../../utils/duration";
+import { DateTimePicker } from "../Calendar/DateTimePicker";
+import { FolderTag } from "../shared/FolderTag";
+import { ColorPicker } from "../shared/ColorPicker";
 
 interface TaskDetailHeaderProps {
   task: TaskNode;
@@ -34,7 +34,9 @@ export function TaskDetailHeader({
   taskColor,
 }: TaskDetailHeaderProps) {
   const [showDurationPicker, setShowDurationPicker] = useState(false);
-  const [colorPickerAncestorId, setColorPickerAncestorId] = useState<string | null>(null);
+  const [colorPickerAncestorId, setColorPickerAncestorId] = useState<
+    string | null
+  >(null);
   const ancestors = getAncestors(task.id, allNodes);
   const duration = task.workDurationMinutes ?? globalWorkDuration;
   const isCustomDuration = task.workDurationMinutes != null;
@@ -45,22 +47,31 @@ export function TaskDetailHeader({
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 text-xs text-notion-text-secondary">
             {ancestors.map((ancestor, i) => (
-              <span key={ancestor.id} className="flex items-center gap-1.5 relative">
+              <span
+                key={ancestor.id}
+                className="flex items-center gap-1.5 relative"
+              >
                 {i > 0 && <span>/</span>}
-                {ancestor.type === 'folder' && onFolderColorChange ? (
+                {ancestor.type === "folder" && onFolderColorChange ? (
                   <>
                     <button
-                      onClick={() => setColorPickerAncestorId(
-                        colorPickerAncestorId === ancestor.id ? null : ancestor.id
-                      )}
+                      onClick={() =>
+                        setColorPickerAncestorId(
+                          colorPickerAncestorId === ancestor.id
+                            ? null
+                            : ancestor.id,
+                        )
+                      }
                       className="hover:text-notion-text transition-colors cursor-pointer"
                     >
-                      {ancestor.title}
+                      <FolderTag tag={ancestor.title} color={ancestor.color} />
                     </button>
                     {colorPickerAncestorId === ancestor.id && (
                       <ColorPicker
                         currentColor={ancestor.color}
-                        onSelect={(color) => onFolderColorChange(ancestor.id, color)}
+                        onSelect={(color) =>
+                          onFolderColorChange(ancestor.id, color)
+                        }
                         onClose={() => setColorPickerAncestorId(null)}
                       />
                     )}
@@ -71,12 +82,6 @@ export function TaskDetailHeader({
               </span>
             ))}
           </div>
-          {(() => {
-            const parentFolder = [...ancestors].reverse().find(a => a.type === 'folder');
-            return parentFolder ? (
-              <FolderTag tag={parentFolder.title} color={parentFolder.color} />
-            ) : null;
-          })()}
         </div>
       )}
       {!ancestors.length && folderTag && (
@@ -84,7 +89,6 @@ export function TaskDetailHeader({
           <FolderTag tag={folderTag} color={taskColor} />
         </div>
       )}
-
       <h1 className="text-2xl font-bold text-notion-text">{task.title}</h1>
 
       <div className="flex items-center gap-3">
@@ -95,14 +99,13 @@ export function TaskDetailHeader({
           <Play size={14} />
           <span>Start</span>
         </button>
-
         <div className="relative">
           <button
             onClick={() => setShowDurationPicker(!showDurationPicker)}
             className={`flex items-center gap-1.5 text-sm px-2 py-1 rounded-md transition-colors ${
               isCustomDuration
-                ? 'text-notion-accent bg-notion-accent/10'
-                : 'text-notion-text-secondary hover:bg-notion-hover'
+                ? "text-notion-accent bg-notion-accent/10"
+                : "text-notion-text-secondary hover:bg-notion-hover"
             }`}
           >
             <Clock size={14} />

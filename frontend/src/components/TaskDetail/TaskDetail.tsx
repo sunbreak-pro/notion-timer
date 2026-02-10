@@ -43,7 +43,7 @@ export function TaskDetail({
 
   return (
     <div className="h-full flex flex-col overflow-auto">
-      <div className="max-w-3xl mx-auto w-full px-12 py-8 flex-1">
+      <div className="max-w-3xl mx-auto w-full h-full flex-1">
         <TaskDetailHeader
           task={task}
           allNodes={allNodes}

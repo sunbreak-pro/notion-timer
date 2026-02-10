@@ -62,7 +62,7 @@ export function MemoDateList({
               : "text-notion-text-secondary hover:bg-notion-hover hover:text-notion-text"
           }`}
         >
-          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
           Today
         </button>
 
@@ -79,7 +79,7 @@ export function MemoDateList({
                     : "text-notion-text-secondary hover:bg-notion-hover hover:text-notion-text"
                 }`}
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-notion-text-secondary/30 flex-shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-notion-text-secondary/30 shrink-0" />
                 {formatDisplayDate(memo.date)}
               </button>
               <button

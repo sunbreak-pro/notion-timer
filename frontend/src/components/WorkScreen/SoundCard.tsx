@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface SoundCardProps {
@@ -7,6 +8,7 @@ interface SoundCardProps {
   volume: number;
   onToggle: () => void;
   onVolumeChange: (volume: number) => void;
+  onDelete?: () => void;
 }
 
 export function SoundCard({
@@ -16,16 +18,28 @@ export function SoundCard({
   volume,
   onToggle,
   onVolumeChange,
+  onDelete,
 }: SoundCardProps) {
   return (
     <div
-      className={`flex flex-col items-center gap-3 p-4 rounded-lg border transition-colors cursor-pointer ${
+      className={`relative flex flex-col items-center gap-3 p-4 rounded-lg border transition-colors cursor-pointer ${
         enabled
           ? "border-notion-accent bg-notion-accent/10"
           : "border-notion-border bg-notion-bg-secondary hover:border-notion-text-secondary"
       }`}
       onClick={onToggle}
     >
+      {onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="absolute top-1 right-1 p-0.5 rounded hover:bg-notion-hover text-notion-text-secondary hover:text-notion-text transition-colors"
+        >
+          <X size={12} />
+        </button>
+      )}
       <Icon
         size={24}
         className={
@@ -33,7 +47,7 @@ export function SoundCard({
         }
       />
       <span
-        className={`text-xs font-medium ${enabled ? "text-notion-accent" : "text-notion-text-secondary"}`}
+        className={`text-xs font-medium truncate max-w-full ${enabled ? "text-notion-accent" : "text-notion-text-secondary"}`}
       >
         {label}
       </span>

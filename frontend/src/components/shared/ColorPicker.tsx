@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { FOLDER_COLORS, getTextColorForBg } from '../../constants/folderColors';
-import { Check } from 'lucide-react';
+import { useEffect, useRef } from "react";
+import { FOLDER_COLORS, getTextColorForBg } from "../../constants/folderColors";
+import { Check } from "lucide-react";
 
 interface ColorPickerProps {
   currentColor?: string;
@@ -8,7 +8,11 @@ interface ColorPickerProps {
   onClose: () => void;
 }
 
-export function ColorPicker({ currentColor, onSelect, onClose }: ColorPickerProps) {
+export function ColorPicker({
+  currentColor,
+  onSelect,
+  onClose,
+}: ColorPickerProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -17,8 +21,8 @@ export function ColorPicker({ currentColor, onSelect, onClose }: ColorPickerProp
         onClose();
       }
     };
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [onClose]);
 
   const pastelColors = FOLDER_COLORS.slice(0, 10);
@@ -29,14 +33,21 @@ export function ColorPicker({ currentColor, onSelect, onClose }: ColorPickerProp
     return (
       <button
         key={color}
-        onClick={() => { onSelect(color); onClose(); }}
+        onClick={() => {
+          onSelect(color);
+          onClose();
+        }}
         className="w-7 h-7 rounded-full flex items-center justify-center transition-transform hover:scale-110"
         style={{
           backgroundColor: color,
-          boxShadow: isSelected ? `0 0 0 2px ${getTextColorForBg(color)}` : undefined,
+          boxShadow: isSelected
+            ? `0 0 0 2px ${getTextColorForBg(color)}`
+            : undefined,
         }}
       >
-        {isSelected && <Check size={12} style={{ color: getTextColorForBg(color) }} />}
+        {isSelected && (
+          <Check size={12} style={{ color: getTextColorForBg(color) }} />
+        )}
       </button>
     );
   };
@@ -44,7 +55,7 @@ export function ColorPicker({ currentColor, onSelect, onClose }: ColorPickerProp
   return (
     <div
       ref={ref}
-      className="absolute top-full left-0 mt-1 z-50 bg-notion-bg border border-notion-border rounded-lg shadow-lg p-2 w-[180px]"
+      className="absolute top-full left-0 mt-1 z-50 bg-notion-bg border border-notion-border rounded-lg shadow-lg p-2 w-45"
     >
       <p className="text-[10px] text-notion-text-secondary mb-1 px-1">Pastel</p>
       <div className="grid grid-cols-5 gap-1.5 mb-2">
