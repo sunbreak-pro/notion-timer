@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { SessionType } from '../types/timer';
-import { TimerContext } from './timerContextValue';
-import type { ActiveTask } from './timerContextValue';
+import { TimerContext } from './TimerContextValue';
+import type { ActiveTask } from './TimerContextValue';
 import { STORAGE_KEYS } from '../constants/storageKeys';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import * as timerApi from '../api/timerClient';

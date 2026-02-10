@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { AudioContext } from '../context/audioContextValue';
+import { AudioContext } from '../context/AudioContextValue';
 
 export function useAudioContext() {
   const context = useContext(AudioContext);

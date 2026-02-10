@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { ThemeContext, type Theme, type FontSize } from "./themeContextValue";
+import { ThemeContext, type Theme, type FontSize } from "./ThemeContextValue";
 import { STORAGE_KEYS } from "../constants/storageKeys";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 

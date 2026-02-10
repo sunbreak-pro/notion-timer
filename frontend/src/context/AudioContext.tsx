@@ -4,7 +4,7 @@ import { useTimerContext } from '../hooks/useTimerContext';
 import { useLocalSoundMixer } from '../hooks/useLocalSoundMixer';
 import { useAudioEngine } from '../hooks/useAudioEngine';
 import { useCustomSounds } from '../hooks/useCustomSounds';
-import { AudioContext, type AudioContextValue } from './audioContextValue';
+import { AudioContext, type AudioContextValue } from './AudioContextValue';
 
 export function AudioProvider({ children }: { children: ReactNode }) {
   const timer = useTimerContext();
