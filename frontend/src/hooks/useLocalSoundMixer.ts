@@ -19,11 +19,27 @@ function getDefaultMixerState(): SoundMixerState {
   return initial;
 }
 
-export function useLocalSoundMixer() {
+export function useLocalSoundMixer(customSoundIds: string[] = []) {
   const [mixer, setMixer] = useLocalStorage<SoundMixerState>(
     STORAGE_KEYS.SOUND_MIXER,
     getDefaultMixerState()
   );
+
+  // Add custom sound entries to mixer when they don't exist yet
+  useEffect(() => {
+    if (customSoundIds.length === 0) return;
+    setMixer(prev => {
+      let changed = false;
+      const next = { ...prev };
+      for (const id of customSoundIds) {
+        if (!next[id]) {
+          next[id] = { enabled: false, volume: 50 };
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [customSoundIds, setMixer]);
 
   // Load from backend on mount
   useEffect(() => {
@@ -41,9 +57,7 @@ export function useLocalSoundMixer() {
           return next;
         });
       })
-      .catch(() => {
-        // Backend unavailable, use localStorage values
-      });
+      .catch((e) => console.warn('[Sound] fetch settings:', e.message));
     return () => { cancelled = true; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -53,7 +67,7 @@ export function useLocalSoundMixer() {
   const syncSoundSetting = useCallback((soundType: string, volume: number, enabled: boolean) => {
     clearTimeout(syncTimeoutRef.current[soundType]);
     syncTimeoutRef.current[soundType] = setTimeout(() => {
-      soundApi.updateSoundSetting(soundType, volume, enabled).catch(() => {});
+      soundApi.updateSoundSetting(soundType, volume, enabled).catch((e) => console.warn('[Sound] sync settings:', e.message));
     }, 500);
   }, []);
 

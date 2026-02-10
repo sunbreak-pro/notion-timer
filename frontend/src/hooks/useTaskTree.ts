@@ -27,6 +27,7 @@ function loadNodes(): TaskNode[] {
       }
       return result;
     } catch {
+      console.warn('[TaskTree] localStorage parse failed');
       return mockTaskTree;
     }
   }

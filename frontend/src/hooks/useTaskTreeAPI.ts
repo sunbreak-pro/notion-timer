@@ -71,9 +71,7 @@ export function useTaskTreeAPI() {
     if (syncPending.current) return;
     syncPending.current = true;
     setTimeout(() => {
-      api.syncTaskTree(updated).catch(() => {
-        // Silently fail - localStorage is the write-through cache
-      }).finally(() => {
+      api.syncTaskTree(updated).catch((e) => console.warn('[TaskTree] sync:', e.message)).finally(() => {
         syncPending.current = false;
       });
     }, 500);

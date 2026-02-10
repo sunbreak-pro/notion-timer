@@ -97,9 +97,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         if (settings.longBreakDuration) setLongBreakDurationMinutesState(settings.longBreakDuration);
         if (settings.sessionsBeforeLongBreak) setSessionsBeforeLongBreakState(settings.sessionsBeforeLongBreak);
       })
-      .catch(() => {
-        // Backend unavailable, use localStorage values
-      });
+      .catch((e) => console.warn('[Timer] fetch settings:', e.message));
     return () => { cancelled = true; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -113,9 +111,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         breakDuration: breakDurationMinutes,
         longBreakDuration: longBreakDurationMinutes,
         sessionsBeforeLongBreak: sessionsBeforeLongBreakState,
-      }).catch(() => {
-        // Backend unavailable, settings remain in localStorage
-      });
+      }).catch((e) => console.warn('[Timer] sync settings:', e.message));
     }, 500);
     return () => clearTimeout(syncSettingsRef.current);
   }, [workDurationMinutes, breakDurationMinutes, longBreakDurationMinutes, sessionsBeforeLongBreakState]);
@@ -132,7 +128,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
 
   const endCurrentSession = useCallback((duration: number, completed: boolean) => {
     if (currentSessionIdRef.current !== null) {
-      timerApi.endTimerSession(currentSessionIdRef.current, duration, completed).catch(() => {});
+      timerApi.endTimerSession(currentSessionIdRef.current, duration, completed).catch((e) => console.warn('[Timer] end session:', e.message));
       currentSessionIdRef.current = null;
     }
   }, []);
@@ -198,7 +194,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     const task = activeTaskRef.current;
     timerApi.startTimerSession(st, task?.id).then((session) => {
       currentSessionIdRef.current = session.id;
-    }).catch(() => {});
+    }).catch((e) => console.warn('[Timer] start session:', e.message));
   }, []);
 
   const pause = useCallback(() => {
@@ -233,7 +229,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     setIsRunning(true);
     timerApi.startTimerSession('WORK', id).then((session) => {
       currentSessionIdRef.current = session.id;
-    }).catch(() => {});
+    }).catch((e) => console.warn('[Timer] start session:', e.message));
   }, [clearTimer, workDurationMinutes, endCurrentSession]);
 
   const openForTask = useCallback((id: string, title: string, durationMinutes?: number) => {

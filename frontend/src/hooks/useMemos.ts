@@ -18,6 +18,7 @@ function loadLocalMemos(): MemoNode[] {
     try {
       return JSON.parse(saved);
     } catch {
+      console.warn('[Memo] localStorage parse failed');
       return [];
     }
   }
@@ -61,9 +62,7 @@ export function useMemos() {
     if (syncPending.current) return;
     syncPending.current = true;
     setTimeout(() => {
-      api.upsertMemo(date, content).catch(() => {
-        // Silently fail - localStorage is the fallback
-      }).finally(() => {
+      api.upsertMemo(date, content).catch((e) => console.warn('[Memo] sync:', e.message)).finally(() => {
         syncPending.current = false;
       });
     }, 500);
@@ -99,7 +98,7 @@ export function useMemos() {
       return updated;
     });
     if (isBackendAvailable) {
-      api.deleteMemo(date).catch(() => {});
+      api.deleteMemo(date).catch((e) => console.warn('[Memo] delete:', e.message));
     }
   }, [isBackendAvailable]);
 
