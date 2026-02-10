@@ -10,7 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -120,11 +122,17 @@ public class TaskService {
     }
 
     private List<String> collectDescendantIds(String id, List<Task> all) {
+        Set<String> visited = new HashSet<>();
+        return collectDescendantIdsInternal(id, all, visited);
+    }
+
+    private List<String> collectDescendantIdsInternal(String id, List<Task> all, Set<String> visited) {
+        if (!visited.add(id)) return List.of();
         ArrayList<String> result = new ArrayList<>();
         result.add(id);
         for (Task t : all) {
             if (id.equals(t.getParentId())) {
-                result.addAll(collectDescendantIds(t.getId(), all));
+                result.addAll(collectDescendantIdsInternal(t.getId(), all, visited));
             }
         }
         return result;

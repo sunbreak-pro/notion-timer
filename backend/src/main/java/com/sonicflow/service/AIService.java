@@ -13,6 +13,9 @@ import org.springframework.web.client.RestClientResponseException;
 
 import jakarta.annotation.PostConstruct;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.List;
 import java.util.Map;
 
@@ -147,24 +150,22 @@ public class AIService {
         return (String) parts.get(0).get("text");
     }
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     private String extractGeminiError(String responseBody) {
         if (responseBody == null || responseBody.isBlank()) {
             return "";
         }
-        // Extract "message" field from Gemini error JSON
-        // Format: {"error":{"code":429,"message":"...","status":"RESOURCE_EXHAUSTED"}}
-        int msgStart = responseBody.indexOf("\"message\"");
-        if (msgStart == -1) {
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode message = root.path("error").path("message");
+            if (message.isMissingNode() || message.isNull()) {
+                return "";
+            }
+            return " [詳細: " + message.asText() + "]";
+        } catch (Exception e) {
             return "";
         }
-        int colonPos = responseBody.indexOf(":", msgStart);
-        int valueStart = responseBody.indexOf("\"", colonPos + 1);
-        int valueEnd = responseBody.indexOf("\"", valueStart + 1);
-        if (valueStart == -1 || valueEnd == -1) {
-            return "";
-        }
-        String message = responseBody.substring(valueStart + 1, valueEnd);
-        return " [詳細: " + message + "]";
     }
 
     private String buildPrompt(AIAdviceRequest request) {

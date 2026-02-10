@@ -65,10 +65,8 @@ public class TimerController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> request) {
         try {
-            Integer duration = request.get("duration") != null
-                    ? ((Number) request.get("duration")).intValue()
-                    : null;
-            Boolean completed = (Boolean) request.get("completed");
+            Integer duration = request.get("duration") instanceof Number num ? num.intValue() : null;
+            Boolean completed = request.get("completed") instanceof Boolean bool ? bool : null;
 
             TimerSession session = timerService.endSession(id, duration, completed);
             return ResponseEntity.ok(session);
