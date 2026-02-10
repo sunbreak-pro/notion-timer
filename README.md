@@ -68,6 +68,23 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 
 ## 開発ジャーナル
 
+### 2026-02-10 - サウンド再生エンジン バグ修正
+
+#### 問題
+WorkScreenでサウンドカードをクリックしても音声が再生されない不具合。コンソールに以下のエラーが発生:
+- `Construction of MediaElementAudioSourceNode is not useful when context is closed.`
+- `Construction of GainNode is not useful when context is closed.`
+- `[AudioEngine] Playback blocked for fire: The play() request was interrupted by a call to pause().`
+
+#### 原因と修正 (`useAudioEngine.ts`)
+1. **AudioContext closed状態の未処理（致命的）**: `ensureContext()`が`state === 'closed'`のContextを再利用していた。React StrictModeやWorkScreen再マウント時にcleanupで`close()`された後、再利用不能なContextでノード作成を試行 → `closed`状態なら新しいAudioContextを作成するよう修正
+2. **cleanup後のnull化漏れ（致命的）**: `contextRef.current?.close()`の後に参照を`null`にしていなかったため、closedなContextが残存 → cleanup時に`contextRef.current = null`を追加
+3. **play/pause競合（中）**: フェードアウト後の`setTimeout(pause)`がIDを管理されておらず、素早いON→OFF→ON操作で古いpauseが新しいplayを中断 → `pauseTimeoutsRef`でタイムアウトIDを追跡し、play前にキャンセル
+4. **unmount時のタイムアウトリーク**: cleanup時に残存するpauseタイムアウトをクリアするよう追加
+
+#### 変更ファイル
+- `frontend/src/hooks/useAudioEngine.ts` — 上記4修正
+
 ### 2026-02-09 - Timer/Sound API連携 + キーボードショートカット拡張
 
 #### Timer/Sound バックエンドAPI接続

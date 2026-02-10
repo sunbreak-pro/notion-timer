@@ -1,5 +1,5 @@
-import { BookOpen, Plus, Trash2 } from 'lucide-react';
-import type { MemoNode } from '../../types/memo';
+import { BookOpen, Plus, Trash2 } from "lucide-react";
+import type { MemoNode } from "../../types/memo";
 
 interface MemoDateListProps {
   memos: MemoNode[];
@@ -11,8 +11,8 @@ interface MemoDateListProps {
 }
 
 function formatDisplayDate(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  const month = date.toLocaleString('en-US', { month: 'short' });
+  const date = new Date(dateStr + "T00:00:00");
+  const month = date.toLocaleString("en-US", { month: "short" });
   const day = date.getDate();
   const year = date.getFullYear();
   const now = new Date();
@@ -30,10 +30,10 @@ export function MemoDateList({
   onCreateToday,
   onDelete,
 }: MemoDateListProps) {
-  const hasTodayMemo = memos.some(m => m.date === todayKey);
+  const hasTodayMemo = memos.some((m) => m.date === todayKey);
 
   return (
-    <div className="w-60 flex-shrink-0 border-r border-notion-border h-full flex flex-col">
+    <div className="w-60 shrink-0 border-r border-notion-border h-full flex flex-col">
       <div className="p-3 border-b border-notion-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-notion-text">
@@ -58,8 +58,8 @@ export function MemoDateList({
           onClick={() => onSelectDate(todayKey)}
           className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
             selectedDate === todayKey
-              ? 'bg-notion-hover text-notion-text font-medium'
-              : 'text-notion-text-secondary hover:bg-notion-hover hover:text-notion-text'
+              ? "bg-notion-hover text-notion-text font-medium"
+              : "text-notion-text-secondary hover:bg-notion-hover hover:text-notion-text"
           }`}
         >
           <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
@@ -68,15 +68,15 @@ export function MemoDateList({
 
         {/* Memo date list */}
         {memos
-          .filter(m => m.date !== todayKey)
-          .map(memo => (
+          .filter((m) => m.date !== todayKey)
+          .map((memo) => (
             <div key={memo.id} className="group relative">
               <button
                 onClick={() => onSelectDate(memo.date)}
                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
                   selectedDate === memo.date
-                    ? 'bg-notion-hover text-notion-text font-medium'
-                    : 'text-notion-text-secondary hover:bg-notion-hover hover:text-notion-text'
+                    ? "bg-notion-hover text-notion-text font-medium"
+                    : "text-notion-text-secondary hover:bg-notion-hover hover:text-notion-text"
                 }`}
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-notion-text-secondary/30 flex-shrink-0" />

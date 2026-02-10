@@ -87,10 +87,13 @@ const COMMANDS: CommandItem[] = [
         .chain()
         .focus()
         .insertContent({
-          type: 'toggleList',
+          type: "toggleList",
           content: [
-            { type: 'toggleSummary', content: [{ type: 'text', text: 'Toggle' }] },
-            { type: 'toggleContent', content: [{ type: 'paragraph' }] },
+            {
+              type: "toggleSummary",
+              content: [{ type: "text", text: "Toggle" }],
+            },
+            { type: "toggleContent", content: [{ type: "paragraph" }] },
           ],
         })
         .run();
@@ -100,7 +103,11 @@ const COMMANDS: CommandItem[] = [
     title: "Table",
     icon: Table2,
     command: (editor) => {
-      editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+      editor
+        .chain()
+        .focus()
+        .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+        .run();
     },
   },
   {
@@ -111,9 +118,9 @@ const COMMANDS: CommandItem[] = [
         .chain()
         .focus()
         .insertContent({
-          type: 'callout',
-          attrs: { emoji: '\u{1F4A1}' },
-          content: [{ type: 'text', text: 'Callout text...' }],
+          type: "callout",
+          attrs: { emoji: "\u{1F4A1}" },
+          content: [{ type: "text", text: "Callout text..." }],
         })
         .run();
     },
@@ -122,7 +129,7 @@ const COMMANDS: CommandItem[] = [
     title: "Image",
     icon: ImageIcon,
     command: (editor) => {
-      const url = window.prompt('Image URL');
+      const url = window.prompt("Image URL");
       if (url) {
         editor.chain().focus().setImage({ src: url }).run();
       }
@@ -144,7 +151,7 @@ export function SlashCommandMenu({ editor }: SlashCommandMenuProps) {
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 bg-notion-bg border border-notion-border rounded-lg shadow-lg py-1 w-56"
+      className="absolute z-50 bg-notion-bg border border-notion-border rounded-lg shadow-lg p-2 w-fit h-50 overflow-auto"
       style={{ top: position.top, left: position.left }}
     >
       {filteredCommands.map((cmd, i) => {

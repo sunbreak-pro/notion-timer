@@ -16,8 +16,10 @@ export function useAudioEngine(mixer: SoundMixerState) {
   const mixerRef = useRef(mixer);
   useEffect(() => { mixerRef.current = mixer; }, [mixer]);
 
+  const pauseTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
   const ensureContext = useCallback(() => {
-    if (!contextRef.current) {
+    if (!contextRef.current || contextRef.current.state === 'closed') {
       contextRef.current = new AudioContext();
     }
     if (contextRef.current.state === 'suspended') {
@@ -34,14 +36,15 @@ export function useAudioEngine(mixer: SoundMixerState) {
     if (!soundType) return null;
 
     const ctx = ensureContext();
-    const audio = new Audio(soundType.file);
+    const audio = new Audio();
     audio.loop = true;
-    audio.crossOrigin = 'anonymous';
+    audio.src = soundType.file;
 
     let source: MediaElementAudioSourceNode;
     try {
       source = ctx.createMediaElementSource(audio);
-    } catch {
+    } catch (e) {
+      console.warn(`[AudioEngine] Failed to create source for ${soundId}:`, e);
       return null;
     }
     const gain = ctx.createGain();
@@ -54,6 +57,21 @@ export function useAudioEngine(mixer: SoundMixerState) {
     return channel;
   }, [ensureContext]);
 
+  // Resume AudioContext on user gesture (Autoplay Policy)
+  useEffect(() => {
+    const resumeOnGesture = () => {
+      if (contextRef.current?.state === 'suspended') {
+        contextRef.current.resume();
+      }
+    };
+    document.addEventListener('click', resumeOnGesture);
+    document.addEventListener('keydown', resumeOnGesture);
+    return () => {
+      document.removeEventListener('click', resumeOnGesture);
+      document.removeEventListener('keydown', resumeOnGesture);
+    };
+  }, []);
+
   // Sync mixer state to audio channels
   useEffect(() => {
     for (const soundType of SOUND_TYPES) {
@@ -61,6 +79,13 @@ export function useAudioEngine(mixer: SoundMixerState) {
       if (!state) continue;
 
       if (state.enabled) {
+        // Cancel any pending pause timeout to prevent play/pause race
+        const pendingPause = pauseTimeoutsRef.current.get(soundType.id);
+        if (pendingPause) {
+          clearTimeout(pendingPause);
+          pauseTimeoutsRef.current.delete(soundType.id);
+        }
+
         const channel = getOrCreateChannel(soundType.id);
         if (!channel) continue;
 
@@ -70,12 +95,13 @@ export function useAudioEngine(mixer: SoundMixerState) {
         // Set target volume with fade
         const targetVolume = state.volume / 100;
         channel.gain.gain.cancelScheduledValues(ctx.currentTime);
+        channel.gain.gain.setValueAtTime(channel.gain.gain.value, ctx.currentTime);
         channel.gain.gain.linearRampToValueAtTime(targetVolume, ctx.currentTime + FADE_DURATION);
 
         // Start playback if paused
         if (channel.audio.paused) {
-          channel.audio.play().catch(() => {
-            // Autoplay blocked — will retry on next user interaction
+          channel.audio.play().catch((e) => {
+            console.warn(`[AudioEngine] Playback blocked for ${soundType.id}:`, e.message);
           });
         }
       } else {
@@ -87,14 +113,17 @@ export function useAudioEngine(mixer: SoundMixerState) {
 
         // Fade out then pause
         channel.gain.gain.cancelScheduledValues(ctx.currentTime);
+        channel.gain.gain.setValueAtTime(channel.gain.gain.value, ctx.currentTime);
         channel.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + FADE_DURATION);
 
         const audio = channel.audio;
-        setTimeout(() => {
+        const timeoutId = setTimeout(() => {
+          pauseTimeoutsRef.current.delete(soundType.id);
           if (!mixerRef.current[soundType.id]?.enabled) {
             audio.pause();
           }
         }, FADE_DURATION * 1000 + 50);
+        pauseTimeoutsRef.current.set(soundType.id, timeoutId);
       }
     }
   }, [mixer, getOrCreateChannel]);
@@ -109,6 +138,7 @@ export function useAudioEngine(mixer: SoundMixerState) {
         // Mute all when tab hidden
         for (const channel of channelsRef.current.values()) {
           channel.gain.gain.cancelScheduledValues(ctx.currentTime);
+          channel.gain.gain.setValueAtTime(channel.gain.gain.value, ctx.currentTime);
           channel.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.05);
         }
       } else {
@@ -119,6 +149,7 @@ export function useAudioEngine(mixer: SoundMixerState) {
           if (state?.enabled) {
             const targetVolume = state.volume / 100;
             channel.gain.gain.cancelScheduledValues(ctx.currentTime);
+            channel.gain.gain.setValueAtTime(channel.gain.gain.value, ctx.currentTime);
             channel.gain.gain.linearRampToValueAtTime(targetVolume, ctx.currentTime + FADE_DURATION);
           }
         }
@@ -138,8 +169,10 @@ export function useAudioEngine(mixer: SoundMixerState) {
         channel.audio.src = '';
       }
       channels.clear();
-      // contextRef may have been set after effect registration
       contextRef.current?.close();
+      contextRef.current = null;
+      for (const t of pauseTimeoutsRef.current.values()) clearTimeout(t);
+      pauseTimeoutsRef.current.clear();
     };
   }, []);
 }

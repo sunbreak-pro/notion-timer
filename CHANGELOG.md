@@ -4,6 +4,16 @@
 
 ---
 
+## サウンド再生エンジン バグ修正
+
+### AudioEngine 致命的バグ3件修正
+- **AudioContext closed状態の未処理修正**: `ensureContext()`で`state === 'closed'`なら新規AudioContextを作成するよう修正（React StrictMode / WorkScreen再マウントで発生）
+- **cleanup後のnull化漏れ修正**: `contextRef.current?.close()`後に`null`代入を追加し、closedなContextの再利用を防止
+- **play/pause競合修正**: `pauseTimeoutsRef`でフェードアウト用setTimeoutのIDを管理し、play前にpendingなpauseをキャンセル
+- **unmount時タイムアウトリーク修正**: cleanup時に全pauseタイムアウトをclearTimeout
+
+---
+
 ## Timer/Sound API連携 + キーボードショートカット拡張
 
 ### Timer/Sound バックエンドAPI接続 (004残タスク → 001)
