@@ -1,0 +1,23 @@
+{
+  "name": "sonic-flow",
+  "version": "1.0.0",
+  "description": "Immersive task management app with ambient sounds and pomodoro timer",
+  "main": "electron/dist/main.js",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n vite,tsc,electron -c cyan,yellow,green \"cd frontend && npm run dev\" \"cd electron && npx tsc --watch\" \"wait-on http://localhost:5173 && electron .\"",
+    "build": "cd frontend && npm run build && cd ../electron && npx tsc",
+    "start": "npm run build && electron .",
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
+    "postinstall": "cd frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "electron": "^35.1.2",
+    "electron-builder": "^26.0.12",
+    "typescript": "~5.8.3",
+    "wait-on": "^8.0.3"
+  }
+}

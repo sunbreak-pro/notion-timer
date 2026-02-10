@@ -1,0 +1,27 @@
+appId: com.sonicflow.app
+productName: Sonic Flow
+directories:
+  output: release
+
+files:
+  - electron/dist/**/*
+  - frontend/dist/**/*
+  - package.json
+
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.productivity
+
+win:
+  target:
+    - nsis
+  nsis:
+    oneClick: false
+    allowToChangeInstallationDirectory: true
+
+linux:
+  target:
+    - AppImage
+  category: Office

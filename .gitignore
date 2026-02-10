@@ -18,3 +18,10 @@ backend/*.trace.db
 
 # Logs
 *.log
+
+# Electron
+electron/dist/
+release/
+
+# Node (root)
+/node_modules/

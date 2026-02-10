@@ -4,6 +4,19 @@
 
 ---
 
+## Electron Shell Foundation (Phase 0)
+
+### Electron基盤構築
+- **electron/main.ts**: BrowserWindow (1200x800, min 800x600)、nodeIntegration:false + contextIsolation:true + sandbox:true
+- **electron/preload.ts**: `contextBridge.exposeInMainWorld('electronAPI', { platform })` プレースホルダー
+- **electron/tsconfig.json**: ES2022 + CommonJS出力
+- **ルートpackage.json**: `npm run dev`（concurrently: Vite + tsc --watch + Electron）、`npm run build/start/dist`
+- **electron-builder.yml**: mac (dmg/zip) + win (nsis) + linux (AppImage) パッケージング設定
+- **vite.config.ts**: `base: './'` 追加（file://プロトコル対応）
+- Webモード（`cd frontend && npm run dev`）は完全互換維持
+
+---
+
 ## Bubble Toolbar + Command Palette
 
 ### Floating Bubble Toolbar (Feature A)

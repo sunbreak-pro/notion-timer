@@ -27,6 +27,7 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ### 技術スタック
 - **Frontend**: React 19 (TypeScript) + Vite + Tailwind CSS v4 + @dnd-kit
 - **Backend**: Spring Boot 3.4.2 (Java 23) + H2 Database
+- **Desktop**: Electron 35 + electron-builder
 
 ---
 
@@ -68,6 +69,32 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-10 - Electron Shell Foundation (Phase 0)
+
+#### 概要
+既存ReactアプリをElectronウィンドウで動作させるデスクトップアプリ化の基盤を構築。React側のコード変更は最小限（`vite.config.ts`の`base`設定のみ）。
+
+#### 変更内容
+- **electron/main.ts**: BrowserWindow作成（1200x800）、dev/prod分岐ロード、macOS対応
+- **electron/preload.ts**: contextBridgeプレースホルダー（`window.electronAPI.platform`）
+- **electron/tsconfig.json**: ES2022 + CommonJS出力設定
+- **ルートpackage.json**: Electron起動スクリプト（concurrently + wait-on）、パッケージングスクリプト
+- **electron-builder.yml**: mac(dmg/zip) + win(nsis) + linux(AppImage)パッケージング設定
+- **vite.config.ts**: `base: './'`追加（file://プロトコル対応、Webモードも互換）
+
+#### 新規ファイル
+- `electron/main.ts`, `electron/preload.ts`, `electron/tsconfig.json`
+- `package.json`（ルート）, `electron-builder.yml`, `resources/.gitkeep`
+
+#### 起動方法
+```bash
+# Electronデスクトップモード（バックエンドは別ターミナルで起動）
+npm run dev
+
+# 従来のWebモード（変更なし）
+cd frontend && npm run dev
+```
 
 ### 2026-02-10 - Bubble Toolbar + Command Palette
 
@@ -368,8 +395,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 
 ### インストール
 ```bash
-# フロントエンド
-cd frontend
+# ルート（Electron + フロントエンド一括インストール）
 npm install
 
 # バックエンド
@@ -378,6 +404,17 @@ cd backend
 ```
 
 ### 起動
+
+#### Electronデスクトップモード
+```bash
+# ターミナル1: バックエンド (port 8080)
+cd backend && ./gradlew bootRun
+
+# ターミナル2: Electron + Vite (自動起動)
+npm run dev
+```
+
+#### Webブラウザモード（従来通り）
 ```bash
 # バックエンド (port 8080)
 cd backend && ./gradlew bootRun
