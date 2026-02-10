@@ -6,6 +6,19 @@ import type { CustomSoundMeta } from '../types/customSound';
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 const ALLOWED_TYPES = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp3', 'audio/wave', 'audio/x-wav'];
 
+async function validateAudioMagicBytes(file: File): Promise<boolean> {
+  const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  // MP3: ID3 tag or MPEG sync
+  if (header[0] === 0x49 && header[1] === 0x44 && header[2] === 0x33) return true;
+  if (header[0] === 0xFF && (header[1] & 0xE0) === 0xE0) return true;
+  // WAV: RIFF....WAVE
+  if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46
+      && header[8] === 0x57 && header[9] === 0x41 && header[10] === 0x56 && header[11] === 0x45) return true;
+  // OGG: OggS
+  if (header[0] === 0x4F && header[1] === 0x67 && header[2] === 0x67 && header[3] === 0x53) return true;
+  return false;
+}
+
 function loadMeta(): CustomSoundMeta[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.CUSTOM_SOUNDS);
@@ -77,6 +90,9 @@ export function useCustomSounds() {
     }
     if (!ALLOWED_TYPES.includes(file.type)) {
       return { error: `非対応の形式です。MP3, WAV, OGG のみ対応しています。` };
+    }
+    if (!await validateAudioMagicBytes(file)) {
+      return { error: `ファイルの内容が音声形式と一致しません。` };
     }
 
     const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;

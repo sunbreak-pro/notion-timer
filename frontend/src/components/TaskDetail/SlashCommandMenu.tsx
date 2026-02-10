@@ -88,6 +88,7 @@ const COMMANDS: CommandItem[] = [
         .focus()
         .insertContent({
           type: "toggleList",
+          attrs: { open: true },
           content: [
             {
               type: "toggleSummary",
@@ -131,7 +132,15 @@ const COMMANDS: CommandItem[] = [
     command: (editor) => {
       const url = window.prompt("Image URL");
       if (url) {
-        editor.chain().focus().setImage({ src: url }).run();
+        try {
+          const parsed = new URL(url);
+          if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+            return;
+          }
+          editor.chain().focus().setImage({ src: parsed.href }).run();
+        } catch {
+          // Invalid URL - ignore
+        }
       }
     },
   },
