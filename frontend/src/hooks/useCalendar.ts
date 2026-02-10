@@ -17,7 +17,7 @@ export function useCalendar(
     for (const task of filtered) {
       const dateStr = task.scheduledAt ?? task.createdAt;
       if (!dateStr) continue;
-      const key = dateStr.substring(0, 10); // "YYYY-MM-DD"
+      const key = dateStr.substring(0, 10);
       const existing = map.get(key);
       if (existing) {
         existing.push(task);

@@ -25,6 +25,7 @@ export interface TimerContextValue {
   startForTask: (id: string, title: string) => void;
   openForTask: (id: string, title: string, durationMinutes?: number) => void;
   clearTask: () => void;
+  updateActiveTaskTitle: (title: string) => void;
   setWorkDurationMinutes: (min: number) => void;
   setBreakDurationMinutes: (min: number) => void;
   setLongBreakDurationMinutes: (min: number) => void;

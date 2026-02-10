@@ -14,8 +14,9 @@
 1. **テキスト選択時にフローティングツールバーを表示**
 2. **インライン書式のみ**: Bold, Italic, Strikethrough, Inline Code, Link, Text Color
 3. **Markdown 記法ショートカット（`**`, `*`, `~~` 等の入力ルール）を削除**
-4. **キーボードショートカット追加 + ツールチップ表示**:
-   - `⌘+B` Bold / `⌘+I` Italic / `⌘+Shift+S` Strikethrough / `⌘+E` Code / `⌘+K` Link
+4. **キーボードショートカット + ツールチップ表示**:
+   - StarterKit 既存: `⌘+B` Bold / `⌘+I` Italic / `⌘+Shift+S` Strikethrough / `⌘+E` Code（`.extend()` で入力ルールのみ削除するためショートカットは自動維持）
+   - 新規追加: `⌘+K` Link（StarterKit の Link にはデフォルトでショートカットなし）
 5. **ブロック操作はスラッシュコマンドに据え置き**
 
 ---
@@ -28,6 +29,9 @@ cd frontend && npm install @tiptap/extension-color @tiptap/extension-text-style
 
 - `@tiptap/extension-bubble-menu` / `BubbleMenu` コンポーネント: `@tiptap/react` のトランジティブ依存で既にインストール済み
 - `@tiptap/extension-link`: StarterKit v3.19.0 に含まれる（別途インストール不要）
+- `@tiptap/extension-bold`, `italic`, `strike`, `code`: StarterKit のトランジティブ依存で存在（`.extend()` に使用）
+
+**重要**: `BubbleMenu` の import パスは `@tiptap/react/menus`（メインの `@tiptap/react` からは export されない）
 
 ---
 
@@ -91,7 +95,7 @@ Color,
 **ファイル**: `frontend/src/components/TaskDetail/BubbleToolbar.tsx`
 
 **構成**:
-- `BubbleMenu`（`@tiptap/react` から import）を使用
+- `BubbleMenu`（`@tiptap/react/menus` から import — メインの `@tiptap/react` には含まれない）を使用
 - ボタン: Bold | Italic | Strikethrough | Code | ── | Link | ── | Text Color
 - 各ボタンに `title` 属性でキーボードショートカットをツールチップ表示
 - `editor.isActive()` でアクティブ状態をハイライト
@@ -139,7 +143,32 @@ MemoView からも同じ MemoEditor を使っているため、自動的に Memo
 - `.bubble-toolbar-color-swatch` — カラー選択ボタン
 - `.memo-editor a` — リンクスタイル
 
-テーマ対応は既存の CSS 変数（`--color-bg-primary`, `--color-border` 等）を使用。
+テーマ対応は既存の CSS 変数を使用:
+- `--color-bg-primary` (#FFFFFF / dark: #191919)
+- `--color-text-primary` (#37352F / dark: #E8E8E3)
+- `--color-border` (#cececc / dark: #3a3a3a)
+- `--color-hover` (#EFEFEF / dark: #2c2c2c)
+- `--color-accent` (#2EAADC / dark: #2EAADC)
+
+---
+
+## テキストカラーのテーマ対応
+
+テキスト色はインラインスタイル（`style="color: #xxx"`）で適用されるため、テーマ切替時に自動変更されない。
+対策: 両テーマで視認性の良い中間色を選定する。
+
+| 色名 | 値 | 備考 |
+|------|-----|------|
+| Default | `null` (色解除) | テーマのデフォルトテキスト色に戻る |
+| Gray | `#9B9A97` | 両テーマで読みやすい |
+| Brown | `#96694C` | ダーク対応で少し明るめ |
+| Orange | `#D9730D` | そのまま |
+| Yellow | `#DFAB01` | そのまま |
+| Green | `#0F7B6C` | ダーク時やや暗いが許容範囲 |
+| Blue | `#2EAADC` | アクセント色と統一 |
+| Purple | `#9065D0` | ダーク対応で明るめ |
+| Pink | `#D44C8F` | ダーク対応で明るめ |
+| Red | `#E03E3E` | そのまま |
 
 ---
 

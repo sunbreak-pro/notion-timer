@@ -246,6 +246,10 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     setActiveTask(null);
   }, []);
 
+  const updateActiveTaskTitle = useCallback((title: string) => {
+    setActiveTask(prev => prev ? { ...prev, title } : null);
+  }, []);
+
   const setWorkDurationMinutes = useCallback((min: number) => {
     const clamped = Math.max(5, Math.min(240, min));
     setWorkDurationMinutesState(clamped);
@@ -295,6 +299,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       startForTask,
       openForTask,
       clearTask,
+      updateActiveTaskTitle,
       setWorkDurationMinutes,
       setBreakDurationMinutes,
       setLongBreakDurationMinutes,

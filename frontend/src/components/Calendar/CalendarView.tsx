@@ -138,6 +138,12 @@ export function CalendarView({ onSelectTask, onCreateTask, onSelectMemo }: Calen
     return map;
   }, [tasksByDate, tagFilter, getFolderTagForTask]);
 
+  // Filter memosByDate by tag
+  const filteredMemosByDate = useMemo(() => {
+    if (!tagFilter || tagFilter === 'Memo') return memosByDate;
+    return new Map<string, MemoNode>();
+  }, [tagFilter, memosByDate]);
+
   return (
     <div className="h-full flex flex-col overflow-auto">
       <div className="max-w-5xl mx-auto w-full px-8 py-6 flex-1">
@@ -213,7 +219,7 @@ export function CalendarView({ onSelectTask, onCreateTask, onSelectMemo }: Calen
             onCreateTask={onCreateTask}
             getTaskColor={getTaskColor}
             getFolderTag={getFolderTagForTask}
-            memosByDate={memosByDate}
+            memosByDate={filteredMemosByDate}
             onSelectMemo={onSelectMemo}
           />
         ) : (
@@ -224,7 +230,7 @@ export function CalendarView({ onSelectTask, onCreateTask, onSelectMemo }: Calen
             onCreateTask={onCreateTask}
             getTaskColor={getTaskColor}
             getFolderTag={getFolderTagForTask}
-            memosByDate={memosByDate}
+            memosByDate={filteredMemosByDate}
             onSelectMemo={onSelectMemo}
           />
         )}

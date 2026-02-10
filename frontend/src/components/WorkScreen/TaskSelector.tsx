@@ -24,8 +24,13 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { getChildren, addNode } = useTaskTreeContext();
+  const { getChildren, addNode, updateNode } = useTaskTreeContext();
   const timer = useTimerContext();
+
+  // Inline editing state for Untitled tasks
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitleValue, setEditTitleValue] = useState('');
+  const editTitleRef = useRef<HTMLInputElement>(null);
 
   // Close on outside click
   useEffect(() => {
@@ -45,6 +50,30 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
       inputRef.current.focus();
     }
   }, [isOpen]);
+
+  // Detect Untitled task and enter editing mode
+  useEffect(() => {
+    if (timer.activeTask?.title === 'Untitled') {
+      setIsEditingTitle(true);
+      setEditTitleValue('');
+    }
+  }, [timer.activeTask?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Focus the edit input when entering editing mode
+  useEffect(() => {
+    if (isEditingTitle && editTitleRef.current) {
+      editTitleRef.current.focus();
+    }
+  }, [isEditingTitle]);
+
+  const commitRename = () => {
+    const trimmed = editTitleValue.trim();
+    if (trimmed && timer.activeTask) {
+      updateNode(timer.activeTask.id, { title: trimmed });
+      timer.updateActiveTaskTitle(trimmed);
+    }
+    setIsEditingTitle(false);
+  };
 
   // Parse "FolderName/taskName" input pattern
   const parsedInput = useMemo(() => {
@@ -172,16 +201,32 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 text-lg font-semibold text-notion-text hover:text-notion-accent transition-colors max-w-full"
-      >
-        <span className="truncate">{currentTitle}</span>
-        <ChevronDown
-          size={16}
-          className={`shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+      {isEditingTitle ? (
+        <input
+          ref={editTitleRef}
+          type="text"
+          value={editTitleValue}
+          onChange={(e) => setEditTitleValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commitRename();
+            if (e.key === 'Escape') setIsEditingTitle(false);
+          }}
+          onBlur={commitRename}
+          placeholder="Task name..."
+          className="text-lg font-semibold text-notion-text bg-transparent outline-none border-b border-notion-accent max-w-full"
         />
-      </button>
+      ) : (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 text-lg font-semibold text-notion-text hover:text-notion-accent transition-colors max-w-full"
+        >
+          <span className="truncate">{currentTitle}</span>
+          <ChevronDown
+            size={16}
+            className={`shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+      )}
 
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 w-72 bg-notion-bg border border-notion-border rounded-lg shadow-xl z-50 overflow-hidden">

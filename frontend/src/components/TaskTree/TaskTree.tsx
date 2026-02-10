@@ -22,17 +22,23 @@ import {
   Inbox,
   FolderOpen,
   CheckCircle2,
+  Plus,
+  LucideFolderPlus,
 } from "lucide-react";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { TaskTreeNode } from "./TaskTreeNode";
 import type { TaskNode } from "../../types/taskTree";
 
-function isFolderFullyCompleted(folderId: string, activeNodes: TaskNode[]): boolean {
-  const children = activeNodes.filter(n => n.parentId === folderId);
+function isFolderFullyCompleted(
+  folderId: string,
+  activeNodes: TaskNode[],
+): boolean {
+  const children = activeNodes.filter((n) => n.parentId === folderId);
   if (children.length === 0) return true;
-  return children.every(child => {
+  return children.every((child) => {
     if (child.type === "task") return child.status === "DONE";
-    if (child.type === "folder") return isFolderFullyCompleted(child.id, activeNodes);
+    if (child.type === "folder")
+      return isFolderFullyCompleted(child.id, activeNodes);
     return false;
   });
 }
@@ -59,8 +65,15 @@ export function TaskTree({
   onSelectTask,
   selectedTaskId,
 }: TaskTreeProps) {
-  const { nodes, getChildren, moveNode, moveNodeInto, moveToRoot, toggleExpanded, toggleTaskStatus } =
-    useTaskTreeContext();
+  const {
+    nodes,
+    getChildren,
+    moveNode,
+    moveNodeInto,
+    moveToRoot,
+    toggleExpanded,
+    toggleTaskStatus,
+  } = useTaskTreeContext();
   const [showCompleted, setShowCompleted] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -70,16 +83,21 @@ export function TaskTree({
   );
 
   const rootChildren = getChildren(null);
-  const inboxTasks = rootChildren.filter((n) => n.type === "task" && n.status !== "DONE");
+  const inboxTasks = rootChildren.filter(
+    (n) => n.type === "task" && n.status !== "DONE",
+  );
   const folders = rootChildren.filter(
-    (n) => n.type === "folder" && !isFolderFullyCompleted(n.id, nodes)
+    (n) => n.type === "folder" && !isFolderFullyCompleted(n.id, nodes),
   );
 
-  const completedRootTasks = rootChildren.filter((n) => n.type === "task" && n.status === "DONE");
-  const completedFolders = rootChildren.filter(
-    (n) => n.type === "folder" && isFolderFullyCompleted(n.id, nodes)
+  const completedRootTasks = rootChildren.filter(
+    (n) => n.type === "task" && n.status === "DONE",
   );
-  const hasCompleted = completedRootTasks.length > 0 || completedFolders.length > 0;
+  const completedFolders = rootChildren.filter(
+    (n) => n.type === "folder" && isFolderFullyCompleted(n.id, nodes),
+  );
+  const hasCompleted =
+    completedRootTasks.length > 0 || completedFolders.length > 0;
 
   const inboxIds = inboxTasks.map((n) => n.id);
   const folderIds = folders.map((n) => n.id);
@@ -134,7 +152,7 @@ export function TaskTree({
     const addVisible = (list: TaskNode[]) => {
       for (const node of list) {
         result.push(node);
-        if (node.type === 'folder' && node.isExpanded) {
+        if (node.type === "folder" && node.isExpanded) {
           addVisible(getChildren(node.id));
         }
       }
@@ -145,62 +163,70 @@ export function TaskTree({
   }, [inboxTasks, folders, getChildren]);
 
   // Indent: move selected node into the previous sibling folder
-  const indentNode = useCallback((nodeId: string) => {
-    const node = nodes.find(n => n.id === nodeId);
-    if (!node) return;
-    const siblings = nodes
-      .filter(n => !n.isDeleted && n.parentId === node.parentId)
-      .sort((a, b) => a.order - b.order);
-    const idx = siblings.findIndex(n => n.id === nodeId);
-    // Find the closest previous sibling that is a folder
-    for (let i = idx - 1; i >= 0; i--) {
-      if (siblings[i].type === 'folder') {
-        moveNodeInto(nodeId, siblings[i].id);
-        return;
+  const indentNode = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return;
+      const siblings = nodes
+        .filter((n) => !n.isDeleted && n.parentId === node.parentId)
+        .sort((a, b) => a.order - b.order);
+      const idx = siblings.findIndex((n) => n.id === nodeId);
+      // Find the closest previous sibling that is a folder
+      for (let i = idx - 1; i >= 0; i--) {
+        if (siblings[i].type === "folder") {
+          moveNodeInto(nodeId, siblings[i].id);
+          return;
+        }
       }
-    }
-  }, [nodes, moveNodeInto]);
+    },
+    [nodes, moveNodeInto],
+  );
 
   // Outdent: move selected node to grandparent
-  const outdentNode = useCallback((nodeId: string) => {
-    const node = nodes.find(n => n.id === nodeId);
-    if (!node || !node.parentId) return;
-    const parent = nodes.find(n => n.id === node.parentId);
-    if (!parent) return;
-    if (parent.parentId === null) {
-      moveToRoot(nodeId);
-    } else {
-      moveNodeInto(nodeId, parent.parentId);
-    }
-  }, [nodes, moveNodeInto, moveToRoot]);
+  const outdentNode = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node || !node.parentId) return;
+      const parent = nodes.find((n) => n.id === node.parentId);
+      if (!parent) return;
+      if (parent.parentId === null) {
+        moveToRoot(nodeId);
+      } else {
+        moveNodeInto(nodeId, parent.parentId);
+      }
+    },
+    [nodes, moveNodeInto, moveToRoot],
+  );
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = document.activeElement?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      if (document.activeElement?.getAttribute('contenteditable') === 'true') return;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (document.activeElement?.getAttribute("contenteditable") === "true")
+        return;
 
-      if (e.key === 'ArrowDown') {
+      if (e.key === "ArrowDown") {
         e.preventDefault();
         if (!selectedTaskId || visibleNodes.length === 0) {
           if (visibleNodes.length > 0) onSelectTask?.(visibleNodes[0].id);
           return;
         }
-        const idx = visibleNodes.findIndex(n => n.id === selectedTaskId);
+        const idx = visibleNodes.findIndex((n) => n.id === selectedTaskId);
         if (idx < visibleNodes.length - 1) {
           onSelectTask?.(visibleNodes[idx + 1].id);
         }
         return;
       }
 
-      if (e.key === 'ArrowUp') {
+      if (e.key === "ArrowUp") {
         e.preventDefault();
         if (!selectedTaskId || visibleNodes.length === 0) {
-          if (visibleNodes.length > 0) onSelectTask?.(visibleNodes[visibleNodes.length - 1].id);
+          if (visibleNodes.length > 0)
+            onSelectTask?.(visibleNodes[visibleNodes.length - 1].id);
           return;
         }
-        const idx = visibleNodes.findIndex(n => n.id === selectedTaskId);
+        const idx = visibleNodes.findIndex((n) => n.id === selectedTaskId);
         if (idx > 0) {
           onSelectTask?.(visibleNodes[idx - 1].id);
         }
@@ -208,30 +234,38 @@ export function TaskTree({
       }
 
       if (!selectedTaskId) return;
-      const selected = nodes.find(n => n.id === selectedTaskId);
+      const selected = nodes.find((n) => n.id === selectedTaskId);
       if (!selected) return;
 
       // → expand folder, ← collapse folder
-      if (e.key === 'ArrowRight' && selected.type === 'folder' && !selected.isExpanded) {
+      if (
+        e.key === "ArrowRight" &&
+        selected.type === "folder" &&
+        !selected.isExpanded
+      ) {
         e.preventDefault();
         toggleExpanded(selected.id);
         return;
       }
-      if (e.key === 'ArrowLeft' && selected.type === 'folder' && selected.isExpanded) {
+      if (
+        e.key === "ArrowLeft" &&
+        selected.type === "folder" &&
+        selected.isExpanded
+      ) {
         e.preventDefault();
         toggleExpanded(selected.id);
         return;
       }
 
       // Cmd+Enter → toggle task status
-      if (e.metaKey && e.key === 'Enter' && selected.type === 'task') {
+      if (e.metaKey && e.key === "Enter" && selected.type === "task") {
         e.preventDefault();
         toggleTaskStatus(selected.id);
         return;
       }
 
       // Tab → indent, Shift+Tab → outdent
-      if (e.key === 'Tab') {
+      if (e.key === "Tab") {
         e.preventDefault();
         if (e.shiftKey) {
           outdentNode(selected.id);
@@ -242,9 +276,18 @@ export function TaskTree({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedTaskId, visibleNodes, nodes, onSelectTask, toggleExpanded, toggleTaskStatus, indentNode, outdentNode]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    selectedTaskId,
+    visibleNodes,
+    nodes,
+    onSelectTask,
+    toggleExpanded,
+    toggleTaskStatus,
+    indentNode,
+    outdentNode,
+  ]);
 
   return (
     <div className="space-y-1">
@@ -267,12 +310,15 @@ export function TaskTree({
                 }`}
               >
                 <Inbox size={14} />
-                <span>
-                  Inbox{" "}
-                  {inboxTasks.length > 0 && (
-                    <span className="font-normal">({inboxTasks.length})</span>
-                  )}
-                </span>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    Inbox{" "}
+                    {inboxTasks.length > 0 && (
+                      <div className="font-normal">({inboxTasks.length})</div>
+                    )}
+                  </div>
+                  <Plus size={14} />
+                </div>
               </div>
               <SortableContext
                 items={inboxIds}
@@ -310,7 +356,16 @@ export function TaskTree({
                 }`}
               >
                 <FolderOpen size={14} />
-                <span>Projects</span>
+                <div
+                  className={
+                    "flex-row flex items-center justify-between w-full"
+                  }
+                >
+                  Projects
+                  <button>
+                    <LucideFolderPlus size={14} />
+                  </button>
+                </div>
               </div>
               <SortableContext
                 items={folderIds}
@@ -355,7 +410,9 @@ export function TaskTree({
               <ChevronRight size={14} />
             )}
             <CheckCircle2 size={14} />
-            <span>Completed ({completedRootTasks.length + completedFolders.length})</span>
+            <span>
+              Completed ({completedRootTasks.length + completedFolders.length})
+            </span>
           </button>
           {showCompleted && (
             <div className="space-y-0.5 opacity-60">
