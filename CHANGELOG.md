@@ -4,6 +4,36 @@
 
 ---
 
+## コードクリーンアップ & ディレクトリ構造整理 (009)
+
+### Phase 1: ディレクトリ構造整理
+- Barrel `index.ts` を5ディレクトリに追加（api, context, hooks, types, utils）
+- `ErrorBoundary.tsx` を `components/shared/` へ移動
+- `navigation.ts`（1行のみ）を `taskTree.ts` に統合・削除
+
+### Phase 2: Context命名規約統一
+- `*ContextValue.ts` 4ファイルをcamelCase→PascalCaseにリネーム
+
+### Phase 3: エラーハンドリング改善
+- `.catch(() => {})` サイレントエラー10箇所に `console.warn` 追加
+- JSON.parse失敗時のログ3箇所追加
+
+### Phase 4: セキュリティ脆弱性修正
+- SlashCommandMenu XSS修正（画像URL検証: http/httpsのみ許可）
+- useCustomSounds MIME検証強化（マジックバイトチェック追加）
+
+### Phase 5: バックエンド クラッシュ防止
+- H2コンソールをdevプロファイルのみに制限
+- TaskService 循環参照防止（visited Setで無限再帰回避）
+- TimerController 型キャスト安全化（instanceofパターンマッチング）
+- MemoController 日付パース安全化（DateTimeParseException → 400）
+- AIService JSON解析をJackson ObjectMapperに置換
+
+### Phase 6: グローバル例外ハンドラー
+- `@ControllerAdvice` で統一エラーレスポンス（400/500）
+
+---
+
 ## サウンド再生エンジン バグ修正
 
 ### AudioEngine 致命的バグ3件修正
