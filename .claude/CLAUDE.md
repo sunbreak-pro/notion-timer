@@ -27,12 +27,16 @@ cd backend && ./gradlew build       # ビルド
 
 Viteが`/api`リクエストをバックエンド(8080)にプロキシするため、フロントエンドからは相対パス(`/api/...`)でアクセス可能。
 
-### H2 データベースコンソール
+### H2 データベースコンソール（devプロファイルのみ）
+```bash
+cd backend && ./gradlew bootRun --args='--spring.profiles.active=dev'
+```
 ```
 http://localhost:8080/h2-console
 JDBC URL: jdbc:h2:file:./data/sonicflow
 Username: sa / Password: (空)
 ```
+※ デフォルトでは`spring.h2.console.enabled=false`。`application-dev.properties`で有効化。
 
 ---
 
@@ -54,10 +58,10 @@ Phase 7で**楽観的更新パターン**を導入済み: UI→localStorage即�
 
 **Context Provider スタック** (`main.tsx`):
 ```
-ThemeProvider → TaskTreeProvider → TimerProvider → App
+ErrorBoundary → ThemeProvider → TaskTreeProvider → MemoProvider → TimerProvider → AudioProvider → App
 ```
 
-**ルーティング**: React Routerなし。`App.tsx`が`activeSection`状態で5セクション（tasks/session/calendar/analytics/settings）を切り替え。
+**ルーティング**: React Routerなし。`App.tsx`が`activeSection`状態で7セクション（tasks/memo/session/calendar/analytics/settings/tips）を切り替え。
 
 **レイアウト構成** (3カラム):
 ```
@@ -66,7 +70,7 @@ App (状態オーケストレーター)
 ├── SubSidebar (リサイズ可能160-400px)
 │   └── TaskTree (Inbox + Projects + Completed)
 └── MainContent (flex-1)
-    └── TaskDetail | WorkScreen | CalendarView | AnalyticsView | Settings
+    └── TaskDetail | MemoView | WorkScreen | CalendarView | AnalyticsView | Settings | Tips
 ```
 WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerModalOpen`）。
 
@@ -78,8 +82,10 @@ WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerMo
 
 **主要フック**:
 - `useTaskTree` — タスクツリー全体のCRUD・移動・DnD操作（分割済み: useTaskTreeCRUD/Deletion/Movement）
-- `useLocalSoundMixer` — サウンドミキサー状態（UI stub、音声再生は未実装）
-- `useTimerContext` / `useTaskTreeContext` — Context消費用の薄いラッパー
+- `useLocalSoundMixer` — サウンドミキサー状態管理（ボリューム、有効/無効）
+- `useAudioEngine` — Web Audio APIによるリアルタイム再生・フェードイン/アウト
+- `useCustomSounds` — カスタムサウンドメタデータ + IndexedDB blob管理
+- `useTimerContext` / `useTaskTreeContext` / `useAudioContext` / `useMemoContext` — Context消費用ラッパー
 
 **タイマーシステム**:
 - `TimerContext`がクライアントサイド`setInterval`でカウントダウン
@@ -92,12 +98,12 @@ WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerMo
 
 **リッチテキスト**: TipTap (`@tiptap/react`) でタスクメモ編集（MemoEditor）。`React.lazy`で遅延ロード（バンドル57%削減）。
 
-**localStorage キー** (`constants/storageKeys.ts`):
-`sonic-flow-task-tree`, `sonic-flow-work-duration`, `sonic-flow-break-duration`, `sonic-flow-long-break-duration`, `sonic-flow-sessions-before-long-break`, `sonic-flow-sound-mixer`, `sonic-flow-theme`, `sonic-flow-left-sidebar-open`, `sonic-flow-right-sidebar-open`, `sonic-flow-right-sidebar-width`, `sonic-flow-notifications-enabled`
+**localStorage キー** (`constants/storageKeys.ts`、全15キー):
+`sonic-flow-task-tree`, `sonic-flow-sound-mixer`, `sonic-flow-work-duration`, `sonic-flow-theme`, `sonic-flow-font-size`, `sonic-flow-subsidebar-width`, `sonic-flow-notifications-enabled`, `sonic-flow-left-sidebar-open`, `sonic-flow-right-sidebar-open`, `sonic-flow-break-duration`, `sonic-flow-long-break-duration`, `sonic-flow-sessions-before-long-break`, `sonic-flow-migration-done`, `sonic-flow-memos`, `sonic-flow-custom-sounds`
 
 ### バックエンド構成
 
-**パッケージ**: `com.sonicflow.{controller,service,repository,entity,config}`
+**パッケージ**: `com.sonicflow.{controller,service,repository,entity,config}`（configにGlobalExceptionHandler含む）
 
 **エンティティ**: Task, TimerSession, TimerSettings（シングルトン）, SoundSettings, SoundPreset
 - JPA関連なし（TimerSession.taskIdは素のLong、ForeignKeyではない）
@@ -123,6 +129,7 @@ WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerMo
 | 変数・関数 | camelCase | `taskList`, `fetchTasks` |
 | 定数 | SCREAMING_SNAKE_CASE | `API_BASE_URL` |
 | Java クラス | PascalCase | `TaskController.java` |
+| Context Value型 | PascalCase | `AudioContextValue.ts` |
 
 - Frontend: ESLint設定に従う
 - Backend: Google Java Style Guide準拠

@@ -290,7 +290,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 - **プログレスバードット**: 現在位置に12pxのドットインジケータ、1秒スムーズトランジション
 
 #### 新規ファイル
-- `frontend/src/context/timerContextValue.ts` — Timer Context型定義
+- `frontend/src/context/TimerContextValue.ts` — Timer Context型定義
 - `frontend/src/context/TimerContext.tsx` — TimerProvider
 - `frontend/src/hooks/useTimerContext.ts` — Consumerフック
 - `frontend/src/components/Layout/SubSidebar.tsx` — プロジェクトナビゲーション
@@ -316,10 +316,11 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 - **NoiseMixer**: 6種の環境音選択UI + 音量スライダー
 - **Settings**: ダークモード/ライトモード、フォントサイズ（S/M/L）、ゴミ箱
 
-#### 未実装
-- AIコーチング（バックエンドエンドポイント未作成）
-- 音声再生（Web Audio API連携）
-- レスポンシブデザイン、キーボードショートカット、通知機能
+#### 以降のバージョンで実装済み
+- AIコーチング → 2026-02-08 実装（Gemini API連携）
+- 音声再生 → 2026-02-08 実装（Web Audio API）
+- キーボードショートカット → 2026-02-09 実装
+- 通知機能 → 2026-02-08 実装（ブラウザ通知）
 
 ### 2025-02-06 - プロジェクト初期化
 

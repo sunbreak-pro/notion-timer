@@ -20,18 +20,19 @@
 * **State Management:** React Context API
 * **Icons:** Lucide React
 * **HTTP Client:** native fetch (Axios削除済み)
-* **Audio:** Web Audio API (予定)
+* **Audio:** Web Audio API
 * **Rich Text:** TipTap (@tiptap/react)
 * **Drag & Drop:** @dnd-kit
 
-### データ永続化（現状）
-**フロントエンドはlocalStorageのみで動作**。バックエンドREST APIは構築済みだが未接続。
-- タスクツリー: `localStorage("sonic-flow-task-tree")`
-- タイマー設定: `localStorage("sonic-flow-work-duration")`
-- サウンド設定: `localStorage("sonic-flow-sound-mixer")`
-- テーマ設定: `localStorage`経由
+### データ永続化
+**タスクツリー・タイマー・サウンドはバックエンドAPI接続済み**。楽観的更新パターン（localStorage即時反映 → 500msデバウンスで非同期PUT）。
+- タスクツリー: `localStorage("sonic-flow-task-tree")` + バックエンドAPI同期
+- タイマー設定: `localStorage` + バックエンドAPI同期（work/break/longBreak/sessionsBeforeLongBreak）
+- タイマーセッション: バックエンドAPI記録（start→POST、pause/reset/完了→PUT）
+- サウンド設定: `localStorage("sonic-flow-sound-mixer")` + バックエンドAPI同期
+- テーマ設定: `localStorage`経由（バックエンド未接続）
 
-将来の目標: すべてのユーザーデータをバックエンド (H2 DB) に移行し、デバイス間連携を実現。
+バックエンド不可用時はlocalStorageフォールバック。`ddl-auto=update`でDBスキーマは永続化済み。
 
 ## 2. アプリケーション機能要件
 
@@ -43,10 +44,11 @@
 * TipTapリッチテキストによるタスクメモ編集
 * Inbox + プロジェクト別フィルタリング
 
-### Feature B: ノイズミキサー (Frontend UI)
-* 6種の環境音UI（Rain, Thunder, Wind, Ocean, Birds, Fire）
+### Feature B: ノイズミキサー (Web Audio API)
+* 6種の環境音UI（Rain, Thunder, Wind, Ocean, Birds, Fire）+ カスタムサウンド追加対応
 * 各環境音の音量を個別にスライダーで調整（0% - 100%）
-* ※音声再生は未実装（Web Audio API統合予定）
+* Web Audio APIによるリアルタイム再生・ミキシング（フェードイン/アウト）
+* カスタムサウンド: IndexedDBでblob管理、メタデータはlocalStorage
 
 ### Feature C: 集中タイマー (TimerContext)
 * WORK → BREAK → LONG_BREAK の自動遷移
@@ -56,23 +58,26 @@
 * モーダル表示 / バックグラウンド継続
 * TaskTreeNode上にインライン残り時間表示
 
-### Feature D: AIコーチング (Backend Proxy) — 未実装
-* タスク分解・励まし・振り返りのアドバイス
-* APIキーはバックエンド経由で管理
+### Feature D: AIコーチング (Gemini API連携)
+* Gemini API (`gemini-2.5-flash-lite`) によるタスク分解・励まし・振り返りの3モード
+* APIキーはバックエンド経由で管理（`SONICFLOW_AI_API_KEY`環境変数）
+* `AICoachPanel`コンポーネントをTaskDetailに統合
 
 ### 外観設定
 * ダークモード/ライトモード切替
 * フォントサイズ設定（S/M/L）
 * Settings画面（外観設定 + ゴミ箱）
 
-## 3. API 定義 (RESTful) — バックエンド構築済み / フロントエンド未接続
+## 3. API 定義 (RESTful) — フロントエンド接続済み（楽観的更新パターン）
 
 ### Tasks
-* `GET /api/tasks`: 未完了タスク一覧取得
-* `GET /api/tasks/history`: 完了済みタスク一覧取得
+* `GET /api/tasks/tree`: タスクツリー一括取得
+* `PUT /api/tasks/tree`: タスクツリー一括同期
 * `POST /api/tasks`: 新規タスク作成
 * `PUT /api/tasks/{id}`: タスク更新
-* `DELETE /api/tasks/{id}`: タスク削除
+* `DELETE /api/tasks/{id}/soft`: ソフトデリート
+* `POST /api/tasks/{id}/restore`: 復元
+* `DELETE /api/tasks/{id}`: 完全削除
 
 ### Sound Settings
 * `GET /api/sound-settings` / `PUT /api/sound-settings`
@@ -83,8 +88,12 @@
 * `POST /api/timer-sessions` / `PUT /api/timer-sessions/{id}`
 * `GET /api/timer-sessions` / `GET /api/tasks/{taskId}/sessions`
 
-### AI — 未実装
-* `POST /api/ai/advice`
+### AI
+* `POST /api/ai/advice`: AIコーチングアドバイス取得
+* `GET /api/ai/settings` / `PUT /api/ai/settings`: AI設定
+
+### Migration
+* `POST /api/migrate/tasks`: localStorage→DB一括インポート
 
 ## 4. データモデル
 
@@ -102,14 +111,19 @@ interface TaskNode {
   deletedAt?: string;
   createdAt: string;
   completedAt?: string;
+  scheduledAt?: string;
   content?: string;           // TipTap rich text (JSON)
   workDurationMinutes?: number;
+  color?: string;
 }
 ```
 
-### バックエンド: Task Entity (Phase 1 — フロントエンドとは未同期)
-* `id`: Long, `title`: String, `status`: Enum (TODO/DONE)
-* `createdAt`, `completedAt`: LocalDateTime
+### バックエンド: Task Entity（フロントエンドと同期済み、IDはString型）
+* `id`: String（フロントエンドの"task-xxx"/"folder-xxx"形式に統一）
+* `title`: String, `type`: String, `parentId`: String, `sortOrder`: Integer
+* `status`: Enum (TODO/DONE), `isExpanded`: Boolean, `isDeleted`: Boolean
+* `createdAt`, `completedAt`, `deletedAt`, `scheduledAt`: LocalDateTime
+* `content`: String (CLOB), `workDurationMinutes`: Integer, `color`: String
 
 ### その他バックエンドエンティティ
 * SoundSettings, SoundPreset, TimerSettings, TimerSession
@@ -118,7 +132,7 @@ interface TaskNode {
 
 ### Context Provider スタック (`main.tsx`)
 ```
-ThemeProvider → TaskTreeProvider → TimerProvider → App
+ErrorBoundary → ThemeProvider → TaskTreeProvider → MemoProvider → TimerProvider → AudioProvider → App
 ```
 
 ### レイアウト (3カラム)
@@ -128,19 +142,21 @@ App (状態オーケストレーター)
 ├── SubSidebar (リサイズ可能160-400px)
 │   └── TaskTree (Inbox + Projects + Completed)
 └── MainContent (flex-1)
-    └── TaskDetail | WorkScreen | Settings
+    └── TaskDetail | MemoView | WorkScreen | CalendarView | AnalyticsView | Settings | Tips
 ```
 
 ### 主要フック
 | Hook | 管理対象 | 永続化 |
 |------|---------|--------|
-| useTaskTree (+ CRUD/Deletion/Movement) | タスクツリー全体 | localStorage |
-| useLocalSoundMixer | サウンドミキサー設定 | localStorage |
-| useTimerContext | タイマー状態 | Context + localStorage |
+| useTaskTree (+ CRUD/Deletion/Movement) | タスクツリー全体 | localStorage + バックエンドAPI |
+| useLocalSoundMixer | サウンドミキサー設定 | localStorage + バックエンドAPI |
+| useAudioEngine | Web Audio API再生制御 | — |
+| useCustomSounds | カスタムサウンド管理 | localStorage + IndexedDB |
+| useTimerContext | タイマー状態 | Context + localStorage + バックエンドAPI |
 | useLocalStorage | 汎用localStorage永続化 | localStorage |
 
 ## 6. 開発の進め方と制約事項
 1. **CORS設定:** `WebConfig.java`で`localhost:5173`のみ許可
 2. **音源ファイル:** リポジトリにコミット禁止（`public/sounds/`は`.gitignore`対象）
 3. **AIキー:** フロントエンドに直接記載禁止、バックエンド経由のみ
-4. **データ永続化:** 現在はlocalStorageのみ。Backend再統合は将来課題
+4. **データ永続化:** 楽観的更新パターンでバックエンド同期済み（バックエンド不可用時はlocalStorageフォールバック）
