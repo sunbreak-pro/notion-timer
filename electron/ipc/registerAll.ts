@@ -4,6 +4,8 @@ import { createTimerRepository } from '../database/timerRepository';
 import { createSoundRepository } from '../database/soundRepository';
 import { createMemoRepository } from '../database/memoRepository';
 import { createAIRepository } from '../database/aiRepository';
+import { createTagRepository } from '../database/tagRepository';
+import { createTemplateRepository } from '../database/templateRepository';
 import { registerTaskHandlers } from './taskHandlers';
 import { registerTimerHandlers } from './timerHandlers';
 import { registerSoundHandlers } from './soundHandlers';
@@ -12,6 +14,9 @@ import { registerAIHandlers } from './aiHandlers';
 import { registerAppHandlers } from './appHandlers';
 import { createCustomSoundRepository } from '../database/customSoundRepository';
 import { registerCustomSoundHandlers } from './customSoundHandlers';
+import { registerTagHandlers } from './tagHandlers';
+import { registerTemplateHandlers } from './templateHandlers';
+import { registerDataIOHandlers } from './dataIOHandlers';
 
 export function registerAllHandlers(db: Database.Database): void {
   const tasks = createTaskRepository(db);
@@ -19,6 +24,8 @@ export function registerAllHandlers(db: Database.Database): void {
   const sound = createSoundRepository(db);
   const memo = createMemoRepository(db);
   const ai = createAIRepository(db);
+  const tags = createTagRepository(db);
+  const templates = createTemplateRepository(db);
   ai.migrateDeprecatedModel();
 
   registerTaskHandlers(tasks);
@@ -27,5 +34,8 @@ export function registerAllHandlers(db: Database.Database): void {
   registerMemoHandlers(memo);
   registerAIHandlers(ai);
   registerCustomSoundHandlers(createCustomSoundRepository());
+  registerTagHandlers(tags);
+  registerTemplateHandlers(templates);
   registerAppHandlers({ tasks, timer, sound, memo });
+  registerDataIOHandlers(db);
 }

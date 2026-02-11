@@ -39,13 +39,19 @@ export function LeftSidebar({
   const timer = useTimerContext();
   const showTimer = timer.activeTask !== null || timer.isRunning;
 
+  const isMac = window.electronAPI?.platform === 'darwin';
+
   return (
     <aside className="w-60 h-screen bg-notion-bg-secondary border-r border-notion-border flex flex-col">
-      <div className="flex justify-between items-center p-4 border-b border-notion-border">
+      <div
+        className={`flex justify-between items-center p-4 border-b border-notion-border titlebar-drag${
+          isMac ? ' pt-10' : ''
+        }`}
+      >
         <h1 className="text-2xl font-semibold text-notion-text">Sonic Flow</h1>
         <button
           onClick={onToggle}
-          className="p-1 text-notion-text-secondary hover:text-notion-text rounded transition-colors"
+          className="p-1 text-notion-text-secondary hover:text-notion-text rounded transition-colors titlebar-nodrag"
         >
           <PanelLeft size={18} />
         </button>

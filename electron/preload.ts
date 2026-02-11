@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 
 const ALLOWED_CHANNELS = new Set([
   // Tasks
@@ -37,6 +37,21 @@ const ALLOWED_CHANNELS = new Set([
   'ai:advice',
   'ai:fetchSettings',
   'ai:updateSettings',
+  // Tags
+  'db:tags:fetchAll',
+  'db:tags:create',
+  'db:tags:update',
+  'db:tags:delete',
+  'db:tags:forTask',
+  'db:tags:setForTask',
+  // Templates
+  'db:templates:fetchAll',
+  'db:templates:create',
+  'db:templates:getById',
+  'db:templates:delete',
+  // Data I/O
+  'data:export',
+  'data:import',
   // App
   'app:migrateFromLocalStorage',
 ]);
@@ -48,5 +63,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return Promise.reject(new Error(`IPC channel not allowed: ${channel}`));
     }
     return ipcRenderer.invoke(channel, ...args) as Promise<T>;
+  },
+  onMenuAction(callback: (action: string) => void): () => void {
+    const handler = (_event: IpcRendererEvent, action: string) => callback(action);
+    ipcRenderer.on('menu:action', handler);
+    return () => { ipcRenderer.removeListener('menu:action', handler); };
   },
 });

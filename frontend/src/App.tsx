@@ -12,6 +12,7 @@ import type { Command } from "./components/CommandPalette/CommandPalette";
 import { useTimerContext } from "./hooks/useTimerContext";
 import { useTaskTreeContext } from "./hooks/useTaskTreeContext";
 import { useMemoContext } from "./hooks/useMemoContext";
+import { getDataService } from "./services";
 
 import type { SectionId } from "./types/taskTree";
 import type { TaskNode } from "./types/taskTree";
@@ -146,6 +147,32 @@ function App() {
     { id: 'view-left-sidebar', title: 'Toggle left sidebar', category: 'View', shortcut: '⌘.', icon: PanelLeft, action: () => window.dispatchEvent(new KeyboardEvent('keydown', { key: '.', code: 'Period', metaKey: true, bubbles: true })) },
     { id: 'view-right-sidebar', title: 'Toggle right sidebar', category: 'View', shortcut: '⌘⇧.', icon: PanelRight, action: () => window.dispatchEvent(new KeyboardEvent('keydown', { key: '.', code: 'Period', metaKey: true, shiftKey: true, bubbles: true })) },
   ], [addNode, selectedTask, softDelete, timer]);
+
+  // Handle native menu actions from Electron
+  useEffect(() => {
+    const cleanup = window.electronAPI?.onMenuAction((action: string) => {
+      switch (action) {
+        case 'new-task': addNode('task', null, 'New Task'); break;
+        case 'new-folder': addNode('folder', null, 'New Folder'); break;
+        case 'navigate:settings': setActiveSection('settings'); break;
+        case 'navigate:tips': setActiveSection('tips'); break;
+        case 'toggle-timer-modal': setIsTimerModalOpen(prev => !prev); break;
+        case 'toggle-left-sidebar':
+          window.dispatchEvent(new KeyboardEvent('keydown', { key: '.', code: 'Period', metaKey: true, bubbles: true }));
+          break;
+        case 'toggle-right-sidebar':
+          window.dispatchEvent(new KeyboardEvent('keydown', { key: '.', code: 'Period', metaKey: true, shiftKey: true, bubbles: true }));
+          break;
+        case 'export-data':
+          getDataService().exportData().catch(console.warn);
+          break;
+        case 'import-data':
+          getDataService().importData().then(ok => { if (ok) window.location.reload(); }).catch(console.warn);
+          break;
+      }
+    });
+    return () => { cleanup?.(); };
+  }, [addNode]);
 
   useEffect(() => {
     const sectionMap: Record<string, SectionId> = {

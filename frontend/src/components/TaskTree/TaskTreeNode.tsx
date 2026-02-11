@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import {
   SortableContext,
@@ -9,6 +9,7 @@ import { GripVertical } from "lucide-react";
 import type { TaskNode } from "../../types/taskTree";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useTimerContext } from "../../hooks/useTimerContext";
+import { useTagContext } from "../../hooks/useTagContext";
 import { TaskNodeIndent } from "./TaskNodeIndent";
 import { TaskNodeCheckbox } from "./TaskNodeCheckbox";
 import { TaskNodeEditor } from "./TaskNodeEditor";
@@ -16,6 +17,8 @@ import { TaskNodeContent } from "./TaskNodeContent";
 import { TaskNodeActions } from "./TaskNodeActions";
 import { TaskNodeTimer, TaskNodeTimerBar } from "./TaskNodeTimer";
 import { TaskNodeContextMenu } from "./TaskNodeContextMenu";
+import { TagBadge } from "../Tags/TagBadge";
+import { useTemplates } from "../../hooks/useTemplates";
 
 interface TaskTreeNodeProps {
   node: TaskNode;
@@ -45,6 +48,8 @@ export function TaskTreeNode({
   } = useTaskTreeContext();
 
   const timer = useTimerContext();
+  const { getTagsForTask, loadTagsForTask, taskTagsVersion } = useTagContext();
+  const { createTemplate } = useTemplates();
 
   const [isEditing, setIsEditing] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
@@ -69,6 +74,15 @@ export function TaskTreeNode({
   const isTimerActive = timer.activeTask?.id === node.id && timer.isRunning;
   const isSelected = node.type === "task" && selectedTaskId === node.id;
 
+  // Load tags for this node
+  useEffect(() => {
+    if (node.type === 'task') loadTagsForTask(node.id);
+  }, [node.id, node.type, loadTagsForTask]);
+
+  // Force re-render when cache version changes
+  void taskTagsVersion;
+  const nodeTags = node.type === 'task' ? getTagsForTask(node.id) : [];
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -85,6 +99,21 @@ export function TaskTreeNode({
     },
     [],
   );
+
+  const handleSaveAsTemplate = useCallback(() => {
+    // Collect folder + all descendants
+    const collected: TaskNode[] = [];
+    const collect = (parentId: string) => {
+      const kids = getChildren(parentId);
+      for (const child of kids) {
+        collected.push(child);
+        if (child.type === 'folder') collect(child.id);
+      }
+    };
+    collected.push(node);
+    collect(node.id);
+    createTemplate(node.title, JSON.stringify(collected));
+  }, [node, getChildren, createTemplate]);
 
   return (
     <div>
@@ -134,6 +163,14 @@ export function TaskTreeNode({
           />
         )}
 
+        {nodeTags.length > 0 && (
+          <div className="flex items-center gap-0.5 ml-1">
+            {nodeTags.map(tag => (
+              <TagBadge key={tag.id} tag={tag} size="sm" />
+            ))}
+          </div>
+        )}
+
         <TaskNodeTimer
           isActive={isTimerActive}
           remainingSeconds={timer.remainingSeconds}
@@ -163,6 +200,7 @@ export function TaskTreeNode({
           onAddFolder={() => addNode("folder", node.id, "New Folder")}
           onStartTimer={() => onPlayTask?.(node)}
           onMoveToRoot={() => moveToRoot(node.id)}
+          onSaveAsTemplate={isFolder ? handleSaveAsTemplate : undefined}
           onDelete={() => softDelete(node.id)}
           onClose={() => setContextMenu(null)}
         />

@@ -7,6 +7,7 @@ import { formatDuration } from "../../utils/duration";
 import { DateTimePicker } from "../Calendar/DateTimePicker";
 import { FolderTag } from "../shared/FolderTag";
 import { ColorPicker } from "../shared/ColorPicker";
+import { TagEditor } from "../Tags/TagEditor";
 
 interface TaskDetailHeaderProps {
   task: TaskNode;
@@ -90,6 +91,8 @@ export function TaskDetailHeader({
         </div>
       )}
       <h1 className="text-2xl font-bold text-notion-text">{task.title}</h1>
+
+      <TagEditor taskId={task.id} />
 
       <div className="flex items-center gap-3">
         <button

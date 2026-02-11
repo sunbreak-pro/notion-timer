@@ -8,6 +8,7 @@ import { TaskTreeProvider } from './context/TaskTreeContext'
 import { MemoProvider } from './context/MemoContext'
 import { TimerProvider } from './context/TimerContext'
 import { AudioProvider } from './context/AudioContext'
+import { TagProvider } from './context/TagContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -17,7 +18,9 @@ createRoot(document.getElementById('root')!).render(
           <MemoProvider>
             <TimerProvider>
               <AudioProvider>
-                <App />
+                <TagProvider>
+                  <App />
+                </TagProvider>
               </AudioProvider>
             </TimerProvider>
           </MemoProvider>

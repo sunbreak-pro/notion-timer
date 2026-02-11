@@ -7,6 +7,7 @@ import {
   Play,
   ArrowUp,
   Trash2,
+  Save,
 } from "lucide-react";
 
 interface MenuAction {
@@ -27,6 +28,7 @@ interface TaskNodeContextMenuProps {
   onAddFolder: () => void;
   onStartTimer: () => void;
   onMoveToRoot: () => void;
+  onSaveAsTemplate?: () => void;
   onDelete: () => void;
   onClose: () => void;
 }
@@ -42,6 +44,7 @@ export function TaskNodeContextMenu({
   onAddFolder,
   onStartTimer,
   onMoveToRoot,
+  onSaveAsTemplate,
   onDelete,
   onClose,
 }: TaskNodeContextMenuProps) {
@@ -100,6 +103,13 @@ export function TaskNodeContextMenu({
         onClick: onAddFolder,
       },
     );
+    if (onSaveAsTemplate) {
+      actions.push({
+        label: "Save as Template",
+        icon: <Save size={14} />,
+        onClick: onSaveAsTemplate,
+      });
+    }
   }
 
   if (!isFolder && !isDone) {

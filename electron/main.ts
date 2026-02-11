@@ -2,15 +2,23 @@ import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
 import { getDatabase, closeDatabase } from './database/db';
 import { registerAllHandlers } from './ipc/registerAll';
+import { loadWindowState, trackWindowState } from './windowState';
+import { createMenu } from './menu';
 
 const isDev = !app.isPackaged;
 
 function createWindow(): BrowserWindow {
+  const saved = loadWindowState();
+
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    x: saved.x,
+    y: saved.y,
+    width: saved.width,
+    height: saved.height,
     minWidth: 800,
     minHeight: 600,
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    trafficLightPosition: process.platform === 'darwin' ? { x: 16, y: 16 } : undefined,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -18,6 +26,10 @@ function createWindow(): BrowserWindow {
       sandbox: true,
     },
   });
+
+  if (saved.isMaximized) win.maximize();
+
+  trackWindowState(win);
 
   if (isDev) {
     win.loadURL('http://localhost:5173');
@@ -34,12 +46,14 @@ app.whenReady().then(() => {
   const db = getDatabase();
   registerAllHandlers(db);
 
-  createWindow();
+  const win = createWindow();
+  createMenu(win);
 
   // macOS: re-create window on dock click when no windows exist
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      const newWin = createWindow();
+      createMenu(newWin);
     }
   });
 });

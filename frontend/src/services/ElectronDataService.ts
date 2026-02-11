@@ -5,6 +5,8 @@ import type { SoundSettings, SoundPreset } from '../types/sound';
 import type { MemoNode } from '../types/memo';
 import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../types/ai';
 import type { CustomSoundMeta } from '../types/customSound';
+import type { Tag } from '../types/tag';
+import type { TaskTemplate } from '../types/template';
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   return window.electronAPI!.invoke<T>(channel, ...args);
@@ -120,5 +122,47 @@ export class ElectronDataService implements DataService {
   }
   updateAISettings(settings: { apiKey?: string; model?: string }): Promise<AISettingsResponse> {
     return invoke('ai:updateSettings', settings);
+  }
+
+  // Tags
+  fetchAllTags(): Promise<Tag[]> {
+    return invoke('db:tags:fetchAll');
+  }
+  createTag(name: string, color: string): Promise<Tag> {
+    return invoke('db:tags:create', name, color);
+  }
+  updateTag(id: number, updates: { name?: string; color?: string }): Promise<Tag> {
+    return invoke('db:tags:update', id, updates.name, updates.color);
+  }
+  deleteTag(id: number): Promise<void> {
+    return invoke('db:tags:delete', id);
+  }
+  fetchTagsForTask(taskId: string): Promise<Tag[]> {
+    return invoke('db:tags:forTask', taskId);
+  }
+  setTagsForTask(taskId: string, tagIds: number[]): Promise<void> {
+    return invoke('db:tags:setForTask', taskId, tagIds);
+  }
+
+  // Templates
+  fetchTemplates(): Promise<TaskTemplate[]> {
+    return invoke('db:templates:fetchAll');
+  }
+  createTemplate(name: string, nodesJson: string): Promise<TaskTemplate> {
+    return invoke('db:templates:create', name, nodesJson);
+  }
+  getTemplate(id: number): Promise<TaskTemplate | null> {
+    return invoke('db:templates:getById', id);
+  }
+  deleteTemplate(id: number): Promise<void> {
+    return invoke('db:templates:delete', id);
+  }
+
+  // Data I/O
+  exportData(): Promise<boolean> {
+    return invoke('data:export');
+  }
+  importData(): Promise<boolean> {
+    return invoke('data:import');
   }
 }

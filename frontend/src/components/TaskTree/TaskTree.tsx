@@ -24,10 +24,14 @@ import {
   CheckCircle2,
   Plus,
   LucideFolderPlus,
+  FileDown,
 } from "lucide-react";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
+import { useTagContext } from "../../hooks/useTagContext";
 import { TaskTreeNode } from "./TaskTreeNode";
 import { InlineCreateInput } from "./InlineCreateInput";
+import { TagFilter } from "../Tags/TagFilter";
+import { TemplateDialog } from "../Templates/TemplateDialog";
 import type { TaskNode } from "../../types/taskTree";
 
 function isFolderFullyCompleted(
@@ -76,10 +80,12 @@ export function TaskTree({
     toggleExpanded,
     toggleTaskStatus,
   } = useTaskTreeContext();
+  const { hasTagFilter, taskPassesFilter } = useTagContext();
   const [showCompleted, setShowCompleted] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isCreatingInboxTask, setIsCreatingInboxTask] = useState(false);
   const [isCreatingProjectFolder, setIsCreatingProjectFolder] = useState(false);
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -88,8 +94,8 @@ export function TaskTree({
 
   const rootChildren = useMemo(() => getChildren(null), [getChildren]);
   const inboxTasks = useMemo(
-    () => rootChildren.filter((n) => n.type === "task" && n.status !== "DONE"),
-    [rootChildren],
+    () => rootChildren.filter((n) => n.type === "task" && n.status !== "DONE" && (!hasTagFilter || taskPassesFilter(n.id))),
+    [rootChildren, hasTagFilter, taskPassesFilter],
   );
   const folders = useMemo(
     () =>
@@ -305,6 +311,7 @@ export function TaskTree({
 
   return (
     <div className="space-y-1">
+      <TagFilter />
       <DndContext
         sensors={sensors}
         collisionDetection={pointerWithin}
@@ -391,15 +398,27 @@ export function TaskTree({
                   }
                 >
                   Projects
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsCreatingProjectFolder(true);
-                    }}
-                    className="hover:text-notion-text transition-colors"
-                  >
-                    <LucideFolderPlus size={14} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsTemplateDialogOpen(true);
+                      }}
+                      className="hover:text-notion-text transition-colors"
+                      title="From template"
+                    >
+                      <FileDown size={14} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCreatingProjectFolder(true);
+                      }}
+                      className="hover:text-notion-text transition-colors"
+                    >
+                      <LucideFolderPlus size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
               <SortableContext
@@ -479,6 +498,10 @@ export function TaskTree({
             </div>
           )}
         </div>
+      )}
+
+      {isTemplateDialogOpen && (
+        <TemplateDialog onClose={() => setIsTemplateDialogOpen(false)} />
       )}
     </div>
   );

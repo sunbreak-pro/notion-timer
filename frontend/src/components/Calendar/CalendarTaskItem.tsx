@@ -1,5 +1,6 @@
 import type { TaskNode } from '../../types/taskTree';
 import { getTextColorForBg } from '../../constants/folderColors';
+import { useTagContext } from '../../hooks/useTagContext';
 
 interface CalendarTaskItemProps {
   task: TaskNode;
@@ -11,6 +12,9 @@ interface CalendarTaskItemProps {
 export function CalendarTaskItem({ task, onClick, color }: CalendarTaskItemProps) {
   const isDone = task.status === 'DONE';
   const textColor = color ? getTextColorForBg(color) : undefined;
+  const { getTagsForTask, taskTagsVersion } = useTagContext();
+  void taskTagsVersion;
+  const taskTags = getTagsForTask(task.id);
 
   return (
     <button
@@ -31,6 +35,17 @@ export function CalendarTaskItem({ task, onClick, color }: CalendarTaskItemProps
         />
       )}
       <span className="truncate">{task.title}</span>
+      {taskTags.length > 0 && (
+        <span className="flex gap-0.5 flex-shrink-0">
+          {taskTags.slice(0, 2).map(t => (
+            <span
+              key={t.id}
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: t.color }}
+            />
+          ))}
+        </span>
+      )}
     </button>
   );
 }

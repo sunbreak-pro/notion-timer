@@ -6,6 +6,9 @@ export function runMigrations(db: Database.Database): void {
   if (currentVersion < 1) {
     migrateV1(db);
   }
+  if (currentVersion < 2) {
+    migrateV2(db);
+  }
 }
 
 function migrateV1(db: Database.Database): void {
@@ -98,5 +101,37 @@ function migrateV1(db: Database.Database): void {
     VALUES (1, '', 'gemini-2.5-flash-lite', datetime('now'));
 
     PRAGMA user_version = 1;
+  `);
+}
+
+function migrateV2(db: Database.Database): void {
+  db.exec(`
+    -- Tags
+    CREATE TABLE IF NOT EXISTS tags (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      color TEXT NOT NULL DEFAULT '#808080'
+    );
+
+    CREATE TABLE IF NOT EXISTS task_tags (
+      task_id TEXT NOT NULL,
+      tag_id INTEGER NOT NULL,
+      PRIMARY KEY (task_id, tag_id),
+      FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+      FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_task_tags_task ON task_tags(task_id);
+    CREATE INDEX IF NOT EXISTS idx_task_tags_tag ON task_tags(tag_id);
+
+    -- Task Templates
+    CREATE TABLE IF NOT EXISTS task_templates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      nodes_json TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    PRAGMA user_version = 2;
   `);
 }

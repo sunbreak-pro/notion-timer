@@ -2,6 +2,8 @@ import { AppearanceSettings } from './AppearanceSettings';
 import { NotificationSettings } from './NotificationSettings';
 import { AISettings } from './AISettings';
 import { TrashBin } from './TrashBin';
+import { TagManager } from '../Tags/TagManager';
+import { DataManagement } from './DataManagement';
 
 export function Settings() {
   return (
@@ -11,7 +13,11 @@ export function Settings() {
       <div className="border-t border-notion-border" />
       <NotificationSettings />
       <div className="border-t border-notion-border" />
+      <TagManager />
+      <div className="border-t border-notion-border" />
       <AISettings />
+      <div className="border-t border-notion-border" />
+      <DataManagement />
       <div className="border-t border-notion-border" />
       <TrashBin />
     </div>
