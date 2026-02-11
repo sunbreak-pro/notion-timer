@@ -277,8 +277,8 @@ export function TaskTree({
         return;
       }
 
-      // Cmd+Enter → toggle task status
-      if (e.metaKey && e.key === "Enter" && selected.type === "task") {
+      // Cmd/Ctrl+Enter → toggle task status
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && selected.type === "task") {
         e.preventDefault();
         toggleTaskStatus(selected.id);
         return;

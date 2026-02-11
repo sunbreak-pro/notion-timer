@@ -1,3 +1,5 @@
+import { isMac } from '../../utils/platform';
+
 interface ShortcutEntry {
   keys: string;
   description: string;
@@ -8,11 +10,13 @@ interface ShortcutGroup {
   shortcuts: ShortcutEntry[];
 }
 
+const mod = isMac ? '\u2318' : 'Ctrl';
+
 const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     category: 'Global',
     shortcuts: [
-      { keys: '\u2318 + ,', description: 'Open Settings' },
+      { keys: `${mod} + ,`, description: 'Open Settings' },
       { keys: 'Space', description: 'Play / Pause timer (when not typing)' },
       { keys: 'n', description: 'Create new task (when not typing)' },
       { keys: 'Escape', description: 'Close timer modal' },

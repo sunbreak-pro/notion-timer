@@ -15,7 +15,7 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **AIコーチング**: Gemini API連携、タスク分解/励まし/レビューの3モード
 - **外観設定**: ダークモード/ライトモード切替、フォントサイズ設定（S/M/L）
 - **デスクトップ通知**: タイマーセッション完了時にブラウザ通知
-- **キーボードショートカット**: Space（タイマー）、n（新規タスク）、Escape（モーダル閉じ）、Delete（タスク削除）、Cmd+.（左サイドバー開閉）、Cmd+Shift+.（右サイドバー開閉）、Cmd+,（Settings遷移）、Cmd+1〜5（セクション切替）、↑/↓（タスク移動）、Tab/Shift+Tab（インデント）、r（タイマーリセット）、Cmd+Shift+T（モーダル）、j/k/t/m（カレンダー操作）
+- **キーボードショートカット**: Space（タイマー）、n（新規タスク）、Escape（モーダル閉じ）、Delete（タスク削除）、Cmd/Ctrl+.（左サイドバー開閉）、Cmd/Ctrl+Shift+.（右サイドバー開閉）、Cmd/Ctrl+,（Settings遷移）、Cmd/Ctrl+1〜5（セクション切替）、↑/↓（タスク移動）、Tab/Shift+Tab（インデント）、r（タイマーリセット）、Cmd/Ctrl+Shift+T（モーダル）、j/k/t/m（カレンダー操作）
 - **Settings画面**: 外観設定、通知設定、ゴミ箱（削除タスクの復元・完全削除）
 - **Tips画面**: ショートカット一覧、タスク/タイマー/カレンダー/エディタの操作ガイド（5タブ構成）
 - **リッチテキストエディタ**: TipTap拡張（Toggle List/Table/Callout/Image）、スラッシュコマンド対応、テキスト選択時Bubbleツールバー（Bold/Italic/Strikethrough/Code/Link/TextColor）
@@ -57,6 +57,18 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-11 - Windows 互換性対応
+
+#### 概要
+macOS 前提で実装されていたキーボードショートカットと表示テキストを Windows 対応。
+
+#### 変更内容
+- **プラットフォーム判定ユーティリティ**: `utils/platform.ts` を新規作成（`isMac`, `modSymbol`, `modKey` エクスポート）
+- **キーボードショートカット修正**: `e.metaKey` → `(e.metaKey || e.ctrlKey)` に変更（App.tsx, Layout.tsx, TaskTree.tsx）
+- **合成イベント廃止**: コマンドパレット・メニューアクションの `window.dispatchEvent(new KeyboardEvent(...))` を `LayoutHandle` ref 経由の直接呼び出しに置換
+- **ショートカット表示テキスト**: `⌘` → Windows では `Ctrl` と表示（CommandPalette、BubbleToolbar、ShortcutsTab）
+- **LeftSidebar**: ローカル `isMac` 宣言を共通ユーティリティのインポートに統一
 
 ### 2026-02-11 - Phase 7: 本番環境対応（自動アップデート・ログ・パフォーマンス監視）
 

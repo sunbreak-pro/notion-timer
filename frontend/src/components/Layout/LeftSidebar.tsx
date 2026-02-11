@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { SectionId } from "../../types/taskTree";
 import { useTimerContext } from "../../hooks/useTimerContext";
+import { isMac } from "../../utils/platform";
 
 interface SidebarProps {
   activeSection: SectionId;
@@ -38,8 +39,6 @@ export function LeftSidebar({
 }: SidebarProps) {
   const timer = useTimerContext();
   const showTimer = timer.activeTask !== null || timer.isRunning;
-
-  const isMac = window.electronAPI?.platform === 'darwin';
 
   return (
     <aside className="w-60 h-screen bg-notion-bg-secondary border-r border-notion-border flex flex-col">

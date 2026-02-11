@@ -22,6 +22,11 @@ function deserializeBool(raw: string): boolean {
   return raw !== "false";
 }
 
+export interface LayoutHandle {
+  toggleLeftSidebar: () => void;
+  toggleRightSidebar: () => void;
+}
+
 interface LayoutProps {
   children: ReactNode;
   activeSection: SectionId;
@@ -32,6 +37,7 @@ interface LayoutProps {
   onSelectTask?: (id: string) => void;
   onPlayTask?: (node: TaskNode) => void;
   selectedTaskId?: string | null;
+  handleRef?: React.MutableRefObject<LayoutHandle | null>;
 }
 
 export function Layout({
@@ -44,6 +50,7 @@ export function Layout({
   onSelectTask,
   onPlayTask,
   selectedTaskId,
+  handleRef,
 }: LayoutProps) {
   const [rightSidebarWidth, setRightSidebarWidth] = useLocalStorage<number>(
     STORAGE_KEYS.RIGHT_SIDEBAR_WIDTH,
@@ -64,8 +71,17 @@ export function Layout({
   const [dragWidth, setDragWidth] = useState<number | null>(null);
 
   useEffect(() => {
+    if (handleRef) {
+      handleRef.current = {
+        toggleLeftSidebar: () => setLeftSidebarOpen(prev => !prev),
+        toggleRightSidebar: () => setRightSidebarOpen(prev => !prev),
+      };
+    }
+  }, [handleRef, setLeftSidebarOpen, setRightSidebarOpen]);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.metaKey && e.code === 'Period') {
+      if ((e.metaKey || e.ctrlKey) && e.code === 'Period') {
         e.preventDefault();
         if (e.shiftKey) {
           setRightSidebarOpen(prev => !prev);

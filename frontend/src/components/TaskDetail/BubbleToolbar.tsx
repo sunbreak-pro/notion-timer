@@ -11,6 +11,7 @@ import {
   X,
   Check,
 } from 'lucide-react';
+import { isMac } from '../../utils/platform';
 
 const TEXT_COLORS = [
   { label: 'Default', value: null },
@@ -152,28 +153,28 @@ export function BubbleToolbar({ editor }: BubbleToolbarProps) {
         <button
           className={`bubble-toolbar-btn ${editor.isActive('bold') ? 'is-active' : ''}`}
           onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBold().run(); }}
-          title="Bold (⌘B)"
+          title={isMac ? "Bold (⌘B)" : "Bold (Ctrl+B)"}
         >
           <Bold size={14} />
         </button>
         <button
           className={`bubble-toolbar-btn ${editor.isActive('italic') ? 'is-active' : ''}`}
           onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleItalic().run(); }}
-          title="Italic (⌘I)"
+          title={isMac ? "Italic (⌘I)" : "Italic (Ctrl+I)"}
         >
           <Italic size={14} />
         </button>
         <button
           className={`bubble-toolbar-btn ${editor.isActive('strike') ? 'is-active' : ''}`}
           onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleStrike().run(); }}
-          title="Strikethrough (⌘⇧S)"
+          title={isMac ? "Strikethrough (⌘⇧S)" : "Strikethrough (Ctrl+Shift+S)"}
         >
           <Strikethrough size={14} />
         </button>
         <button
           className={`bubble-toolbar-btn ${editor.isActive('code') ? 'is-active' : ''}`}
           onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleCode().run(); }}
-          title="Code (⌘E)"
+          title={isMac ? "Code (⌘E)" : "Code (Ctrl+E)"}
         >
           <Code size={14} />
         </button>
@@ -183,7 +184,7 @@ export function BubbleToolbar({ editor }: BubbleToolbarProps) {
         <button
           className={`bubble-toolbar-btn ${editor.isActive('link') ? 'is-active' : ''}`}
           onMouseDown={(e) => { e.preventDefault(); handleLinkOpen(); }}
-          title="Link (⌘K)"
+          title={isMac ? "Link (⌘K)" : "Link (Ctrl+K)"}
         >
           <LinkIcon size={14} />
         </button>

@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Layout } from "./components/Layout";
+import type { LayoutHandle } from "./components/Layout";
 import { TaskDetail } from "./components/TaskDetail";
 import { WorkScreen } from "./components/WorkScreen";
 import { Settings } from "./components/Settings";
@@ -17,6 +18,7 @@ import { getDataService } from "./services";
 
 import type { SectionId } from "./types/taskTree";
 import type { TaskNode } from "./types/taskTree";
+import { isMac } from "./utils/platform";
 import {
   ListTodo,
   StickyNote,
@@ -40,6 +42,7 @@ function App() {
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const layoutRef = useRef<LayoutHandle | null>(null);
   const timer = useTimerContext();
   const {
     nodes,
@@ -157,7 +160,7 @@ function App() {
         id: "nav-tasks",
         title: "Go to Tasks",
         category: "Navigation",
-        shortcut: "⌘1",
+        shortcut: isMac ? "⌘1" : "Ctrl+1",
         icon: ListTodo,
         action: () => setActiveSection("tasks"),
       },
@@ -172,7 +175,7 @@ function App() {
         id: "nav-session",
         title: "Go to Session",
         category: "Navigation",
-        shortcut: "⌘2",
+        shortcut: isMac ? "⌘2" : "Ctrl+2",
         icon: Timer,
         action: () => setActiveSection("session"),
       },
@@ -180,7 +183,7 @@ function App() {
         id: "nav-calendar",
         title: "Go to Calendar",
         category: "Navigation",
-        shortcut: "⌘3",
+        shortcut: isMac ? "⌘3" : "Ctrl+3",
         icon: Calendar,
         action: () => setActiveSection("calendar"),
       },
@@ -188,7 +191,7 @@ function App() {
         id: "nav-analytics",
         title: "Go to Analytics",
         category: "Navigation",
-        shortcut: "⌘4",
+        shortcut: isMac ? "⌘4" : "Ctrl+4",
         icon: BarChart3,
         action: () => setActiveSection("analytics"),
       },
@@ -196,7 +199,7 @@ function App() {
         id: "nav-settings",
         title: "Go to Settings",
         category: "Navigation",
-        shortcut: "⌘,",
+        shortcut: isMac ? "⌘," : "Ctrl+,",
         icon: SettingsIcon,
         action: () => setActiveSection("settings"),
       },
@@ -241,7 +244,7 @@ function App() {
         id: "timer-modal",
         title: "Open timer modal",
         category: "Timer",
-        shortcut: "⌘⇧T",
+        shortcut: isMac ? "⌘⇧T" : "Ctrl+Shift+T",
         icon: Timer,
         action: () => setIsTimerModalOpen(true),
       },
@@ -269,34 +272,17 @@ function App() {
         id: "view-left-sidebar",
         title: "Toggle left sidebar",
         category: "View",
-        shortcut: "⌘.",
+        shortcut: isMac ? "⌘." : "Ctrl+.",
         icon: PanelLeft,
-        action: () =>
-          window.dispatchEvent(
-            new KeyboardEvent("keydown", {
-              key: ".",
-              code: "Period",
-              metaKey: true,
-              bubbles: true,
-            }),
-          ),
+        action: () => layoutRef.current?.toggleLeftSidebar(),
       },
       {
         id: "view-right-sidebar",
         title: "Toggle right sidebar",
         category: "View",
-        shortcut: "⌘⇧.",
+        shortcut: isMac ? "⌘⇧." : "Ctrl+Shift+.",
         icon: PanelRight,
-        action: () =>
-          window.dispatchEvent(
-            new KeyboardEvent("keydown", {
-              key: ".",
-              code: "Period",
-              metaKey: true,
-              shiftKey: true,
-              bubbles: true,
-            }),
-          ),
+        action: () => layoutRef.current?.toggleRightSidebar(),
       },
     ],
     [addNode, selectedTask, softDelete, timer],
@@ -322,25 +308,10 @@ function App() {
           setIsTimerModalOpen((prev) => !prev);
           break;
         case "toggle-left-sidebar":
-          window.dispatchEvent(
-            new KeyboardEvent("keydown", {
-              key: ".",
-              code: "Period",
-              metaKey: true,
-              bubbles: true,
-            }),
-          );
+          layoutRef.current?.toggleLeftSidebar();
           break;
         case "toggle-right-sidebar":
-          window.dispatchEvent(
-            new KeyboardEvent("keydown", {
-              key: ".",
-              code: "Period",
-              metaKey: true,
-              shiftKey: true,
-              bubbles: true,
-            }),
-          );
+          layoutRef.current?.toggleRightSidebar();
           break;
         case "export-data":
           getDataService().exportData().catch(console.warn);
@@ -370,8 +341,9 @@ function App() {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd+K → Command Palette (but defer to TipTap Link when editor has selection)
-      if (e.metaKey && !e.shiftKey && e.code === "KeyK") {
+      // Cmd/Ctrl+K → Command Palette (but defer to TipTap Link when editor has selection)
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && !e.shiftKey && e.code === "KeyK") {
         const el = document.activeElement;
         const isEditorWithSelection =
           el?.getAttribute("contenteditable") === "true" &&
@@ -383,22 +355,22 @@ function App() {
         }
       }
 
-      // Cmd+, → Settings (works even when input is focused)
-      if (e.metaKey && e.code === "Comma") {
+      // Cmd/Ctrl+, → Settings (works even when input is focused)
+      if (mod && e.code === "Comma") {
         e.preventDefault();
         setActiveSection("settings");
         return;
       }
 
-      // Cmd+1-5 → Section switching (works even when input is focused)
-      if (e.metaKey && !e.shiftKey && sectionMap[e.key]) {
+      // Cmd/Ctrl+1-5 → Section switching (works even when input is focused)
+      if (mod && !e.shiftKey && sectionMap[e.key]) {
         e.preventDefault();
         setActiveSection(sectionMap[e.key]);
         return;
       }
 
-      // Cmd+Shift+T → Timer modal toggle (works even when input is focused)
-      if (e.metaKey && e.shiftKey && e.code === "KeyT") {
+      // Cmd/Ctrl+Shift+T → Timer modal toggle (works even when input is focused)
+      if (mod && e.shiftKey && e.code === "KeyT") {
         e.preventDefault();
         setIsTimerModalOpen((prev) => !prev);
         return;
@@ -508,6 +480,7 @@ function App() {
         onSelectTask={setSelectedTaskId}
         onPlayTask={handlePlayTask}
         selectedTaskId={selectedTaskId}
+        handleRef={layoutRef}
       >
         {renderContent()}
       </Layout>

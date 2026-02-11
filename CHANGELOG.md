@@ -4,6 +4,16 @@
 
 ---
 
+## Windows 互換性対応 (2026-02-11)
+
+- `utils/platform.ts` 新規作成: `isMac`, `modSymbol`, `modKey` ユーティリティ
+- `e.metaKey` → `(e.metaKey || e.ctrlKey)` に変更（App.tsx, Layout.tsx, TaskTree.tsx）
+- コマンドパレット・メニューアクションの合成KeyboardEvent → `LayoutHandle` ref経由の直接呼び出しに置換
+- ショートカット表示テキストをプラットフォーム判定で分岐（⌘ / Ctrl）
+- `LeftSidebar.tsx` のローカル `isMac` を共通ユーティリティに統一
+
+---
+
 ## Electron Shell Foundation (Phase 0)
 
 ### Electron基盤構築
