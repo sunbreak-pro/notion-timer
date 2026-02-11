@@ -9,6 +9,7 @@ import { AnalyticsView } from "./components/Analytics/AnalyticsView";
 import { MemoView } from "./components/Memo";
 import { CommandPalette } from "./components/CommandPalette/CommandPalette";
 import type { Command } from "./components/CommandPalette/CommandPalette";
+import { UpdateNotification } from "./components/UpdateNotification";
 import { useTimerContext } from "./hooks/useTimerContext";
 import { useTaskTreeContext } from "./hooks/useTaskTreeContext";
 import { useMemoContext } from "./hooks/useMemoContext";
@@ -40,7 +41,7 @@ function App() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const timer = useTimerContext();
-  const { nodes, addNode, updateNode, softDelete, getTaskColor, getFolderTagForTask } = useTaskTreeContext();
+  const { nodes, addNode, updateNode, softDelete, getTaskColor, getFolderTagForTask, persistError } = useTaskTreeContext();
   const { setSelectedDate: setMemoDate } = useMemoContext();
 
   const selectedTask = selectedTaskId
@@ -287,6 +288,12 @@ function App() {
 
   return (
     <>
+      <UpdateNotification />
+      {persistError && (
+        <div className="fixed top-0 left-0 right-0 z-[9999] bg-red-600 text-white text-sm px-4 py-2 text-center">
+          Save failed: {persistError}
+        </div>
+      )}
       <Layout
         activeSection={activeSection}
         onSectionChange={setActiveSection}

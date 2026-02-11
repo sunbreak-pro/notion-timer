@@ -3,62 +3,114 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## プロジェクト概要
-Notionライクなタスク管理 + 環境音ミキサー + ポモドーロタイマーを組み合わせた没入型個人タスク管理アプリ（Sonic Flow）
+Notionライクなタスク管理 + 環境音ミキサー + ポモドーロタイマーを組み合わせた没入型個人タスク管理デスクトップアプリ（Sonic Flow）。Electron + SQLite でスタンドアロン動作（バックエンドサーバー不要）。
 
 ---
 
 ## 開発コマンド
 
-### Frontend (React 19 + Vite + TypeScript)
+### 起動（Electron + Vite同時起動）
 ```bash
-cd frontend && npm run dev          # 開発サーバー (port 5173)
+npm run dev     # tsc → concurrently: Vite(5173) + tsc --watch + Electron
+npm run build   # Frontend + Electron ビルド
+npm run start   # ビルド後にElectron起動
+```
+
+### Frontend単体
+```bash
+cd frontend && npm run dev          # Vite開発サーバー (port 5173)
 cd frontend && npm run build        # tsc -b && vite build
 cd frontend && npm run lint         # ESLint
+cd frontend && npm run test         # Vitest（単発実行）
+cd frontend && npm run test:watch   # Vitest（ウォッチモード）
 ```
 
-### Backend (Spring Boot 3.4.2 + Java 23)
+### Electron単体
 ```bash
-cd backend && ./gradlew bootRun     # 開発サーバー (port 8080)
-cd backend && ./gradlew test        # JUnit テスト
-cd backend && ./gradlew build       # ビルド
+cd electron && npx tsc              # 一回コンパイル
+cd electron && npx tsc --watch      # ウォッチモード
 ```
 
-両方同時に起動が必要（CORS: localhost:5173 → localhost:8080）
-
-Viteが`/api`リクエストをバックエンド(8080)にプロキシするため、フロントエンドからは相対パス(`/api/...`)でアクセス可能。
-
-### H2 データベースコンソール（devプロファイルのみ）
+### パッケージング
 ```bash
-cd backend && ./gradlew bootRun --args='--spring.profiles.active=dev'
+npm run dist        # electron-builder
+npm run dist:mac    # macOS向け
+npm run dist:win    # Windows向け
 ```
+
+### ネイティブモジュール再ビルド
+```bash
+npx electron-rebuild -f -w better-sqlite3
 ```
-http://localhost:8080/h2-console
-JDBC URL: jdbc:h2:file:./data/sonicflow
-Username: sa / Password: (空)
-```
-※ デフォルトでは`spring.h2.console.enabled=false`。`application-dev.properties`で有効化。
 
 ---
 
 ## アーキテクチャ
 
-### 現在のデータ永続化（重要）
-**タスクツリー・タイマー・サウンドはバックエンドAPI接続済み**。楽観的更新パターン（localStorage即時反映 → 500msデバウンスで非同期PUT）。
-- タスクツリー: `localStorage("sonic-flow-task-tree")` + バックエンドAPI同期
-- タイマー設定: `localStorage` + バックエンドAPI同期（work/break/longBreak/sessionsBeforeLongBreak）
-- タイマーセッション: バックエンドAPI記録（start→POST、pause/reset/完了→PUT）
-- サウンド設定: `localStorage("sonic-flow-sound-mixer")` + バックエンドAPI同期
-- テーマ設定: `localStorage`経由（バックエンド未接続）
+### 全体構成
 
-Phase 7で**楽観的更新パターン**を導入済み: UI→localStorage即時反映→バックエンドへ500msデバウンス非同期同期。バックエンド不可用時はlocalStorageフォールバック。
+```
+Renderer (React 19 + Vite)
+  ↓ window.electronAPI.invoke(channel, ...args)
+Preload (contextBridge, チャンネルホワイトリスト)
+  ↓ ipcRenderer.invoke
+Main Process (Electron 35)
+  ↓ ipcMain.handle
+Repository層 (better-sqlite3 → userData/sonic-flow.db)
+```
 
-✅ **`ddl-auto=update`**: DBスキーマは永続化済み。バックエンド再起動でデータは保持される。
+セキュリティ: `contextIsolation=true`, `nodeIntegration=false`, `preload.ts`でチャンネルホワイトリスト制御。
+
+### データ永続化
+**SQLite (better-sqlite3)** でローカルファイルに永続化。DBファイル: `userData/sonic-flow.db`（WALモード）。
+
+テーブル: tasks, timer_settings, timer_sessions, sound_settings, sound_presets, memos, ai_settings, tags, task_tags, task_templates, custom_sounds
+
+**localStorage は UI状態のみ**（6キー、`constants/storageKeys.ts`）: theme, font-size, sidebar幅, 通知ON/OFF, 左右サイドバー開閉。
+
+### DataService 抽象化レイヤー（重要）
+フロントエンドは `DataService` インターフェース経由でデータアクセス。直接IPCを呼ばない。
+
+```
+frontend/src/services/
+├── DataService.ts          # インターフェース定義（全ドメインの操作）
+├── ElectronDataService.ts  # IPC実装（window.electronAPI.invoke）
+├── dataServiceFactory.ts   # シングルトンファクトリ
+└── index.ts                # getDataService() エクスポート
+```
+
+各Context/hookは `getDataService()` 経由でデータ操作を行う。
+
+### IPC チャンネル一覧
+`preload.ts` の `ALLOWED_CHANNELS` で許可制御。プレフィックス規則:
+- `db:tasks:*` / `db:timer:*` / `db:sound:*` / `db:memo:*` — DB CRUD
+- `db:customSound:*` / `db:tags:*` / `db:templates:*` — DB CRUD
+- `ai:*` — Gemini API呼び出し（メインプロセス経由）
+- `data:export` / `data:import` — JSON一括入出力
+- `app:migrateFromLocalStorage` — 初回マイグレーション
+
+### Electron メインプロセス構成
+```
+electron/
+├── main.ts              # エントリポイント（BrowserWindow作成、dev/prod分岐）
+├── preload.ts           # contextBridge + チャンネルホワイトリスト
+├── database/
+│   ├── db.ts            # better-sqlite3 シングルトン初期化
+│   ├── migrations.ts    # テーブルスキーマ定義
+│   └── *Repository.ts   # 8つのリポジトリ（task/timer/sound/memo/ai/tag/template/customSound）
+├── ipc/
+│   ├── registerAll.ts   # 全ハンドラ一括登録（個別try/catch付き）
+│   └── *Handlers.ts     # ドメイン別IPCハンドラ（10ファイル）
+└── services/
+    ├── aiService.ts         # Gemini API呼び出し
+    └── safeStorageService.ts  # APIキー安全保存
+```
 
 ### フロントエンド構成
 
 **Context Provider スタック** (`main.tsx`):
 ```
-ErrorBoundary → ThemeProvider → TaskTreeProvider → MemoProvider → TimerProvider → AudioProvider → App
+StrictMode → ErrorBoundary → ThemeProvider → TaskTreeProvider → MemoProvider → TimerProvider → AudioProvider → TagProvider → App
 ```
 
 **ルーティング**: React Routerなし。`App.tsx`が`activeSection`状態で7セクション（tasks/memo/session/calendar/analytics/settings/tips）を切り替え。
@@ -81,42 +133,23 @@ WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerMo
 - ソフトデリート: `isDeleted`フラグ → Settings画面のゴミ箱から復元可能
 
 **主要フック**:
-- `useTaskTree` — タスクツリー全体のCRUD・移動・DnD操作（分割済み: useTaskTreeCRUD/Deletion/Movement）
+- `useTaskTreeAPI` — タスクツリーCRUD（IPC経由SQLite永続化）、内部で分割: `useTaskTreeCRUD` / `useTaskTreeDeletion` / `useTaskTreeMovement`
 - `useLocalSoundMixer` — サウンドミキサー状態管理（ボリューム、有効/無効）
 - `useAudioEngine` — Web Audio APIによるリアルタイム再生・フェードイン/アウト
-- `useCustomSounds` — カスタムサウンドメタデータ + IndexedDB blob管理
-- `useTimerContext` / `useTaskTreeContext` / `useAudioContext` / `useMemoContext` — Context消費用ラッパー
+- `useCustomSounds` — カスタムサウンドメタデータ + IPC blob管理
+- `useTimerContext` / `useTaskTreeContext` / `useAudioContext` / `useMemoContext` / `useTagContext` — Context消費用ラッパー
 
 **タイマーシステム**:
 - `TimerContext`がクライアントサイド`setInterval`でカウントダウン
 - `activeTask`（タイマー対象）と`selectedTaskId`（詳細表示対象）は独立
 - WORK → BREAK → LONG_BREAK を自動遷移
 - モーダルを閉じてもバックグラウンドで継続
-- `TaskTreeNode`にインラインで残り時間+ミニプログレスバーを表示
 
 **ドラッグ&ドロップ**: `@dnd-kit`使用。`moveNode`（並び替え）と`moveNodeInto`（階層移動）は別操作。循環参照防止あり。
 
-**リッチテキスト**: TipTap (`@tiptap/react`) でタスクメモ編集（MemoEditor）。`React.lazy`で遅延ロード（バンドル57%削減）。
+**リッチテキスト**: TipTap (`@tiptap/react`) でタスクメモ編集（MemoEditor）。`React.lazy`で遅延ロード。
 
-**localStorage キー** (`constants/storageKeys.ts`、全15キー):
-`sonic-flow-task-tree`, `sonic-flow-sound-mixer`, `sonic-flow-work-duration`, `sonic-flow-theme`, `sonic-flow-font-size`, `sonic-flow-subsidebar-width`, `sonic-flow-notifications-enabled`, `sonic-flow-left-sidebar-open`, `sonic-flow-right-sidebar-open`, `sonic-flow-break-duration`, `sonic-flow-long-break-duration`, `sonic-flow-sessions-before-long-break`, `sonic-flow-migration-done`, `sonic-flow-memos`, `sonic-flow-custom-sounds`
-
-### バックエンド構成
-
-**パッケージ**: `com.sonicflow.{controller,service,repository,entity,config}`（configにGlobalExceptionHandler含む）
-
-**エンティティ**: Task, TimerSession, TimerSettings（シングルトン）, SoundSettings, SoundPreset
-- JPA関連なし（TimerSession.taskIdは素のLong、ForeignKeyではない）
-- `@PrePersist`でタイムスタンプ自動設定
-
-**API**:
-- Tasks: `GET /api/tasks/tree`, `PUT /api/tasks/tree`(一括同期), `POST /api/tasks`, `PUT /api/tasks/{id}`, `DELETE /api/tasks/{id}/soft`, `POST /api/tasks/{id}/restore`, `DELETE /api/tasks/{id}`
-- Timer: `/api/timer-sessions`, `/api/timer-settings`
-- Sound: `/api/sound-settings`, `/api/sound-presets`
-- AI: `POST /api/ai/advice`, `GET/PUT /api/ai/settings` — Gemini API (`SONICFLOW_AI_API_KEY`環境変数必須)
-- Migration: `POST /api/migrate/tasks` (localStorage→DB一括インポート)
-
-**IDはString型**: フロントエンドの`"task-xxx"`/`"folder-xxx"`形式に統一済み（Phase 7）。
+**IDはString型**: `"task-xxx"`/`"folder-xxx"`形式。
 
 ---
 
@@ -128,11 +161,9 @@ WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerMo
 | フック | camelCase + use接頭辞 | `useTasks.ts` |
 | 変数・関数 | camelCase | `taskList`, `fetchTasks` |
 | 定数 | SCREAMING_SNAKE_CASE | `API_BASE_URL` |
-| Java クラス | PascalCase | `TaskController.java` |
 | Context Value型 | PascalCase | `AudioContextValue.ts` |
 
 - Frontend: ESLint設定に従う
-- Backend: Google Java Style Guide準拠
 - コメントは必要最小限
 
 ---
@@ -148,10 +179,13 @@ type: `feat` / `fix` / `docs` / `style` / `refactor` / `test` / `chore`
 
 ## 作業時の注意点
 
-- **README.md更新必須**: コード変更時は開発ジャーナルセクションにエントリ追加（降順）
+- **README.md更新必須**: コード変更の作業完了時は必ず以下を実施:
+  1. 開発ジャーナルセクションに日付付きエントリを追加（降順、最新が先頭）
+  2. 機能追加・削除時は「主な機能」セクションも更新
+  3. アーキテクチャ変更時は「技術スタック」「セットアップ」セクションも更新
 - **音源ファイル**: リポジトリにコミット禁止（`public/sounds/`は`.gitignore`対象）
-- **AIキー**: フロントエンドに直接記載禁止、バックエンド経由のみ
-- **CORS**: `WebConfig.java`で`localhost:5173`のみ許可（本番時は要変更）
+- **AIキー**: フロントエンドに直接記載禁止、Electronメインプロセス経由のみ（`safeStorageService`使用）
+- **IPC追加時**: `preload.ts`の`ALLOWED_CHANNELS`、`electron/ipc/`のハンドラ、`ElectronDataService.ts`の3箇所を更新
 
 ---
 

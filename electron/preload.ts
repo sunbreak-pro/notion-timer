@@ -54,6 +54,17 @@ const ALLOWED_CHANNELS = new Set([
   'data:import',
   // App
   'app:migrateFromLocalStorage',
+  // Diagnostics
+  'diagnostics:fetchLogs',
+  'diagnostics:openLogFolder',
+  'diagnostics:exportLogs',
+  'diagnostics:fetchMetrics',
+  'diagnostics:resetMetrics',
+  'diagnostics:fetchSystemInfo',
+  // Updater
+  'updater:checkForUpdates',
+  'updater:downloadUpdate',
+  'updater:installUpdate',
 ]);
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -68,5 +79,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = (_event: IpcRendererEvent, action: string) => callback(action);
     ipcRenderer.on('menu:action', handler);
     return () => { ipcRenderer.removeListener('menu:action', handler); };
+  },
+  onUpdaterStatus(callback: (status: { event: string; data?: unknown }) => void): () => void {
+    const handler = (_event: IpcRendererEvent, status: { event: string; data?: unknown }) => callback(status);
+    ipcRenderer.on('updater:status', handler);
+    return () => { ipcRenderer.removeListener('updater:status', handler); };
   },
 });

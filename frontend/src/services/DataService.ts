@@ -6,6 +6,7 @@ import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../t
 import type { CustomSoundMeta } from '../types/customSound';
 import type { Tag } from '../types/tag';
 import type { TaskTemplate } from '../types/template';
+import type { LogEntry, IpcChannelMetrics, SystemInfo } from '../types/diagnostics';
 
 export interface DataService {
   // Tasks
@@ -68,4 +69,17 @@ export interface DataService {
   // Data I/O
   exportData(): Promise<boolean>;
   importData(): Promise<boolean>;
+
+  // Diagnostics
+  fetchLogs(options?: { level?: string; limit?: number }): Promise<LogEntry[]>;
+  openLogFolder(): Promise<void>;
+  exportLogs(): Promise<boolean>;
+  fetchMetrics(): Promise<IpcChannelMetrics[]>;
+  resetMetrics(): Promise<boolean>;
+  fetchSystemInfo(): Promise<SystemInfo>;
+
+  // Updater
+  checkForUpdates(): Promise<void>;
+  downloadUpdate(): Promise<void>;
+  installUpdate(): Promise<void>;
 }

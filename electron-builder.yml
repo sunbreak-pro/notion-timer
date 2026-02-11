@@ -8,6 +8,9 @@ files:
   - frontend/dist/**/*
   - package.json
 
+asarUnpack:
+  - "node_modules/better-sqlite3/**/*"
+
 mac:
   target:
     - dmg
@@ -25,3 +28,6 @@ linux:
   target:
     - AppImage
   category: Office
+
+publish:
+  provider: github

@@ -1,7 +1,24 @@
+import log from '../logger';
 import { ipcMain, dialog, BrowserWindow, app } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import type Database from 'better-sqlite3';
+
+function safeQuery(db: Database.Database, sql: string): unknown[] {
+  try {
+    return db.prepare(sql).all();
+  } catch {
+    return [];
+  }
+}
+
+function safeQueryOne(db: Database.Database, sql: string): unknown | null {
+  try {
+    return db.prepare(sql).get() ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export function registerDataIOHandlers(db: Database.Database): void {
   ipcMain.handle('data:export', async () => {
@@ -21,16 +38,16 @@ export function registerDataIOHandlers(db: Database.Database): void {
       exportedAt: new Date().toISOString(),
       app: 'Sonic Flow',
       data: {
-        tasks: db.prepare('SELECT * FROM tasks').all(),
-        timerSettings: db.prepare('SELECT * FROM timer_settings WHERE id = 1').get(),
-        timerSessions: db.prepare('SELECT * FROM timer_sessions').all(),
-        soundSettings: db.prepare('SELECT * FROM sound_settings').all(),
-        soundPresets: db.prepare('SELECT * FROM sound_presets').all(),
-        memos: db.prepare('SELECT * FROM memos').all(),
-        tags: db.prepare('SELECT * FROM tags').all(),
-        taskTags: db.prepare('SELECT * FROM task_tags').all(),
-        templates: db.prepare('SELECT * FROM task_templates').all(),
-        aiSettings: db.prepare('SELECT * FROM ai_settings WHERE id = 1').get(),
+        tasks: safeQuery(db, 'SELECT * FROM tasks'),
+        timerSettings: safeQueryOne(db, 'SELECT * FROM timer_settings WHERE id = 1'),
+        timerSessions: safeQuery(db, 'SELECT * FROM timer_sessions'),
+        soundSettings: safeQuery(db, 'SELECT * FROM sound_settings'),
+        soundPresets: safeQuery(db, 'SELECT * FROM sound_presets'),
+        memos: safeQuery(db, 'SELECT * FROM memos'),
+        tags: safeQuery(db, 'SELECT * FROM tags'),
+        taskTags: safeQuery(db, 'SELECT * FROM task_tags'),
+        templates: safeQuery(db, 'SELECT * FROM task_templates'),
+        aiSettings: safeQueryOne(db, 'SELECT * FROM ai_settings WHERE id = 1'),
       },
     };
 
@@ -67,123 +84,131 @@ export function registerDataIOHandlers(db: Database.Database): void {
 
     const data = imported.data;
 
-    // Import within a transaction
-    const importAll = db.transaction(() => {
-      // Clear all tables
-      db.exec(`
-        DELETE FROM task_tags;
-        DELETE FROM tags;
-        DELETE FROM task_templates;
-        DELETE FROM timer_sessions;
-        DELETE FROM sound_settings;
-        DELETE FROM sound_presets;
-        DELETE FROM memos;
-        DELETE FROM tasks;
-      `);
-
-      // Import tasks
-      if (Array.isArray(data.tasks)) {
-        const insertTask = db.prepare(`
-          INSERT INTO tasks (id, type, title, parent_id, "order", status, is_expanded, is_deleted, deleted_at, created_at, completed_at, scheduled_at, content, work_duration_minutes, color)
-          VALUES (@id, @type, @title, @parent_id, @"order", @status, @is_expanded, @is_deleted, @deleted_at, @created_at, @completed_at, @scheduled_at, @content, @work_duration_minutes, @color)
+    try {
+      const importAll = db.transaction(() => {
+        // Clear all tables
+        db.exec(`
+          DELETE FROM task_tags;
+          DELETE FROM tags;
+          DELETE FROM task_templates;
+          DELETE FROM timer_sessions;
+          DELETE FROM sound_settings;
+          DELETE FROM sound_presets;
+          DELETE FROM memos;
+          DELETE FROM tasks;
         `);
-        for (const t of data.tasks) {
-          insertTask.run(t);
+
+        // Import tasks
+        if (Array.isArray(data.tasks)) {
+          const insertTask = db.prepare(`
+            INSERT INTO tasks (id, type, title, parent_id, "order", status, is_expanded, is_deleted, deleted_at, created_at, completed_at, scheduled_at, content, work_duration_minutes, color)
+            VALUES (@id, @type, @title, @parent_id, @"order", @status, @is_expanded, @is_deleted, @deleted_at, @created_at, @completed_at, @scheduled_at, @content, @work_duration_minutes, @color)
+          `);
+          for (const t of data.tasks) {
+            insertTask.run(t);
+          }
         }
-      }
 
-      // Import timer settings
-      if (data.timerSettings) {
-        const ts = data.timerSettings;
-        db.prepare(`
-          UPDATE timer_settings SET work_duration=@work_duration, break_duration=@break_duration,
-          long_break_duration=@long_break_duration, sessions_before_long_break=@sessions_before_long_break,
-          updated_at=@updated_at WHERE id=1
-        `).run(ts);
-      }
-
-      // Import timer sessions
-      if (Array.isArray(data.timerSessions)) {
-        const insertSession = db.prepare(`
-          INSERT INTO timer_sessions (id, task_id, session_type, started_at, completed_at, duration, completed)
-          VALUES (@id, @task_id, @session_type, @started_at, @completed_at, @duration, @completed)
-        `);
-        for (const s of data.timerSessions) {
-          insertSession.run(s);
+        // Import timer settings
+        if (data.timerSettings) {
+          const ts = data.timerSettings;
+          db.prepare(`
+            UPDATE timer_settings SET work_duration=@work_duration, break_duration=@break_duration,
+            long_break_duration=@long_break_duration, sessions_before_long_break=@sessions_before_long_break,
+            updated_at=@updated_at WHERE id=1
+          `).run(ts);
         }
-      }
 
-      // Import sound settings
-      if (Array.isArray(data.soundSettings)) {
-        const insertSound = db.prepare(`
-          INSERT INTO sound_settings (id, sound_type, volume, enabled, updated_at)
-          VALUES (@id, @sound_type, @volume, @enabled, @updated_at)
-        `);
-        for (const s of data.soundSettings) {
-          insertSound.run(s);
+        // Import timer sessions
+        if (Array.isArray(data.timerSessions)) {
+          const insertSession = db.prepare(`
+            INSERT INTO timer_sessions (id, task_id, session_type, started_at, completed_at, duration, completed)
+            VALUES (@id, @task_id, @session_type, @started_at, @completed_at, @duration, @completed)
+          `);
+          for (const s of data.timerSessions) {
+            insertSession.run(s);
+          }
         }
-      }
 
-      // Import sound presets
-      if (Array.isArray(data.soundPresets)) {
-        const insertPreset = db.prepare(`
-          INSERT INTO sound_presets (id, name, settings_json, created_at)
-          VALUES (@id, @name, @settings_json, @created_at)
-        `);
-        for (const p of data.soundPresets) {
-          insertPreset.run(p);
+        // Import sound settings
+        if (Array.isArray(data.soundSettings)) {
+          const insertSound = db.prepare(`
+            INSERT INTO sound_settings (id, sound_type, volume, enabled, updated_at)
+            VALUES (@id, @sound_type, @volume, @enabled, @updated_at)
+          `);
+          for (const s of data.soundSettings) {
+            insertSound.run(s);
+          }
         }
-      }
 
-      // Import memos
-      if (Array.isArray(data.memos)) {
-        const insertMemo = db.prepare(`
-          INSERT INTO memos (id, date, content, created_at, updated_at)
-          VALUES (@id, @date, @content, @created_at, @updated_at)
-        `);
-        for (const m of data.memos) {
-          insertMemo.run(m);
+        // Import sound presets
+        if (Array.isArray(data.soundPresets)) {
+          const insertPreset = db.prepare(`
+            INSERT INTO sound_presets (id, name, settings_json, created_at)
+            VALUES (@id, @name, @settings_json, @created_at)
+          `);
+          for (const p of data.soundPresets) {
+            insertPreset.run(p);
+          }
         }
-      }
 
-      // Import tags
-      if (Array.isArray(data.tags)) {
-        const insertTag = db.prepare(`INSERT INTO tags (id, name, color) VALUES (@id, @name, @color)`);
-        for (const t of data.tags) {
-          insertTag.run(t);
+        // Import memos
+        if (Array.isArray(data.memos)) {
+          const insertMemo = db.prepare(`
+            INSERT INTO memos (id, date, content, created_at, updated_at)
+            VALUES (@id, @date, @content, @created_at, @updated_at)
+          `);
+          for (const m of data.memos) {
+            insertMemo.run(m);
+          }
         }
-      }
 
-      // Import task_tags
-      if (Array.isArray(data.taskTags)) {
-        const insertTaskTag = db.prepare(`INSERT INTO task_tags (task_id, tag_id) VALUES (@task_id, @tag_id)`);
-        for (const tt of data.taskTags) {
-          insertTaskTag.run(tt);
+        // Import tags
+        if (Array.isArray(data.tags)) {
+          const insertTag = db.prepare(`INSERT INTO tags (id, name, color) VALUES (@id, @name, @color)`);
+          for (const t of data.tags) {
+            insertTag.run(t);
+          }
         }
-      }
 
-      // Import templates
-      if (Array.isArray(data.templates)) {
-        const insertTemplate = db.prepare(`
-          INSERT INTO task_templates (id, name, nodes_json, created_at)
-          VALUES (@id, @name, @nodes_json, @created_at)
-        `);
-        for (const t of data.templates) {
-          insertTemplate.run(t);
+        // Import task_tags
+        if (Array.isArray(data.taskTags)) {
+          const insertTaskTag = db.prepare(`INSERT INTO task_tags (task_id, tag_id) VALUES (@task_id, @tag_id)`);
+          for (const tt of data.taskTags) {
+            insertTaskTag.run(tt);
+          }
         }
-      }
 
-      // Import AI settings
-      if (data.aiSettings) {
-        const ai = data.aiSettings;
-        db.prepare(`
-          UPDATE ai_settings SET api_key=@api_key, model=@model, updated_at=@updated_at WHERE id=1
-        `).run(ai);
-      }
-    });
+        // Import templates
+        if (Array.isArray(data.templates)) {
+          const insertTemplate = db.prepare(`
+            INSERT INTO task_templates (id, name, nodes_json, created_at)
+            VALUES (@id, @name, @nodes_json, @created_at)
+          `);
+          for (const t of data.templates) {
+            insertTemplate.run(t);
+          }
+        }
 
-    importAll();
-    return true;
+        // Import AI settings
+        if (data.aiSettings) {
+          const ai = data.aiSettings;
+          db.prepare(`
+            UPDATE ai_settings SET api_key=@api_key, model=@model, updated_at=@updated_at WHERE id=1
+          `).run(ai);
+        }
+      });
+
+      importAll();
+      return true;
+    } catch (e) {
+      log.error('[DataIO] Import failed, restoring backup:', e);
+      // Restore backup on failure
+      if (fs.existsSync(backupPath)) {
+        fs.copyFileSync(backupPath, dbPath);
+      }
+      throw e;
+    }
   });
 }
 

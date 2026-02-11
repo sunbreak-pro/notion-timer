@@ -7,6 +7,7 @@ import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../t
 import type { CustomSoundMeta } from '../types/customSound';
 import type { Tag } from '../types/tag';
 import type { TaskTemplate } from '../types/template';
+import type { LogEntry, IpcChannelMetrics, SystemInfo } from '../types/diagnostics';
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   return window.electronAPI!.invoke<T>(channel, ...args);
@@ -164,5 +165,36 @@ export class ElectronDataService implements DataService {
   }
   importData(): Promise<boolean> {
     return invoke('data:import');
+  }
+
+  // Diagnostics
+  fetchLogs(options?: { level?: string; limit?: number }): Promise<LogEntry[]> {
+    return invoke('diagnostics:fetchLogs', options);
+  }
+  openLogFolder(): Promise<void> {
+    return invoke('diagnostics:openLogFolder');
+  }
+  exportLogs(): Promise<boolean> {
+    return invoke('diagnostics:exportLogs');
+  }
+  fetchMetrics(): Promise<IpcChannelMetrics[]> {
+    return invoke('diagnostics:fetchMetrics');
+  }
+  resetMetrics(): Promise<boolean> {
+    return invoke('diagnostics:resetMetrics');
+  }
+  fetchSystemInfo(): Promise<SystemInfo> {
+    return invoke('diagnostics:fetchSystemInfo');
+  }
+
+  // Updater
+  checkForUpdates(): Promise<void> {
+    return invoke('updater:checkForUpdates');
+  }
+  downloadUpdate(): Promise<void> {
+    return invoke('updater:downloadUpdate');
+  }
+  installUpdate(): Promise<void> {
+    return invoke('updater:installUpdate');
   }
 }

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { TaskNode, NodeType } from '../types/taskTree';
 import { useTaskTreeCRUD } from './useTaskTreeCRUD';
 import { useTaskTreeDeletion } from './useTaskTreeDeletion';
@@ -16,15 +16,22 @@ export function useTaskTreeAPI() {
   const [nodes, setNodes] = useState<TaskNode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [persistError, setPersistError] = useState<string | null>(null);
+  const loadedRef = useRef(false);
 
-  // Load from DataService on mount
+  // Load from DataService on mount (including soft-deleted tasks)
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const tree = await getDataService().fetchTaskTree();
+        const ds = getDataService();
+        const [active, deleted] = await Promise.all([
+          ds.fetchTaskTree(),
+          ds.fetchDeletedTasks(),
+        ]);
         if (!cancelled) {
-          setNodes(tree);
+          setNodes([...active, ...deleted]);
+          loadedRef.current = true;
         }
       } catch (e) {
         if (!cancelled) {
@@ -38,8 +45,13 @@ export function useTaskTreeAPI() {
   }, []);
 
   const persist = useCallback((updated: TaskNode[]) => {
+    if (!loadedRef.current) return;
     setNodes(updated);
-    getDataService().syncTaskTree(updated).catch((e) => console.warn('[TaskTree] sync:', e.message));
+    setPersistError(null);
+    getDataService().syncTaskTree(updated).catch((e) => {
+      console.error('[TaskTree] sync failed:', e.message);
+      setPersistError(e instanceof Error ? e.message : 'Failed to save tasks');
+    });
   }, []);
 
   const activeNodes = useMemo(() => nodes.filter(n => !n.isDeleted), [nodes]);
@@ -74,6 +86,7 @@ export function useTaskTreeAPI() {
     getChildren,
     isLoading,
     error,
+    persistError,
     getTaskColor,
     getFolderTagForTask,
     ...crud,

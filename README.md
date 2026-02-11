@@ -22,53 +22,85 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **コマンドパレット**: ⌘Kで起動、16コマンド（Navigation/Task/Timer/View）をリアルタイム検索・実行
 - **カレンダー**: 月/週表示切替、タスクを日付別に表示、フィルタリング（incomplete/completed）
 - **アナリティクス**: 基本統計（総タスク数、完了率、フォルダ数）
-- **Backend連携**: localStorage→H2 DB自動マイグレーション、Optimistic Update、オフラインフォールバック
+- **データ管理**: SQLite永続化（better-sqlite3）、JSON Export/Import、バックアップ付きインポート
+- **タグ**: タスクにカラータグ付与、フィルタリング
+- **テンプレート**: タスクツリー構造をテンプレート保存・展開
+- **自動アップデート**: electron-updater + GitHub Releases、ユーザー確認型ダウンロード・インストール
+- **構造化ログ**: electron-logによるファイル出力、Settings画面でログ閲覧・フィルタ・エクスポート
+- **パフォーマンス監視**: 全IPC応答時間を自動計測、Settings画面でチャネル別メトリクス表示
 
 ### 技術スタック
-- **Frontend**: React 19 (TypeScript) + Vite + Tailwind CSS v4 + @dnd-kit
-- **Backend**: Spring Boot 3.4.2 (Java 23) + H2 Database
-- **Desktop**: Electron 35 + electron-builder
+- **Frontend**: React 19 (TypeScript) + Vite + Tailwind CSS v4 + @dnd-kit + TipTap
+- **Desktop**: Electron 35 + better-sqlite3 + electron-builder
 
 ---
 
-## API エンドポイント
+## IPC チャンネル
 
-### Tasks (`/api/tasks`)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/tasks` | 未完了タスク取得 |
-| GET | `/api/tasks/history` | 完了タスク取得 |
-| POST | `/api/tasks` | タスク作成 |
-| PUT | `/api/tasks/{id}` | タスク更新 |
-| DELETE | `/api/tasks/{id}` | タスク削除 |
+フロントエンドからは `window.electronAPI.invoke(channel, ...args)` 経由でElectronメインプロセスと通信。
 
-### Timer (`/api/timer-*`)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/timer-settings` | タイマー設定取得 |
-| PUT | `/api/timer-settings` | タイマー設定更新 |
-| POST | `/api/timer-sessions` | セッション開始 |
-| PUT | `/api/timer-sessions/{id}` | セッション終了 |
-| GET | `/api/timer-sessions` | 全セッション取得 |
-| GET | `/api/tasks/{taskId}/sessions` | タスク別セッション取得 |
-
-### AI (`/api/ai`)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/ai/advice` | AIコーチングアドバイス取得 |
-
-### Sound (`/api/sound-*`)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/sound-settings` | サウンド設定取得 |
-| PUT | `/api/sound-settings` | サウンド設定更新 |
-| GET | `/api/sound-presets` | プリセット一覧取得 |
-| POST | `/api/sound-presets` | プリセット作成 |
-| DELETE | `/api/sound-presets/{id}` | プリセット削除 |
+| ドメイン | チャンネル | 概要 |
+|---------|-----------|------|
+| Tasks | `tasks:getTree` / `tasks:saveTree` | ツリー一括同期 |
+| Tasks | `tasks:create` / `tasks:update` / `tasks:delete` / `tasks:softDelete` / `tasks:restore` | タスクCRUD |
+| Timer | `timer:getSettings` / `timer:updateSettings` | タイマー設定 |
+| Timer | `timer:createSession` / `timer:updateSession` / `timer:getSessions` | セッション管理 |
+| Sound | `sound:getSettings` / `sound:updateSettings` | サウンド設定 |
+| Sound | `sound:getPresets` / `sound:savePreset` / `sound:deletePreset` | プリセット管理 |
+| Data I/O | `data:export` / `data:import` | JSON Export/Import |
+| Tags | `tags:getAll` / `tags:create` / `tags:update` / `tags:delete` | タグ管理 |
+| Templates | `templates:getAll` / `templates:save` / `templates:delete` | テンプレート管理 |
+| Memos | `memos:get` / `memos:save` | メモ管理 |
+| AI | `ai:getSettings` / `ai:updateSettings` / `ai:getAdvice` | AIコーチング |
+| App | `app:getVersion` | アプリ情報 |
 
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-11 - Phase 7: 本番環境対応（自動アップデート・ログ・パフォーマンス監視）
+
+#### 概要
+本番運用に向けたインフラ整備。構造化ログ、IPCパフォーマンス計測、自動アップデート機能、診断UIを実装。
+
+#### 変更内容
+- **electron-log**: ファイルトランスポート（2MB、ローテーション5）、グローバルエラーキャッチ（uncaughtException/unhandledRejection）
+- **console.error→log.error置換**: main.ts、registerAll.ts、dataIOHandlers.tsの全console.errorをelectron-log経由に統一
+- **IPCパフォーマンス計測**: 全IPCハンドラの応答時間を自動計測、100ms超のスロークエリを警告ログ出力
+- **診断系IPC**: ログ閲覧（レベルフィルタ対応）、ログフォルダオープン、ログエクスポート、メトリクス取得/リセット、システム情報取得
+- **自動アップデート**: electron-updater + GitHub Releases、autoDownload=false（ユーザー確認必須）、起動10秒後に非ブロッキングチェック
+- **Settings UI**: LogViewer（レベルフィルタ、モノスペースリスト、Export/OpenFolder）、PerformanceMonitor（チャネル別テーブル、システム情報、DBテーブル行数）、UpdateSettings（チェック/ダウンロード/再起動ボタン）
+- **更新通知バナー**: アプリ上部に非侵入型バナー（available/downloaded状態で表示、dismissible）
+- **Helpメニュー**: 「Check for Updates…」追加
+- **コード署名計画書**: macOS notarization + Windows署名の手順・CI/CD統合計画
+
+#### 新規ファイル（12）
+- `electron/logger.ts` — electron-log初期化
+- `electron/updater.ts` — electron-updater初期化
+- `electron/ipc/ipcMetrics.ts` — IPC計測ミドルウェア
+- `electron/ipc/diagnosticsHandlers.ts` — 診断系IPCハンドラ
+- `electron/ipc/updaterHandlers.ts` — アップデート操作IPCハンドラ
+- `frontend/src/types/diagnostics.ts` — 診断系型定義
+- `frontend/src/types/updater.ts` — アップデート型定義
+- `frontend/src/components/Settings/LogViewer.tsx` — ログビューアUI
+- `frontend/src/components/Settings/PerformanceMonitor.tsx` — パフォーマンスモニタUI
+- `frontend/src/components/Settings/UpdateSettings.tsx` — アップデート設定UI
+- `frontend/src/components/UpdateNotification.tsx` — 更新通知バナー
+- `.claude/feature_plans/code-signing-plan.md` — コード署名計画書
+
+### 2026-02-11 - Export/Import修正 + Electronクリーンアップ
+
+#### 概要
+バックエンド（Spring Boot）を完全削除し、Electron + SQLiteアーキテクチャに完全移行。Export/Importの堅牢化、デッドコード削除、ドキュメント更新を実施。
+
+#### 変更内容
+- **main.ts**: エラーハンドリング強化（uncaughtException/unhandledRejection捕捉）
+- **registerAll.ts**: IPC登録の個別try/catch + `[IPC]`プレフィックスログ
+- **dataIOHandlers.ts**: Export/Importのエラーハンドリング堅牢化、バックアップ付きインポート
+- **devスクリプト改善**: 初回`tsc`実行 → `concurrently`でVite + tsc --watch + Electron同時起動
+- **デッドコード削除**: backend/ディレクトリ完全削除、`useTaskTree.ts`削除、未使用storageKeys 9件削除
+- **ドキュメント更新**: CLAUDE.md/MEMORY.mdをElectron構成に更新
+- **README.md更新**: バックエンド記述削除、IPC/セットアップをElectron構成に更新
 
 ### 2026-02-10 - Electron Shell Foundation (Phase 0)
 
@@ -89,11 +121,7 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 
 #### 起動方法
 ```bash
-# Electronデスクトップモード（バックエンドは別ターミナルで起動）
-npm run dev
-
-# 従来のWebモード（変更なし）
-cd frontend && npm run dev
+npm run dev    # Electron + Vite 同時起動
 ```
 
 ### 2026-02-10 - Bubble Toolbar + Command Palette
@@ -390,37 +418,16 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 
 ### 前提条件
 - Node.js 18+
-- Java 23
-- npm または yarn
+- npm
 
 ### インストール
 ```bash
-# ルート（Electron + フロントエンド一括インストール）
-npm install
-
-# バックエンド
-cd backend
-./gradlew build
+npm install    # postinstallでfrontend依存 + electron-rebuild自動実行
 ```
 
 ### 起動
-
-#### Electronデスクトップモード
 ```bash
-# ターミナル1: バックエンド (port 8080)
-cd backend && ./gradlew bootRun
-
-# ターミナル2: Electron + Vite (自動起動)
-npm run dev
-```
-
-#### Webブラウザモード（従来通り）
-```bash
-# バックエンド (port 8080)
-cd backend && ./gradlew bootRun
-
-# フロントエンド (port 5173)
-cd frontend && npm run dev
+npm run dev    # Vite(5173) + tsc --watch + Electron 同時起動
 ```
 
 ---

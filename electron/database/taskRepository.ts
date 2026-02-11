@@ -107,9 +107,19 @@ export function createTaskRepository(db: Database.Database) {
     },
 
     syncTree: db.transaction((nodes: TaskNode[]) => {
-      stmts.deleteAll.run();
+      const incomingIds = new Set(nodes.map(n => n.id));
+      const existingRows = db.prepare('SELECT id FROM tasks').all() as { id: string }[];
+      for (const { id } of existingRows) {
+        if (!incomingIds.has(id)) {
+          stmts.permanentDelete.run(id);
+        }
+      }
+      const upsert = db.prepare(`
+        INSERT OR REPLACE INTO tasks (id, type, title, parent_id, "order", status, is_expanded, is_deleted, deleted_at, created_at, completed_at, scheduled_at, content, work_duration_minutes, color)
+        VALUES (@id, @type, @title, @parentId, @order, @status, @isExpanded, @isDeleted, @deletedAt, @createdAt, @completedAt, @scheduledAt, @content, @workDurationMinutes, @color)
+      `);
       for (const node of nodes) {
-        stmts.insert.run(nodeToParams(node));
+        upsert.run(nodeToParams(node));
       }
     }),
 

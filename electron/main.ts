@@ -1,9 +1,11 @@
-import { app, BrowserWindow } from 'electron';
+import log from './logger';
+import { app, BrowserWindow, dialog } from 'electron';
 import * as path from 'path';
 import { getDatabase, closeDatabase } from './database/db';
 import { registerAllHandlers } from './ipc/registerAll';
 import { loadWindowState, trackWindowState } from './windowState';
 import { createMenu } from './menu';
+import { initAutoUpdater } from './updater';
 
 const isDev = !app.isPackaged;
 
@@ -42,12 +44,23 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
-  // Initialize database and register IPC handlers
-  const db = getDatabase();
-  registerAllHandlers(db);
+  try {
+    const db = getDatabase();
+    registerAllHandlers(db);
+  } catch (e) {
+    log.error('[Main] Failed to initialize database/handlers:', e);
+    dialog.showErrorBox(
+      'Sonic Flow - Database Error',
+      `Failed to initialize the database. Your data will not be saved.\n\n${e instanceof Error ? e.message : String(e)}`
+    );
+  }
 
   const win = createWindow();
   createMenu(win);
+
+  if (!isDev) {
+    initAutoUpdater(win);
+  }
 
   // macOS: re-create window on dock click when no windows exist
   app.on('activate', () => {
@@ -56,7 +69,7 @@ app.whenReady().then(() => {
       createMenu(newWin);
     }
   });
-});
+}).catch(e => log.error('[Main] app.whenReady failed:', e));
 
 // Quit when all windows are closed (except macOS)
 app.on('window-all-closed', () => {

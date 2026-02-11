@@ -1,4 +1,5 @@
 import { Menu, BrowserWindow, app } from 'electron';
+import { autoUpdater } from 'electron-updater';
 
 const isMac = process.platform === 'darwin';
 const isDev = !app.isPackaged;
@@ -92,6 +93,13 @@ export function createMenu(win: BrowserWindow): void {
       label: 'Help',
       submenu: [
         { label: 'Tips', click: () => send('navigate:tips') },
+        { type: 'separator' },
+        {
+          label: 'Check for Updates…',
+          click: () => {
+            autoUpdater.checkForUpdates().catch(() => {});
+          },
+        },
       ],
     },
   ];

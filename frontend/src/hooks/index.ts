@@ -10,7 +10,6 @@ export { useMemoContext } from './useMemoContext';
 export { useMemos } from './useMemos';
 
 export { useSlashCommand } from './useSlashCommand';
-export { useTaskTree } from './useTaskTree';
 export { useTaskTreeAPI } from './useTaskTreeAPI';
 export { useTaskTreeContext } from './useTaskTreeContext';
 export { useTaskTreeCRUD } from './useTaskTreeCRUD';
