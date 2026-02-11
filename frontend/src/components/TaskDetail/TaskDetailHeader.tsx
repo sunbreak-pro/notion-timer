@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Play, Trash2, Clock } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import type { KeyboardEvent } from "react";
+import { Play, Trash2, Clock, Flag } from "lucide-react";
 import type { TaskNode } from "../../types/taskTree";
 import { getAncestors } from "../../utils/breadcrumb";
 import { DurationPicker } from "../shared/DurationPicker";
@@ -18,6 +19,8 @@ interface TaskDetailHeaderProps {
   onDurationChange?: (minutes: number) => void;
   onScheduledAtChange?: (scheduledAt: string | undefined) => void;
   onFolderColorChange?: (folderId: string, color: string) => void;
+  onTitleChange?: (newTitle: string) => void;
+  onDueDateChange?: (dueDate: string | undefined) => void;
   folderTag?: string;
   taskColor?: string;
 }
@@ -31,6 +34,8 @@ export function TaskDetailHeader({
   onDurationChange,
   onScheduledAtChange,
   onFolderColorChange,
+  onTitleChange,
+  onDueDateChange,
   folderTag,
   taskColor,
 }: TaskDetailHeaderProps) {
@@ -38,6 +43,39 @@ export function TaskDetailHeader({
   const [colorPickerAncestorId, setColorPickerAncestorId] = useState<
     string | null
   >(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitleValue, setEditTitleValue] = useState(task.title);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setEditTitleValue(task.title);
+    setIsEditingTitle(false);
+  }, [task.id, task.title]);
+
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
+
+  const handleTitleSave = () => {
+    const trimmed = editTitleValue.trim();
+    if (trimmed && trimmed !== task.title) {
+      onTitleChange?.(trimmed);
+    } else {
+      setEditTitleValue(task.title);
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") handleTitleSave();
+    if (e.key === "Escape") {
+      setEditTitleValue(task.title);
+      setIsEditingTitle(false);
+    }
+  };
   const ancestors = getAncestors(task.id, allNodes);
   const duration = task.workDurationMinutes ?? globalWorkDuration;
   const isCustomDuration = task.workDurationMinutes != null;
@@ -90,7 +128,24 @@ export function TaskDetailHeader({
           <FolderTag tag={folderTag} color={taskColor} />
         </div>
       )}
-      <h1 className="text-2xl font-bold text-notion-text">{task.title}</h1>
+      {isEditingTitle ? (
+        <input
+          ref={titleInputRef}
+          type="text"
+          value={editTitleValue}
+          onChange={(e) => setEditTitleValue(e.target.value)}
+          onBlur={handleTitleSave}
+          onKeyDown={handleTitleKeyDown}
+          className="text-2xl font-bold bg-transparent outline-none border-b border-notion-accent w-full text-notion-text"
+        />
+      ) : (
+        <h1
+          className="text-2xl font-bold text-notion-text cursor-pointer hover:bg-notion-hover/50 rounded px-1 -mx-1 transition-colors"
+          onClick={() => setIsEditingTitle(true)}
+        >
+          {task.title}
+        </h1>
+      )}
 
       <TagEditor taskId={task.id} />
 
@@ -134,6 +189,14 @@ export function TaskDetailHeader({
         <DateTimePicker
           value={task.scheduledAt}
           onChange={(val) => onScheduledAtChange?.(val)}
+        />
+
+        <DateTimePicker
+          value={task.dueDate}
+          onChange={(val) => onDueDateChange?.(val)}
+          icon={<Flag size={14} />}
+          label="Due"
+          activeColor
         />
 
         <button

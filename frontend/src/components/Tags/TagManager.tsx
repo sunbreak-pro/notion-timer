@@ -1,11 +1,19 @@
 import { useState } from 'react';
-import { Pencil, Trash2, Check, X } from 'lucide-react';
+import { Pencil, Trash2, Check, X, CheckSquare, FileText } from 'lucide-react';
 import { useTagContext } from '../../hooks/useTagContext';
+import type { TagOperations } from '../../context/TagContext';
+import type { Tag } from '../../types/tag';
 
 const DEFAULT_COLORS = ['#808080', '#E03E3E', '#D9730D', '#DFAB01', '#0F7B6C', '#2EAADC', '#6940A5', '#AD1457'];
 
-export function TagManager() {
-  const { tags, createTag, updateTag, deleteTag } = useTagContext();
+interface TagSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  ops: TagOperations;
+}
+
+function TagSection({ title, icon, ops }: TagSectionProps) {
+  const { tags, createTag, updateTag, deleteTag } = ops;
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
@@ -33,10 +41,13 @@ export function TagManager() {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-notion-text mb-3">Tags</h3>
+      <h4 className="text-sm font-semibold text-notion-text mb-2 flex items-center gap-1.5">
+        {icon}
+        {title}
+      </h4>
 
-      <div className="space-y-1.5 mb-4">
-        {tags.map(tag => (
+      <div className="space-y-1.5 mb-3">
+        {tags.map((tag: Tag) => (
           <div key={tag.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-notion-hover group">
             {editingId === tag.id ? (
               <>
@@ -113,6 +124,20 @@ export function TagManager() {
         >
           Create
         </button>
+      </div>
+    </div>
+  );
+}
+
+export function TagManager() {
+  const { taskTags, noteTags } = useTagContext();
+
+  return (
+    <div>
+      <h3 className="text-lg font-semibold text-notion-text mb-4">Tags</h3>
+      <div className="space-y-6">
+        <TagSection title="Task Tags" icon={<CheckSquare size={14} />} ops={taskTags} />
+        <TagSection title="Note Tags" icon={<FileText size={14} />} ops={noteTags} />
       </div>
     </div>
   );

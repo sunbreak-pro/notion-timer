@@ -44,11 +44,15 @@ export function registerDataIOHandlers(db: Database.Database): void {
         soundSettings: safeQuery(db, 'SELECT * FROM sound_settings'),
         soundPresets: safeQuery(db, 'SELECT * FROM sound_presets'),
         memos: safeQuery(db, 'SELECT * FROM memos'),
-        tags: safeQuery(db, 'SELECT * FROM tags'),
+        taskTagDefinitions: safeQuery(db, 'SELECT * FROM task_tag_definitions'),
         taskTags: safeQuery(db, 'SELECT * FROM task_tags'),
+        noteTagDefinitions: safeQuery(db, 'SELECT * FROM note_tag_definitions'),
         notes: safeQuery(db, 'SELECT * FROM notes'),
         noteTags: safeQuery(db, 'SELECT * FROM note_tags'),
         templates: safeQuery(db, 'SELECT * FROM task_templates'),
+        soundTagDefinitions: safeQuery(db, 'SELECT * FROM sound_tag_definitions'),
+        soundTagAssignments: safeQuery(db, 'SELECT * FROM sound_tag_assignments'),
+        soundDisplayMeta: safeQuery(db, 'SELECT * FROM sound_display_meta'),
         aiSettings: safeQueryOne(db, 'SELECT * FROM ai_settings WHERE id = 1'),
       },
     };
@@ -93,7 +97,11 @@ export function registerDataIOHandlers(db: Database.Database): void {
           DELETE FROM note_tags;
           DELETE FROM notes;
           DELETE FROM task_tags;
-          DELETE FROM tags;
+          DELETE FROM task_tag_definitions;
+          DELETE FROM note_tag_definitions;
+          DELETE FROM sound_tag_assignments;
+          DELETE FROM sound_tag_definitions;
+          DELETE FROM sound_display_meta;
           DELETE FROM task_templates;
           DELETE FROM timer_sessions;
           DELETE FROM sound_settings;
@@ -105,11 +113,11 @@ export function registerDataIOHandlers(db: Database.Database): void {
         // Import tasks
         if (Array.isArray(data.tasks)) {
           const insertTask = db.prepare(`
-            INSERT INTO tasks (id, type, title, parent_id, "order", status, is_expanded, is_deleted, deleted_at, created_at, completed_at, scheduled_at, content, work_duration_minutes, color)
-            VALUES (@id, @type, @title, @parent_id, @"order", @status, @is_expanded, @is_deleted, @deleted_at, @created_at, @completed_at, @scheduled_at, @content, @work_duration_minutes, @color)
+            INSERT INTO tasks (id, type, title, parent_id, "order", status, is_expanded, is_deleted, deleted_at, created_at, completed_at, scheduled_at, content, work_duration_minutes, color, due_date)
+            VALUES (@id, @type, @title, @parent_id, @"order", @status, @is_expanded, @is_deleted, @deleted_at, @created_at, @completed_at, @scheduled_at, @content, @work_duration_minutes, @color, @due_date)
           `);
           for (const t of data.tasks) {
-            insertTask.run(t);
+            insertTask.run({ ...t, due_date: t.due_date ?? null });
           }
         }
 
@@ -167,10 +175,10 @@ export function registerDataIOHandlers(db: Database.Database): void {
           }
         }
 
-        // Import tags
-        if (Array.isArray(data.tags)) {
-          const insertTag = db.prepare(`INSERT INTO tags (id, name, color) VALUES (@id, @name, @color)`);
-          for (const t of data.tags) {
+        // Import task tag definitions
+        if (Array.isArray(data.taskTagDefinitions)) {
+          const insertTag = db.prepare(`INSERT INTO task_tag_definitions (id, name, color) VALUES (@id, @name, @color)`);
+          for (const t of data.taskTagDefinitions) {
             insertTag.run(t);
           }
         }
@@ -180,6 +188,14 @@ export function registerDataIOHandlers(db: Database.Database): void {
           const insertTaskTag = db.prepare(`INSERT INTO task_tags (task_id, tag_id) VALUES (@task_id, @tag_id)`);
           for (const tt of data.taskTags) {
             insertTaskTag.run(tt);
+          }
+        }
+
+        // Import note tag definitions
+        if (Array.isArray(data.noteTagDefinitions)) {
+          const insertTag = db.prepare(`INSERT INTO note_tag_definitions (id, name, color) VALUES (@id, @name, @color)`);
+          for (const t of data.noteTagDefinitions) {
+            insertTag.run(t);
           }
         }
 
@@ -210,6 +226,30 @@ export function registerDataIOHandlers(db: Database.Database): void {
           const insertNoteTag = db.prepare(`INSERT INTO note_tags (note_id, tag_id) VALUES (@note_id, @tag_id)`);
           for (const nt of data.noteTags) {
             insertNoteTag.run(nt);
+          }
+        }
+
+        // Import sound tag definitions
+        if (Array.isArray(data.soundTagDefinitions)) {
+          const insertSoundTag = db.prepare(`INSERT INTO sound_tag_definitions (id, name, color) VALUES (@id, @name, @color)`);
+          for (const t of data.soundTagDefinitions) {
+            insertSoundTag.run(t);
+          }
+        }
+
+        // Import sound tag assignments
+        if (Array.isArray(data.soundTagAssignments)) {
+          const insertAssignment = db.prepare(`INSERT INTO sound_tag_assignments (sound_id, tag_id) VALUES (@sound_id, @tag_id)`);
+          for (const a of data.soundTagAssignments) {
+            insertAssignment.run(a);
+          }
+        }
+
+        // Import sound display meta
+        if (Array.isArray(data.soundDisplayMeta)) {
+          const insertMeta = db.prepare(`INSERT INTO sound_display_meta (sound_id, display_name) VALUES (@sound_id, @display_name)`);
+          for (const m of data.soundDisplayMeta) {
+            insertMeta.run(m);
           }
         }
 

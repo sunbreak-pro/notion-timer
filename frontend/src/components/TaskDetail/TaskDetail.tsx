@@ -18,6 +18,8 @@ interface TaskDetailProps {
   onDurationChange?: (minutes: number) => void;
   onScheduledAtChange?: (scheduledAt: string | undefined) => void;
   onFolderColorChange?: (folderId: string, color: string) => void;
+  onTitleChange?: (newTitle: string) => void;
+  onDueDateChange?: (dueDate: string | undefined) => void;
   onNavigateToSettings?: () => void;
   folderTag?: string;
   taskColor?: string;
@@ -33,6 +35,8 @@ export function TaskDetail({
   onDurationChange,
   onScheduledAtChange,
   onFolderColorChange,
+  onTitleChange,
+  onDueDateChange,
   onNavigateToSettings,
   folderTag,
   taskColor,
@@ -53,6 +57,8 @@ export function TaskDetail({
           onDurationChange={onDurationChange}
           onScheduledAtChange={onScheduledAtChange}
           onFolderColorChange={onFolderColorChange}
+          onTitleChange={onTitleChange}
+          onDueDateChange={onDueDateChange}
           folderTag={folderTag}
           taskColor={taskColor}
         />

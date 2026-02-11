@@ -2,85 +2,97 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Tag } from '../types/tag';
 import { getDataService } from '../services';
 
-export function useTags() {
+export function useTags(type: 'task' | 'note') {
   const [tags, setTags] = useState<Tag[]>([]);
-  const taskTagsCache = useRef<Map<string, Tag[]>>(new Map());
-  const [taskTagsVersion, setTaskTagsVersion] = useState(0);
+  const entityTagsCache = useRef<Map<string, Tag[]>>(new Map());
+  const [entityTagsVersion, setEntityTagsVersion] = useState(0);
   const [filterTagIds, setFilterTagIds] = useState<number[]>([]);
 
-  // Load all tags on mount
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const loaded = await getDataService().fetchAllTags();
+        const loaded = type === 'task'
+          ? await getDataService().fetchAllTaskTags()
+          : await getDataService().fetchAllNoteTags();
         if (!cancelled) setTags(loaded);
       } catch (e) {
-        console.warn('[Tags] fetch:', e instanceof Error ? e.message : e);
+        console.warn(`[Tags:${type}] fetch:`, e instanceof Error ? e.message : e);
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [type]);
 
   const createTag = useCallback(async (name: string, color: string): Promise<Tag> => {
-    const tag = await getDataService().createTag(name, color);
+    const tag = type === 'task'
+      ? await getDataService().createTaskTag(name, color)
+      : await getDataService().createNoteTag(name, color);
     setTags(prev => [...prev, tag].sort((a, b) => a.name.localeCompare(b.name)));
     return tag;
-  }, []);
+  }, [type]);
 
   const updateTag = useCallback(async (id: number, updates: { name?: string; color?: string }) => {
-    const updated = await getDataService().updateTag(id, updates);
+    const updated = type === 'task'
+      ? await getDataService().updateTaskTag(id, updates)
+      : await getDataService().updateNoteTag(id, updates);
     setTags(prev => prev.map(t => t.id === id ? updated : t));
-    // Invalidate task tags cache entries that had this tag
-    taskTagsCache.current.forEach((cachedTags, taskId) => {
+    entityTagsCache.current.forEach((cachedTags, entityId) => {
       if (cachedTags.some(t => t.id === id)) {
-        taskTagsCache.current.set(taskId, cachedTags.map(t => t.id === id ? updated : t));
+        entityTagsCache.current.set(entityId, cachedTags.map(t => t.id === id ? updated : t));
       }
     });
-    setTaskTagsVersion(v => v + 1);
-  }, []);
+    setEntityTagsVersion(v => v + 1);
+  }, [type]);
 
   const deleteTag = useCallback(async (id: number) => {
-    await getDataService().deleteTag(id);
+    if (type === 'task') {
+      await getDataService().deleteTaskTag(id);
+    } else {
+      await getDataService().deleteNoteTag(id);
+    }
     setTags(prev => prev.filter(t => t.id !== id));
     setFilterTagIds(prev => prev.filter(tid => tid !== id));
-    // Remove from cache
-    taskTagsCache.current.forEach((cachedTags, taskId) => {
+    entityTagsCache.current.forEach((cachedTags, entityId) => {
       const filtered = cachedTags.filter(t => t.id !== id);
       if (filtered.length !== cachedTags.length) {
-        taskTagsCache.current.set(taskId, filtered);
+        entityTagsCache.current.set(entityId, filtered);
       }
     });
-    setTaskTagsVersion(v => v + 1);
+    setEntityTagsVersion(v => v + 1);
+  }, [type]);
+
+  const getTagsForEntity = useCallback((entityId: string): Tag[] => {
+    return entityTagsCache.current.get(entityId) ?? [];
   }, []);
 
-  const getTagsForTask = useCallback((taskId: string): Tag[] => {
-    return taskTagsCache.current.get(taskId) ?? [];
-  }, []);
-
-  const loadTagsForTask = useCallback(async (taskId: string): Promise<Tag[]> => {
+  const loadTagsForEntity = useCallback(async (entityId: string): Promise<Tag[]> => {
     try {
-      const taskTags = await getDataService().fetchTagsForTask(taskId);
-      taskTagsCache.current.set(taskId, taskTags);
-      setTaskTagsVersion(v => v + 1);
-      return taskTags;
+      const entityTags = type === 'task'
+        ? await getDataService().fetchTagsForTask(entityId)
+        : await getDataService().fetchTagsForNote(entityId);
+      entityTagsCache.current.set(entityId, entityTags);
+      setEntityTagsVersion(v => v + 1);
+      return entityTags;
     } catch (e) {
-      console.warn('[Tags] fetchForTask:', e instanceof Error ? e.message : e);
+      console.warn(`[Tags:${type}] fetchForEntity:`, e instanceof Error ? e.message : e);
       return [];
     }
-  }, []);
+  }, [type]);
 
-  const setTagsForTask = useCallback(async (taskId: string, tagIds: number[]) => {
-    // Optimistic update
+  const setTagsForEntity = useCallback(async (entityId: string, tagIds: number[]) => {
     const newTags = tags.filter(t => tagIds.includes(t.id));
-    taskTagsCache.current.set(taskId, newTags);
-    setTaskTagsVersion(v => v + 1);
+    entityTagsCache.current.set(entityId, newTags);
+    setEntityTagsVersion(v => v + 1);
     try {
-      await getDataService().setTagsForTask(taskId, tagIds);
+      if (type === 'task') {
+        await getDataService().setTagsForTask(entityId, tagIds);
+      } else {
+        await getDataService().setTagsForNote(entityId, tagIds);
+      }
     } catch (e) {
-      console.warn('[Tags] setForTask:', e instanceof Error ? e.message : e);
+      console.warn(`[Tags:${type}] setForEntity:`, e instanceof Error ? e.message : e);
     }
-  }, [tags]);
+  }, [tags, type]);
 
   const toggleFilterTag = useCallback((tagId: number) => {
     setFilterTagIds(prev =>
@@ -98,7 +110,7 @@ export function useTags() {
 
   const taskPassesFilter = useCallback((taskId: string): boolean => {
     if (filterTagIds.length === 0) return true;
-    const taskTags = taskTagsCache.current.get(taskId) ?? [];
+    const taskTags = entityTagsCache.current.get(taskId) ?? [];
     return filterTagIds.some(fid => taskTags.some(t => t.id === fid));
   }, [filterTagIds]);
 
@@ -106,13 +118,13 @@ export function useTags() {
     tags,
     filterTagIds,
     hasTagFilter,
-    taskTagsVersion,
+    entityTagsVersion,
     createTag,
     updateTag,
     deleteTag,
-    getTagsForTask,
-    loadTagsForTask,
-    setTagsForTask,
+    getTagsForEntity,
+    loadTagsForEntity,
+    setTagsForEntity,
     toggleFilterTag,
     clearFilter,
     taskPassesFilter,

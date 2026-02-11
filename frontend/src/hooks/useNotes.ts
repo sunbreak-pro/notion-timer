@@ -12,24 +12,24 @@ export function useNotes() {
   const [filterTagIds, setFilterTagIds] = useState<number[]>([]);
   const [noteTagsMap, setNoteTagsMap] = useState<Map<string, Tag[]>>(new Map());
 
-  // Load notes and tags on mount
+  // Load notes and note tag assignments on mount
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [loaded, allNoteTags, allTags] = await Promise.all([
+        const [loaded, allNoteTagAssignments, allNoteTags] = await Promise.all([
           getDataService().fetchAllNotes(),
+          getDataService().fetchAllNoteTagAssignments(),
           getDataService().fetchAllNoteTags(),
-          getDataService().fetchAllTags(),
         ]);
         if (cancelled) return;
         setNotes(loaded);
 
         // Build note tags map
         const tagMap = new Map<number, Tag>();
-        for (const t of allTags) tagMap.set(t.id, t);
+        for (const t of allNoteTags) tagMap.set(t.id, t);
         const ntMap = new Map<string, Tag[]>();
-        for (const { note_id, tag_id } of allNoteTags) {
+        for (const { note_id, tag_id } of allNoteTagAssignments) {
           const tag = tagMap.get(tag_id);
           if (tag) {
             const existing = ntMap.get(note_id) || [];

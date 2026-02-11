@@ -54,7 +54,7 @@ export function NoteList() {
     getTagsForNote,
   } = useNoteContext();
 
-  const { tags } = useTagContext();
+  const { noteTags: { tags } } = useTagContext();
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const debounceRef = useRef<number | null>(null);

@@ -1,7 +1,7 @@
 import type { DataService } from './DataService';
 import type { TaskNode } from '../types/taskTree';
 import type { TimerSettings, TimerSession, SessionType } from '../types/timer';
-import type { SoundSettings, SoundPreset } from '../types/sound';
+import type { SoundSettings, SoundPreset, SoundTag, SoundDisplayMeta } from '../types/sound';
 import type { MemoNode } from '../types/memo';
 import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../types/ai';
 import type { CustomSoundMeta } from '../types/customSound';
@@ -81,6 +81,41 @@ export class ElectronDataService implements DataService {
     return invoke('db:sound:deletePreset', id);
   }
 
+  // Sound Tags
+  fetchAllSoundTags(): Promise<SoundTag[]> {
+    return invoke('db:sound:fetchAllSoundTags');
+  }
+  createSoundTag(name: string, color: string): Promise<SoundTag> {
+    return invoke('db:sound:createSoundTag', name, color);
+  }
+  updateSoundTag(id: number, updates: { name?: string; color?: string }): Promise<SoundTag> {
+    return invoke('db:sound:updateSoundTag', id, updates.name, updates.color);
+  }
+  deleteSoundTag(id: number): Promise<void> {
+    return invoke('db:sound:deleteSoundTag', id);
+  }
+  fetchTagsForSound(soundId: string): Promise<SoundTag[]> {
+    return invoke('db:sound:fetchTagsForSound', soundId);
+  }
+  setTagsForSound(soundId: string, tagIds: number[]): Promise<void> {
+    return invoke('db:sound:setTagsForSound', soundId, tagIds);
+  }
+  fetchAllSoundTagAssignments(): Promise<Array<{ sound_id: string; tag_id: number }>> {
+    return invoke('db:sound:fetchAllSoundTagAssignments');
+  }
+  fetchAllSoundDisplayMeta(): Promise<SoundDisplayMeta[]> {
+    return invoke('db:sound:fetchAllSoundDisplayMeta');
+  }
+  updateSoundDisplayMeta(soundId: string, displayName: string): Promise<void> {
+    return invoke('db:sound:updateSoundDisplayMeta', soundId, displayName);
+  }
+  fetchWorkscreenSelections(sessionCategory: string): Promise<Array<{ soundId: string; displayOrder: number }>> {
+    return invoke('db:sound:fetchWorkscreenSelections', sessionCategory);
+  }
+  setWorkscreenSelections(sessionCategory: string, soundIds: string[]): Promise<void> {
+    return invoke('db:sound:setWorkscreenSelections', sessionCategory, soundIds);
+  }
+
   // Memo
   fetchAllMemos(): Promise<MemoNode[]> {
     return invoke('db:memo:fetchAll');
@@ -120,15 +155,7 @@ export class ElectronDataService implements DataService {
   searchNotes(query: string): Promise<NoteNode[]> {
     return invoke('db:notes:search', query);
   }
-  fetchTagsForNote(noteId: string): Promise<Tag[]> {
-    return invoke('db:notes:tagsForNote', noteId);
-  }
-  setTagsForNote(noteId: string, tagIds: number[]): Promise<void> {
-    return invoke('db:notes:setTags', noteId, tagIds);
-  }
-  fetchAllNoteTags(): Promise<Array<{ note_id: string; tag_id: number }>> {
-    return invoke('db:notes:allNoteTags');
-  }
+
 
   // Custom Sounds
   async saveCustomSound(_id: string, data: ArrayBuffer, meta: CustomSoundMeta): Promise<void> {
@@ -161,24 +188,47 @@ export class ElectronDataService implements DataService {
     return invoke('ai:updateSettings', settings);
   }
 
-  // Tags
-  fetchAllTags(): Promise<Tag[]> {
-    return invoke('db:tags:fetchAll');
+  // Task Tags
+  fetchAllTaskTags(): Promise<Tag[]> {
+    return invoke('db:taskTags:fetchAll');
   }
-  createTag(name: string, color: string): Promise<Tag> {
-    return invoke('db:tags:create', name, color);
+  createTaskTag(name: string, color: string): Promise<Tag> {
+    return invoke('db:taskTags:create', name, color);
   }
-  updateTag(id: number, updates: { name?: string; color?: string }): Promise<Tag> {
-    return invoke('db:tags:update', id, updates.name, updates.color);
+  updateTaskTag(id: number, updates: { name?: string; color?: string }): Promise<Tag> {
+    return invoke('db:taskTags:update', id, updates.name, updates.color);
   }
-  deleteTag(id: number): Promise<void> {
-    return invoke('db:tags:delete', id);
+  deleteTaskTag(id: number): Promise<void> {
+    return invoke('db:taskTags:delete', id);
   }
   fetchTagsForTask(taskId: string): Promise<Tag[]> {
-    return invoke('db:tags:forTask', taskId);
+    return invoke('db:taskTags:forTask', taskId);
   }
   setTagsForTask(taskId: string, tagIds: number[]): Promise<void> {
-    return invoke('db:tags:setForTask', taskId, tagIds);
+    return invoke('db:taskTags:setForTask', taskId, tagIds);
+  }
+
+  // Note Tags
+  fetchAllNoteTags(): Promise<Tag[]> {
+    return invoke('db:noteTags:fetchAll');
+  }
+  createNoteTag(name: string, color: string): Promise<Tag> {
+    return invoke('db:noteTags:create', name, color);
+  }
+  updateNoteTag(id: number, updates: { name?: string; color?: string }): Promise<Tag> {
+    return invoke('db:noteTags:update', id, updates.name, updates.color);
+  }
+  deleteNoteTag(id: number): Promise<void> {
+    return invoke('db:noteTags:delete', id);
+  }
+  fetchTagsForNote(noteId: string): Promise<Tag[]> {
+    return invoke('db:noteTags:forNote', noteId);
+  }
+  setTagsForNote(noteId: string, tagIds: number[]): Promise<void> {
+    return invoke('db:noteTags:setForNote', noteId, tagIds);
+  }
+  fetchAllNoteTagAssignments(): Promise<Array<{ note_id: string; tag_id: number }>> {
+    return invoke('db:noteTags:allNoteTags');
   }
 
   // Templates

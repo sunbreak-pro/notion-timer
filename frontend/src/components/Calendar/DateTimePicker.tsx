@@ -5,6 +5,9 @@ import { formatDateKey } from '../../hooks/useCalendar';
 interface DateTimePickerProps {
   value?: string;
   onChange: (value: string | undefined) => void;
+  icon?: React.ReactNode;
+  label?: string;
+  activeColor?: boolean;
 }
 
 const MONTH_NAMES = [
@@ -12,7 +15,7 @@ const MONTH_NAMES = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
-export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
+export function DateTimePicker({ value, onChange, icon, label, activeColor }: DateTimePickerProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -58,15 +61,21 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
     ? new Date(value).toLocaleDateString('en-US', {
         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
       })
-    : 'Set date';
+    : label ? `Set ${label.toLowerCase()}` : 'Set date';
+
+  const hasValue = !!value && activeColor;
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 text-sm px-2 py-1 rounded-md text-notion-text-secondary hover:bg-notion-hover transition-colors"
+        className={`flex items-center gap-1.5 text-sm px-2 py-1 rounded-md transition-colors ${
+          hasValue
+            ? 'text-notion-accent bg-notion-accent/10'
+            : 'text-notion-text-secondary hover:bg-notion-hover'
+        }`}
       >
-        <CalendarIcon size={14} />
+        {icon ?? <CalendarIcon size={14} />}
         <span>{displayText}</span>
       </button>
 

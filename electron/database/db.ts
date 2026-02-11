@@ -31,6 +31,11 @@ export function getDatabase(): Database.Database {
 
 export function closeDatabase(): void {
   if (db) {
+    try {
+      db.pragma('wal_checkpoint(TRUNCATE)');
+    } catch (e) {
+      log.error('[DB] WAL checkpoint failed:', e);
+    }
     db.close();
     db = null;
   }

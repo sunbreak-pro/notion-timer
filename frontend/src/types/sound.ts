@@ -22,3 +22,14 @@ export interface SoundSettingsMap {
     enabled: boolean;
   };
 }
+
+export interface SoundTag {
+  id: number;
+  name: string;
+  color: string;
+}
+
+export interface SoundDisplayMeta {
+  soundId: string;
+  displayName: string | null;
+}

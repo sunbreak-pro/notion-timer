@@ -1,4 +1,4 @@
-export type SectionId = 'tasks' | 'memo' | 'session' | 'calendar' | 'analytics' | 'settings' | 'tips';
+export type SectionId = 'tasks' | 'memo' | 'music' | 'calendar' | 'analytics' | 'settings' | 'tips';
 
 export type NodeType = 'folder' | 'task';
 export type TaskStatus = 'TODO' | 'DONE';
@@ -21,4 +21,5 @@ export interface TaskNode {
   content?: string;
   workDurationMinutes?: number;
   color?: string;
+  dueDate?: string;
 }

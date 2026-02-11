@@ -26,13 +26,12 @@ import { registerUpdaterHandlers } from './updaterHandlers';
 import { wrapHandler } from './ipcMetrics';
 
 export function registerAllHandlers(db: Database.Database): void {
+  // Stable repos (V1-V5 tables) — safe to create eagerly
   const tasks = createTaskRepository(db);
   const timer = createTimerRepository(db);
-  const sound = createSoundRepository(db);
   const memo = createMemoRepository(db);
   const ai = createAIRepository(db);
   const notes = createNoteRepository(db);
-  const tags = createTagRepository(db);
   const templates = createTemplateRepository(db);
 
   try { ai.migrateDeprecatedModel(); } catch (e) { log.error('[IPC] AI migration failed:', e); }
@@ -43,17 +42,31 @@ export function registerAllHandlers(db: Database.Database): void {
     return originalHandle(channel, wrapHandler(channel, listener));
   };
 
+  // sound repo is shared between 'Sound' and 'App' registrations
+  // to avoid double creation (and double failure if tables are missing)
+  let soundRepo: ReturnType<typeof createSoundRepository> | null = null;
+  function getSoundRepo() {
+    if (!soundRepo) soundRepo = createSoundRepository(db);
+    return soundRepo;
+  }
+
+  // sound (V7) and taskTags/noteTags (V6) repos are created inside closures
+  // so that db.prepare() failures are caught per-module, not globally
   const registrations: [string, () => void][] = [
     ['Tasks', () => registerTaskHandlers(tasks)],
     ['Timer', () => registerTimerHandlers(timer)],
-    ['Sound', () => registerSoundHandlers(sound)],
+    ['Sound', () => registerSoundHandlers(getSoundRepo())],
     ['Memo', () => registerMemoHandlers(memo)],
     ['Notes', () => registerNoteHandlers(notes)],
     ['AI', () => registerAIHandlers(ai)],
     ['CustomSound', () => registerCustomSoundHandlers(createCustomSoundRepository())],
-    ['Tags', () => registerTagHandlers(tags)],
+    ['Tags', () => {
+      const taskTags = createTagRepository(db, 'task');
+      const noteTags = createTagRepository(db, 'note');
+      registerTagHandlers(taskTags, noteTags);
+    }],
     ['Templates', () => registerTemplateHandlers(templates)],
-    ['App', () => registerAppHandlers({ tasks, timer, sound, memo })],
+    ['App', () => registerAppHandlers({ tasks, timer, sound: getSoundRepo(), memo })],
     ['DataIO', () => registerDataIOHandlers(db)],
     ['Diagnostics', () => registerDiagnosticsHandlers(db)],
     ['Updater', () => registerUpdaterHandlers()],
@@ -62,8 +75,9 @@ export function registerAllHandlers(db: Database.Database): void {
   for (const [name, register] of registrations) {
     try {
       register();
-    } catch (e) {
-      log.error(`[IPC] Failed to register ${name} handlers:`, e);
+    } catch (e: unknown) {
+      const err = e instanceof Error ? e : new Error(String(e));
+      log.error(`[IPC] Failed to register ${name} handlers: ${err.message}\n${err.stack}`);
     }
   }
 

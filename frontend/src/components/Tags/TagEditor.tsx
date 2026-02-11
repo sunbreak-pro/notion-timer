@@ -11,16 +11,16 @@ interface TagEditorProps {
 }
 
 export function TagEditor({ taskId }: TagEditorProps) {
-  const { tags, getTagsForTask, loadTagsForTask, setTagsForTask, createTag, taskTagsVersion } = useTagContext();
+  const { taskTags: { tags, getTagsForEntity, loadTagsForEntity, setTagsForEntity, createTag, entityTagsVersion } } = useTagContext();
   const [isOpen, setIsOpen] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState(DEFAULT_COLORS[0]);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const taskTags = getTagsForTask(taskId);
+  const taskTags = getTagsForEntity(taskId);
 
   useEffect(() => {
-    loadTagsForTask(taskId);
-  }, [taskId, loadTagsForTask]);
+    loadTagsForEntity(taskId);
+  }, [taskId, loadTagsForEntity]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -38,7 +38,7 @@ export function TagEditor({ taskId }: TagEditorProps) {
     const next = current.includes(tag.id)
       ? current.filter(id => id !== tag.id)
       : [...current, tag.id];
-    setTagsForTask(taskId, next);
+    setTagsForEntity(taskId, next);
   };
 
   const handleCreateTag = async () => {
@@ -46,12 +46,12 @@ export function TagEditor({ taskId }: TagEditorProps) {
     if (!trimmed) return;
     const tag = await createTag(trimmed, newTagColor);
     const current = taskTags.map(t => t.id);
-    setTagsForTask(taskId, [...current, tag.id]);
+    setTagsForEntity(taskId, [...current, tag.id]);
     setNewTagName('');
   };
 
   // Force re-render when cache changes
-  void taskTagsVersion;
+  void entityTagsVersion;
 
   return (
     <div className="relative" ref={dropdownRef}>

@@ -1,6 +1,6 @@
 import type { TaskNode } from '../types/taskTree';
 import type { TimerSettings, TimerSession, SessionType } from '../types/timer';
-import type { SoundSettings, SoundPreset } from '../types/sound';
+import type { SoundSettings, SoundPreset, SoundTag, SoundDisplayMeta } from '../types/sound';
 import type { MemoNode } from '../types/memo';
 import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../types/ai';
 import type { CustomSoundMeta } from '../types/customSound';
@@ -36,6 +36,19 @@ export interface DataService {
   createSoundPreset(name: string, settingsJson: string): Promise<SoundPreset>;
   deleteSoundPreset(id: number): Promise<void>;
 
+  // Sound Tags
+  fetchAllSoundTags(): Promise<SoundTag[]>;
+  createSoundTag(name: string, color: string): Promise<SoundTag>;
+  updateSoundTag(id: number, updates: { name?: string; color?: string }): Promise<SoundTag>;
+  deleteSoundTag(id: number): Promise<void>;
+  fetchTagsForSound(soundId: string): Promise<SoundTag[]>;
+  setTagsForSound(soundId: string, tagIds: number[]): Promise<void>;
+  fetchAllSoundTagAssignments(): Promise<Array<{ sound_id: string; tag_id: number }>>;
+  fetchAllSoundDisplayMeta(): Promise<SoundDisplayMeta[]>;
+  updateSoundDisplayMeta(soundId: string, displayName: string): Promise<void>;
+  fetchWorkscreenSelections(sessionCategory: string): Promise<Array<{ soundId: string; displayOrder: number }>>;
+  setWorkscreenSelections(sessionCategory: string, soundIds: string[]): Promise<void>;
+
   // Memo
   fetchAllMemos(): Promise<MemoNode[]>;
   fetchMemoByDate(date: string): Promise<MemoNode | null>;
@@ -51,9 +64,6 @@ export interface DataService {
   restoreNote(id: string): Promise<void>;
   permanentDeleteNote(id: string): Promise<void>;
   searchNotes(query: string): Promise<NoteNode[]>;
-  fetchTagsForNote(noteId: string): Promise<Tag[]>;
-  setTagsForNote(noteId: string, tagIds: number[]): Promise<void>;
-  fetchAllNoteTags(): Promise<Array<{ note_id: string; tag_id: number }>>;
 
   // Custom Sounds
   saveCustomSound(id: string, data: ArrayBuffer, meta: CustomSoundMeta): Promise<void>;
@@ -66,13 +76,23 @@ export interface DataService {
   fetchAISettings(): Promise<AISettingsResponse>;
   updateAISettings(settings: { apiKey?: string; model?: string }): Promise<AISettingsResponse>;
 
-  // Tags
-  fetchAllTags(): Promise<Tag[]>;
-  createTag(name: string, color: string): Promise<Tag>;
-  updateTag(id: number, updates: { name?: string; color?: string }): Promise<Tag>;
-  deleteTag(id: number): Promise<void>;
+  // Task Tags
+  fetchAllTaskTags(): Promise<Tag[]>;
+  createTaskTag(name: string, color: string): Promise<Tag>;
+  updateTaskTag(id: number, updates: { name?: string; color?: string }): Promise<Tag>;
+  deleteTaskTag(id: number): Promise<void>;
   fetchTagsForTask(taskId: string): Promise<Tag[]>;
   setTagsForTask(taskId: string, tagIds: number[]): Promise<void>;
+
+  // Note Tags
+  fetchAllNoteTags(): Promise<Tag[]>;
+  createNoteTag(name: string, color: string): Promise<Tag>;
+  updateNoteTag(id: number, updates: { name?: string; color?: string }): Promise<Tag>;
+  deleteNoteTag(id: number): Promise<void>;
+  fetchTagsForNote(noteId: string): Promise<Tag[]>;
+  setTagsForNote(noteId: string, tagIds: number[]): Promise<void>;
+  fetchAllNoteTagAssignments(): Promise<Array<{ note_id: string; tag_id: number }>>;
+
 
   // Templates
   fetchTemplates(): Promise<TaskTemplate[]>;

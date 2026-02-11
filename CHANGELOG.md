@@ -4,6 +4,73 @@
 
 ---
 
+## 5件バグ修正 + WorkScreen UIリデザイン + フェーズ別サウンド選択 (2026-02-11)
+
+- サウンドタグIPC登録失敗を修正: soundRepositoryのV7テーブル参照をtableExists()ガードで保護、テーブル未作成でも他のSoundハンドラが正常動作
+- migrateV6のnote_tagsテーブル参照を防御的にガード（テーブル未存在時はスキップ）
+- registerAll.tsのエラーログにスタックトレース出力追加、soundRepoを共有化
+- ノートデータ消失対策: closeDatabase()にWALチェックポイント追加、noteHandlers全メソッドにエラーログ追加
+- フォントサイズ設定が効かない問題を修正: html要素のfontSizeを直接設定し、rem単位のTailwindクラスが自動スケール
+- index.cssのbody font-sizeを1remに、memo-editorのfont-sizeをremに変換
+- フェーズ別サウンド選択機能追加: Music画面でW/Rボタンでサウンドを各フェーズに割当（最大6つ）、DBマイグレーションV8
+- WorkScreenサウンドミキサーをコンパクトリスト表示にリデザイン: SoundListItem（水平レイアウト）、選択済みサウンドのみ表示
+- 新規ファイル: useWorkscreenSelections.ts, SoundListItem.tsx
+- IPC 2チャンネル追加: fetchWorkscreenSelections, setWorkscreenSelections
+
+---
+
+## WorkScreen 5要件修正 (2026-02-11)
+
+- SessionType型を `'WORK' | 'BREAK' | 'LONG_BREAK'` に統一（frontend/electron間の不整合を修正）
+- WorkScreenからサウンド削除ボタンを除去、Music画面のみ削除可能に（確認ダイアログ追加）
+- ポモドーロ設定UIを新設（PomodoroSettings）: Work/Break/Long Break/Sessions数を個別設定可能、ドットインジケーター表示
+- DurationPickerにpresets/min/max propsを追加して汎用化
+- SoundMixerのuseEffect+setState警告を修正（getDerivedStateFromPropsパターンに移行）
+- WORK/RESTタブ手動切替で実際のサウンド再生も切り替わるように修正（mixerOverride機構追加）
+- シークコントロール追加: SoundCard/MusicSoundItemで再生位置スライダー表示、ドラッグで再生位置変更可能
+- useAudioEngineの戻り値にresetAllPlayback/seekSound/channelPositionsを追加
+
+---
+
+## サウンドタグ + Music画面 (2026-02-11)
+
+- サウンドにタグ付け・フィルタリング機能追加（sound_tag_definitions, sound_tag_assignments テーブル）
+- サウンド表示名のカスタマイズ機能追加（sound_display_meta テーブル）
+- SessionセクションをMusicにリネーム、専用サウンド管理画面を新規作成
+- DBマイグレーションV7追加、IPC 9チャンネル追加
+- 新規コンポーネント: MusicScreen, MusicSoundItem, SoundTagEditor, SoundTagFilter, useSoundTags
+- data export/import対応
+
+---
+
+## タスクタグ・ノートタグ分離 (2026-02-11)
+
+- 統合tagsテーブルを廃止、task_tag_definitions / note_tag_definitions に完全分離
+- tagRepository をファクトリパターン（createTagRepository(db, type)）に書換
+- IPC チャンネル: db:taskTags:* / db:noteTags:* に移行
+- TagManager画面を2セクション（タスクタグ/ノートタグ）に分割
+- DBマイグレーションV6追加、既存データ自動移行
+- 変更ファイル: 20+ファイル（Backend 8, Frontend 12+）
+
+---
+
+## タスク期限（dueDate）機能追加 (2026-02-11)
+
+- タスクにdueDate（期限）フィールド追加、Flagアイコンでトグル
+- DateTimePickerを拡張（icon/label/activeColor props）してdueDate設定UIに再利用
+- DBマイグレーションV5: tasks テーブルに due_date カラム追加
+- 変更ファイル: 8ファイル
+
+---
+
+## タスクヘッダーのインライン名前変更 (2026-02-11)
+
+- TaskDetail画面のタイトル（h1）をクリックでインライン編集可能に
+- Enter/Blur保存、Escapeキャンセルのパターン
+- バックエンド変更なし、フロントエンドのみ（3ファイル）
+
+---
+
 ## ポモドーロタイマー強化 (2026-02-11)
 
 - WORK完了時セッション完了モーダル追加（延長5〜30分/休憩選択/タスク完了）

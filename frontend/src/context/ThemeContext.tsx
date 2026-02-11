@@ -40,10 +40,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   useEffect(() => {
-    document.documentElement.style.setProperty(
-      "--font-size-base",
-      FONT_SIZE_MAP[fontSize],
-    );
+    // Set font-size directly on the html element so all rem-based
+    // Tailwind classes scale proportionally
+    document.documentElement.style.fontSize = FONT_SIZE_MAP[fontSize];
   }, [fontSize]);
 
   const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");

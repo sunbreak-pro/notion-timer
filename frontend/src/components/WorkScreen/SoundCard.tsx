@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X, Clock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface SoundCardProps {
@@ -9,6 +9,15 @@ interface SoundCardProps {
   onToggle: () => void;
   onVolumeChange: (volume: number) => void;
   onDelete?: () => void;
+  currentTime?: number;
+  duration?: number;
+  onSeek?: (time: number) => void;
+}
+
+function formatSeekTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 export function SoundCard({
@@ -19,7 +28,11 @@ export function SoundCard({
   onToggle,
   onVolumeChange,
   onDelete,
+  currentTime,
+  duration,
+  onSeek,
 }: SoundCardProps) {
+  const showSeek = enabled && onSeek && duration !== undefined && duration > 0;
   return (
     <div
       className={`relative flex flex-col items-center gap-3 p-4 rounded-lg border transition-colors cursor-pointer ${
@@ -64,6 +77,26 @@ export function SoundCard({
         className="w-full h-1 accent-[--color-accent] cursor-pointer"
         disabled={!enabled}
       />
+      {showSeek && (
+        <div className="flex items-center gap-1 w-full" onClick={(e) => e.stopPropagation()}>
+          <Clock size={10} className="text-notion-text-secondary shrink-0" />
+          <input
+            type="range"
+            min={0}
+            max={duration}
+            step={0.1}
+            value={currentTime ?? 0}
+            onChange={(e) => {
+              e.stopPropagation();
+              onSeek(Number(e.target.value));
+            }}
+            className="w-full h-1 accent-[--color-text-secondary] cursor-pointer"
+          />
+          <span className="text-[9px] text-notion-text-secondary tabular-nums shrink-0">
+            {formatSeekTime(currentTime ?? 0)}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

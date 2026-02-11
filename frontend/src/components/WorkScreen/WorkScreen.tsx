@@ -1,13 +1,13 @@
-import { useEffect } from 'react';
-import { X, CheckCircle2 } from 'lucide-react';
-import { useTimerContext } from '../../hooks/useTimerContext';
-import { useAudioContext } from '../../hooks/useAudioContext';
-import { TimerDisplay } from './TimerDisplay';
-import { TimerProgressBar } from './TimerProgressBar';
-import { DurationSelector } from './DurationSelector';
-import { SoundMixer } from './SoundMixer';
-import { TaskSelector } from './TaskSelector';
-import { SessionCompletionModal } from './SessionCompletionModal';
+import { useEffect, useCallback } from "react";
+import { X, CheckCircle2 } from "lucide-react";
+import { useTimerContext } from "../../hooks/useTimerContext";
+import { useAudioContext } from "../../hooks/useAudioContext";
+import { TimerDisplay } from "./TimerDisplay";
+import { TimerProgressBar } from "./TimerProgressBar";
+import { PomodoroSettings } from "./PomodoroSettings";
+import { SoundMixer } from "./SoundMixer";
+import { TaskSelector } from "./TaskSelector";
+import { SessionCompletionModal } from "./SessionCompletionModal";
 
 interface WorkScreenProps {
   isOverlay?: boolean;
@@ -15,24 +15,47 @@ interface WorkScreenProps {
   onCompleteTask?: () => void;
 }
 
-export function WorkScreen({ isOverlay = false, onClose, onCompleteTask }: WorkScreenProps) {
+export function WorkScreen({
+  isOverlay = false,
+  onClose,
+  onCompleteTask,
+}: WorkScreenProps) {
   const timer = useTimerContext();
+  const audio = useAudioContext();
   const {
-    workMixer, restMixer,
-    toggleWorkSound, toggleRestSound,
-    setWorkVolume, setRestVolume,
-    customSounds, addSound, removeSound,
-  } = useAudioContext();
+    workMixer,
+    restMixer,
+    toggleWorkSound,
+    toggleRestSound,
+    setWorkVolume,
+    setRestVolume,
+    customSounds,
+    workscreenSelections,
+  } = audio;
 
-  const title = timer.activeTask?.title ?? 'Free Session';
+  const handleManualTabSwitch = useCallback(
+    (tab: "WORK" | "REST") => {
+      // If switching to the natural tab for the current session, clear override
+      const naturalTab = timer.sessionType === "WORK" ? "WORK" : "REST";
+      if (tab === naturalTab) {
+        audio.setMixerOverride(null);
+      } else {
+        audio.setMixerOverride(tab);
+      }
+      audio.resetAllPlayback();
+    },
+    [timer.sessionType, audio],
+  );
+
+  const title = timer.activeTask?.title ?? "Free Session";
 
   useEffect(() => {
     if (!isOverlay || !onClose) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOverlay, onClose]);
 
   const content = (
@@ -72,19 +95,25 @@ export function WorkScreen({ isOverlay = false, onClose, onCompleteTask }: WorkS
           </button>
         )}
 
-        <DurationSelector
+        <PomodoroSettings
           workDurationMinutes={timer.workDurationMinutes}
-          onChangeDuration={timer.setWorkDurationMinutes}
+          breakDurationMinutes={timer.breakDurationMinutes}
+          longBreakDurationMinutes={timer.longBreakDurationMinutes}
+          sessionsBeforeLongBreak={timer.sessionsBeforeLongBreak}
+          onChangeWorkDuration={timer.setWorkDurationMinutes}
+          onChangeBreakDuration={timer.setBreakDurationMinutes}
+          onChangeLongBreakDuration={timer.setLongBreakDurationMinutes}
+          onChangeSessionsBeforeLongBreak={timer.setSessionsBeforeLongBreak}
           disabled={timer.isRunning}
         />
 
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-xl">
           <TimerProgressBar progress={timer.progress} />
         </div>
       </div>
 
       <div className="px-6 pb-6">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-xl mx-auto">
           <SoundMixer
             workMixer={workMixer}
             restMixer={restMixer}
@@ -93,9 +122,11 @@ export function WorkScreen({ isOverlay = false, onClose, onCompleteTask }: WorkS
             onSetWorkVolume={setWorkVolume}
             onSetRestVolume={setRestVolume}
             customSounds={customSounds}
-            onAddSound={addSound}
-            onRemoveSound={removeSound}
             activeSessionType={timer.sessionType}
+            onManualTabSwitch={handleManualTabSwitch}
+            channelPositions={audio.channelPositions}
+            onSeekSound={audio.seekSound}
+            workscreenSelections={workscreenSelections}
           />
         </div>
       </div>
@@ -107,7 +138,9 @@ export function WorkScreen({ isOverlay = false, onClose, onCompleteTask }: WorkS
       onExtend={timer.extendWork}
       onStartRest={timer.startRest}
       onDismiss={timer.dismissCompletionModal}
-      onCompleteTask={timer.activeTask && onCompleteTask ? onCompleteTask : undefined}
+      onCompleteTask={
+        timer.activeTask && onCompleteTask ? onCompleteTask : undefined
+      }
     />
   );
 
@@ -115,7 +148,7 @@ export function WorkScreen({ isOverlay = false, onClose, onCompleteTask }: WorkS
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-        <div className="relative z-10 w-full max-w-lg mx-4 bg-notion-bg rounded-xl shadow-2xl border border-notion-border max-h-[90vh] overflow-y-auto">
+        <div className="relative z-10 w-[75vw] mx-4 bg-notion-bg rounded-xl shadow-2xl border border-notion-border max-h-[90vh] overflow-y-auto">
           {content}
         </div>
         {completionModal}

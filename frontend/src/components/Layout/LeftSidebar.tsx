@@ -1,7 +1,7 @@
 import {
   CheckSquare,
   BookOpen,
-  Headphones,
+  Music,
   Calendar,
   BarChart3,
   Settings,
@@ -24,7 +24,7 @@ const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] =
   [
     { id: "tasks", label: "Tasks", icon: CheckSquare },
     { id: "memo", label: "Memo", icon: BookOpen },
-    { id: "session", label: "Session", icon: Headphones },
+    { id: "music", label: "Music", icon: Music },
     { id: "calendar", label: "Calendar", icon: Calendar },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "settings", label: "Settings", icon: Settings },
@@ -73,7 +73,7 @@ export function LeftSidebar({
                 <span>{item.label}</span>
               </button>
 
-              {item.id === "session" && showTimer && (
+              {item.id === "music" && showTimer && (
                 <div className="ml-3 mr-2 mb-1 px-3 py-2 rounded-md bg-notion-hover/50">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">

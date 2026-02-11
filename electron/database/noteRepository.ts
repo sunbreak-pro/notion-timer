@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import type { NoteNode, Tag } from '../types';
+import type { NoteNode } from '../types';
 
 interface NoteRow {
   id: string;
@@ -46,15 +46,6 @@ export function createNoteRepository(db: Database.Database) {
       AND (title LIKE @query OR content LIKE @query)
       ORDER BY updated_at DESC
     `),
-    fetchTagsForNote: db.prepare(`
-      SELECT t.* FROM tags t
-      INNER JOIN note_tags nt ON t.id = nt.tag_id
-      WHERE nt.note_id = ?
-      ORDER BY t.name ASC
-    `),
-    clearNoteTags: db.prepare(`DELETE FROM note_tags WHERE note_id = ?`),
-    insertNoteTag: db.prepare(`INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (?, ?)`),
-    fetchAllNoteTags: db.prepare(`SELECT note_id, tag_id FROM note_tags`),
   };
 
   return {
@@ -102,20 +93,6 @@ export function createNoteRepository(db: Database.Database) {
       return (stmts.search.all({ query: `%${query}%` }) as NoteRow[]).map(rowToNode);
     },
 
-    getTagsForNote(noteId: string): Tag[] {
-      return stmts.fetchTagsForNote.all(noteId) as Tag[];
-    },
-
-    setNoteTags: db.transaction((noteId: string, tagIds: number[]) => {
-      stmts.clearNoteTags.run(noteId);
-      for (const tagId of tagIds) {
-        stmts.insertNoteTag.run(noteId, tagId);
-      }
-    }),
-
-    getAllNoteTags(): Array<{ note_id: string; tag_id: number }> {
-      return stmts.fetchAllNoteTags.all() as Array<{ note_id: string; tag_id: number }>;
-    },
   };
 }
 

@@ -16,9 +16,9 @@ export function CalendarTaskItem({
 }: CalendarTaskItemProps) {
   const isDone = task.status === "DONE";
   const textColor = color ? getTextColorForBg(color) : undefined;
-  const { getTagsForTask, taskTagsVersion } = useTagContext();
-  void taskTagsVersion;
-  const taskTags = getTagsForTask(task.id);
+  const { taskTags: { getTagsForEntity, entityTagsVersion } } = useTagContext();
+  void entityTagsVersion;
+  const taskTags = getTagsForEntity(task.id);
 
   return (
     <button

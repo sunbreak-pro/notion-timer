@@ -7,11 +7,13 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **タスク管理**: 階層型タスクツリー（フォルダ/サブフォルダ/タスク）、ドラッグ&ドロップ並び替え、ソフトデリート+ゴミ箱
 - **プロジェクトナビゲーション**: サブサイドバーでInbox+フォルダ別にタスクを絞り込み表示
 - **グローバルタイマー**: 画面遷移してもタイマーが継続するContextベースのポモドーロタイマー
-- **集中タイマー**: WORK/BREAK/LONG_BREAK対応、作業時間カスタマイズ（5〜60分、5分刻み）、プログレスバー（ドットインジケータ付き）、WORK完了時モーダル（延長5〜30分/休憩選択/タスク完了）
+- **タスク期限管理**: Flagアイコンでdue date設定、DateTimePickerで日時選択
+- **集中タイマー**: WORK/BREAK/LONG_BREAK対応、ポモドーロ設定UI（Work/Break/Long Break/Sessions数を個別設定）、ドットインジケーター表示、プログレスバー、WORK完了時モーダル（延長5〜30分/休憩選択/タスク完了）
 - **タイマーモーダル**: タスクのPlayボタンでモーダル表示、閉じてもバックグラウンドでタイマー継続
 - **サイドバータイマー表示**: タイマー実行中はサイドバーにタスク名・残り時間・編集ボタンを表示
 - **TaskTreeタイマー表示**: 実行中のタスク行に残り時間テキスト+ミニプログレスバーを表示
-- **ノイズミキサー**: 6種の環境音（Rain, Thunder, Wind, Ocean, Birds, Fire）、Web Audio APIによるリアルタイム再生・ミキシング、Work/Rest別サウンド設定
+- **Music管理画面**: サウンド一覧表示・検索・タグフィルタリング、サウンド表示名のインラインカスタマイズ、サウンドタグの作成・割当、WorkScreenフェーズ別サウンド選択（W/Rトグル、各フェーズ最大6音）
+- **ノイズミキサー**: 6種の環境音（Rain, Thunder, Wind, Ocean, Birds, Fire）、Web Audio APIによるリアルタイム再生・ミキシング、Work/Rest別サウンド設定、タブ切替でサウンド再生も切替、シークコントロール（再生位置スライダー）、WorkScreenではフェーズ別選択サウンドのみコンパクトリスト表示
 - **AIコーチング**: Gemini API連携、タスク分解/励まし/レビューの3モード
 - **外観設定**: ダークモード/ライトモード切替、フォントサイズ設定（S/M/L）
 - **デスクトップ通知**: タイマーセッション完了時にブラウザ通知
@@ -24,7 +26,7 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **アナリティクス**: 基本統計（総タスク数、完了率、フォルダ数）
 - **データ管理**: SQLite永続化（better-sqlite3）、JSON Export/Import、バックアップ付きインポート
 - **自由メモ（Notes）**: 日付に縛られないフリーフォームノート、ピン留め、全文検索、ソート切替（更新日/作成日/タイトル）、タグ付け・タグフィルタリング、ソフトデリート対応
-- **タグ**: タスク・ノートにカラータグ付与、フィルタリング
+- **タグ**: タスクタグ・ノートタグ・サウンドタグを独立管理、カラータグ付与、フィルタリング
 - **テンプレート**: タスクツリー構造をテンプレート保存・展開
 - **自動アップデート**: electron-updater + GitHub Releases、ユーザー確認型ダウンロード・インストール
 - **構造化ログ**: electron-logによるファイル出力、Settings画面でログ閲覧・フィルタ・エクスポート
@@ -58,6 +60,41 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-11 - 5件バグ修正 + WorkScreen UIリデザイン + フェーズ別サウンド選択
+
+#### 概要
+5つのバグ修正と2つの新機能: サウンドタグIPC登録失敗修正、ノートデータ永続化修正、フォントサイズ設定修正、WorkScreenコンパクトUIリデザイン、Music画面フェーズ別サウンド選択。
+
+#### 変更点
+- **サウンドタグIPC修正**: soundRepositoryのV7テーブル参照をtableExists()で保護。migrateV6のnote_tags参照を防御ガード。registerAll.tsのエラーログ改善+soundRepo共有化
+- **ノート永続化修正**: closeDatabase()にWALチェックポイント追加。noteHandlers全メソッドにtry-catch+エラーログ
+- **フォントサイズ修正**: html要素のfontSizeを直接設定、body font-sizeを1remに、memo-editorをrem化。Tailwind remクラスが自動スケール
+- **フェーズ別サウンド選択**: Music画面でW/Rボタンによりサウンドを各フェーズに割当（最大6つ）。DBマイグレーションV8、useWorkscreenSelectionsフック
+- **WorkScreenリデザイン**: SoundMixerをコンパクトリスト表示に変更（SoundListItem）。選択済みサウンドのみ表示、未選択時は誘導メッセージ表示
+
+### 2026-02-11 - WorkScreen 5要件修正
+
+#### 概要
+WorkScreenの5つの問題を修正: React useEffect警告、音楽削除制限、ポモドーロ設定UI、タブ切替連動、シークコントロール。
+
+#### 変更点
+- **SessionType型統一**: `'WORK' | 'REST' | 'LONG_REST'` → `'WORK' | 'BREAK' | 'LONG_BREAK'`に修正（TimerContextの実使用値に合わせる）
+- **音楽削除制限**: WorkScreenからのサウンド削除を禁止、Music画面のみ削除可（確認ダイアログ付き）
+- **ポモドーロ設定UI**: DurationSelectorをPomodoroSettingsに置換。Work/Break/Long Break/Sessions数を個別設定可能（折りたたみ式）。DurationPickerをpresets/min/max props対応に汎用化。ドットインジケーター表示（●●○○形式）
+- **タブ切替連動**: WORK/RESTタブ手動切替でサウンド再生も実際に切り替わるように（mixerOverride機構追加）。SoundMixerのuseEffect+setStateをgetDerivedStateFromPropsパターンに修正
+- **シークコントロール**: SoundCard/MusicSoundItemに再生位置スライダー追加。useAudioEngineにseekSound/channelPositions/resetAllPlaybackを追加
+
+### 2026-02-11 - 4機能一括実装（タスクUX強化・タグ分離・Music画面）
+
+#### 概要
+タスク管理のUX向上（インライン名前変更、期限管理）、タグシステムの3分離（タスク/ノート/サウンド）、サウンド管理画面の専用化の4機能を実装。DBマイグレーションV5〜V7追加。
+
+#### 変更点
+- **タスクヘッダーインライン名前変更**: TaskDetailのh1タイトルをクリックでインライン編集（Enter/Blur保存、Escapeキャンセル）
+- **タスク期限（dueDate）**: tasksテーブルにdue_dateカラム追加（V5）、Flagアイコン+DateTimePickerでトグル設定
+- **タスクタグ・ノートタグ分離**: 統合tagsテーブル廃止、task_tag_definitions/note_tag_definitionsに分離（V6）、tagRepositoryをファクトリパターンに、IPCチャンネルdb:taskTags:*/db:noteTags:*に移行
+- **サウンドタグ+Music画面**: sound_tag_definitions/sound_tag_assignments/sound_display_metaテーブル追加（V7）、SessionセクションをMusicにリネーム、サウンド管理専用画面（検索・タグフィルタ・インライン名前変更・タグ割当）を新規作成
 
 ### 2026-02-11 - ポモドーロタイマー強化
 

@@ -1,4 +1,4 @@
-import { CheckSquare, Headphones, Settings, Pencil } from "lucide-react";
+import { CheckSquare, Music, Settings, Pencil } from "lucide-react";
 import type { SectionId } from "../../types/taskTree";
 import { useTimerContext } from "../../hooks/useTimerContext";
 
@@ -11,7 +11,7 @@ interface SidebarProps {
 const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] =
   [
     { id: "tasks", label: "Tasks", icon: CheckSquare },
-    { id: "session", label: "Session", icon: Headphones },
+    { id: "music", label: "Music", icon: Music },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
@@ -46,7 +46,7 @@ export function Sidebar({
                 <span>{item.label}</span>
               </button>
 
-              {item.id === "session" && showTimer && (
+              {item.id === "music" && showTimer && (
                 <div className="ml-3 mr-2 mb-1 px-3 py-2 rounded-md bg-notion-hover/50">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">

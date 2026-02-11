@@ -4,8 +4,6 @@ import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 
 export function AnalyticsView() {
   const { nodes } = useTaskTreeContext();
-  <Toggle />;
-
   const stats = useMemo(() => {
     const tasks = nodes.filter((n) => n.type === "task");
     const folders = nodes.filter((n) => n.type === "folder");

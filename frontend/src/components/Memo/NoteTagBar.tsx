@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, X } from "lucide-react";
-import { useNoteContext } from "../../hooks/useNoteContext";
 import { useTagContext } from "../../hooks/useTagContext";
 
 interface NoteTagBarProps {
@@ -8,23 +7,29 @@ interface NoteTagBarProps {
 }
 
 export function NoteTagBar({ noteId }: NoteTagBarProps) {
-  const { getTagsForNote, setTagsForNote } = useNoteContext();
-  const { tags } = useTagContext();
+  const { noteTags: { tags, getTagsForEntity, loadTagsForEntity, setTagsForEntity, entityTagsVersion } } = useTagContext();
   const [showPicker, setShowPicker] = useState(false);
 
-  const noteTags = getTagsForNote(noteId);
+  useEffect(() => {
+    loadTagsForEntity(noteId);
+  }, [noteId, loadTagsForEntity]);
+
+  // Force re-render when cache changes
+  void entityTagsVersion;
+
+  const noteTags = getTagsForEntity(noteId);
   const noteTagIds = noteTags.map((t) => t.id);
   const availableTags = tags.filter((t) => !noteTagIds.includes(t.id));
 
   const handleAdd = (tagId: number) => {
     const newIds = [...noteTagIds, tagId];
-    setTagsForNote(noteId, newIds, tags);
+    setTagsForEntity(noteId, newIds);
     setShowPicker(false);
   };
 
   const handleRemove = (tagId: number) => {
     const newIds = noteTagIds.filter((id) => id !== tagId);
-    setTagsForNote(noteId, newIds, tags);
+    setTagsForEntity(noteId, newIds);
   };
 
   return (

@@ -53,7 +53,7 @@ export function TaskTreeNode({
   } = useTaskTreeContext();
 
   const timer = useTimerContext();
-  const { getTagsForTask, loadTagsForTask, taskTagsVersion } = useTagContext();
+  const { taskTags: { getTagsForEntity: getTagsForTask, loadTagsForEntity: loadTagsForTask, entityTagsVersion: taskTagsVersion } } = useTagContext();
   const { createTemplate } = useTemplates();
 
   const [isEditing, setIsEditing] = useState(false);

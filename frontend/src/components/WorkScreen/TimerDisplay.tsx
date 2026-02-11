@@ -1,5 +1,5 @@
-import { Play, Pause, RotateCcw } from 'lucide-react';
-import type { SessionType } from '../../types/timer';
+import { Play, Pause, RotateCcw } from "lucide-react";
+import type { SessionType } from "../../types/timer";
 
 interface TimerDisplayProps {
   sessionType: SessionType;
@@ -14,9 +14,9 @@ interface TimerDisplayProps {
 }
 
 const SESSION_LABELS: Record<SessionType, string> = {
-  WORK: 'WORK',
-  BREAK: 'BREAK',
-  LONG_BREAK: 'LONG BREAK',
+  WORK: "WORK",
+  BREAK: "REST",
+  LONG_BREAK: "LONG REST",
 };
 
 export function TimerDisplay({
@@ -67,9 +67,23 @@ export function TimerDisplay({
         </button>
       </div>
 
-      <span className="text-sm text-notion-text-secondary">
-        Session {currentSession} of {sessionsBeforeLongBreak}
-      </span>
+      <div className="flex items-center gap-2 text-sm text-notion-text-secondary">
+        <span className="tabular-nums">{currentSession}/{sessionsBeforeLongBreak}</span>
+        <div className="flex gap-1">
+          {Array.from({ length: sessionsBeforeLongBreak }, (_, i) => (
+            <span
+              key={i}
+              className={`w-2 h-2 rounded-full ${
+                i < (completedSessions % sessionsBeforeLongBreak)
+                  ? 'bg-notion-accent'
+                  : i === (completedSessions % sessionsBeforeLongBreak) && sessionType === 'WORK'
+                    ? 'bg-notion-accent/40'
+                    : 'bg-notion-border'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

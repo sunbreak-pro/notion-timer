@@ -66,7 +66,7 @@ export function TaskTree({
     toggleExpanded,
     toggleTaskStatus,
   } = useTaskTreeContext();
-  const { hasTagFilter, taskPassesFilter } = useTagContext();
+  const { taskTags: { hasTagFilter, taskPassesFilter } } = useTagContext();
   const [showCompleted, setShowCompleted] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isCreatingInboxTask, setIsCreatingInboxTask] = useState(false);

@@ -8,6 +8,7 @@ import { Tips } from "./components/Tips";
 import { CalendarView } from "./components/Calendar/CalendarView";
 import { AnalyticsView } from "./components/Analytics/AnalyticsView";
 import { MemoView } from "./components/Memo";
+import { MusicScreen } from "./components/Music/MusicScreen";
 import { CommandPalette } from "./components/CommandPalette/CommandPalette";
 import type { Command } from "./components/CommandPalette/CommandPalette";
 import { UpdateNotification } from "./components/UpdateNotification";
@@ -98,6 +99,16 @@ function App() {
     updateNode(selectedTaskId, { scheduledAt });
   };
 
+  const handleTitleChange = (newTitle: string) => {
+    if (!selectedTaskId) return;
+    updateNode(selectedTaskId, { title: newTitle });
+  };
+
+  const handleDueDateChange = (dueDate: string | undefined) => {
+    if (!selectedTaskId) return;
+    updateNode(selectedTaskId, { dueDate });
+  };
+
   const handleFolderColorChange = (folderId: string, color: string) => {
     updateNode(folderId, { color });
   };
@@ -184,12 +195,12 @@ function App() {
         action: () => setActiveSection("memo"),
       },
       {
-        id: "nav-session",
-        title: "Go to Session",
+        id: "nav-music",
+        title: "Go to Music",
         category: "Navigation",
         shortcut: isMac ? "⌘2" : "Ctrl+2",
         icon: Timer,
-        action: () => setActiveSection("session"),
+        action: () => setActiveSection("music"),
       },
       {
         id: "nav-calendar",
@@ -346,7 +357,7 @@ function App() {
   useEffect(() => {
     const sectionMap: Record<string, SectionId> = {
       "1": "tasks",
-      "2": "session",
+      "2": "music",
       "3": "calendar",
       "4": "analytics",
       "5": "settings",
@@ -445,6 +456,8 @@ function App() {
             onDurationChange={handleDurationChange}
             onScheduledAtChange={handleScheduledAtChange}
             onFolderColorChange={handleFolderColorChange}
+            onTitleChange={handleTitleChange}
+            onDueDateChange={handleDueDateChange}
             onNavigateToSettings={() => setActiveSection("settings")}
             folderTag={
               selectedTask ? getFolderTagForTask(selectedTask.id) : undefined
@@ -454,8 +467,8 @@ function App() {
         );
       case "memo":
         return <MemoView />;
-      case "session":
-        return <WorkScreen onCompleteTask={handleCompleteTask} />;
+      case "music":
+        return <MusicScreen />;
       case "calendar":
         return (
           <CalendarView

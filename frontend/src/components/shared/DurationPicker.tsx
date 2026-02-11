@@ -1,7 +1,9 @@
 import { Minus, Plus } from 'lucide-react';
 import { formatDuration } from '../../utils/duration';
 
-const PRESETS = [15, 25, 30, 45, 60, 90, 120, 180, 240];
+const DEFAULT_PRESETS = [15, 25, 30, 45, 60, 90, 120, 180, 240];
+const DEFAULT_MIN = 5;
+const DEFAULT_MAX = 240;
 
 function getStep(minutes: number, direction: 'up' | 'down'): number {
   if (direction === 'up') return minutes >= 60 ? 15 : 5;
@@ -15,6 +17,9 @@ interface DurationPickerProps {
   showResetToDefault?: boolean;
   onResetToDefault?: () => void;
   defaultLabel?: string;
+  presets?: number[];
+  min?: number;
+  max?: number;
 }
 
 export function DurationPicker({
@@ -24,13 +29,16 @@ export function DurationPicker({
   showResetToDefault,
   onResetToDefault,
   defaultLabel,
+  presets = DEFAULT_PRESETS,
+  min = DEFAULT_MIN,
+  max = DEFAULT_MAX,
 }: DurationPickerProps) {
   return (
     <div className={disabled ? 'opacity-50 pointer-events-none' : ''}>
       <div className="flex items-center justify-between mb-2">
         <button
-          onClick={() => onChange(Math.max(5, value - getStep(value, 'down')))}
-          disabled={disabled || value <= 5}
+          onClick={() => onChange(Math.max(min, value - getStep(value, 'down')))}
+          disabled={disabled || value <= min}
           className="p-1 rounded-md text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover transition-colors disabled:opacity-30"
         >
           <Minus size={14} />
@@ -39,8 +47,8 @@ export function DurationPicker({
           {formatDuration(value)}
         </span>
         <button
-          onClick={() => onChange(Math.min(240, value + getStep(value, 'up')))}
-          disabled={disabled || value >= 240}
+          onClick={() => onChange(Math.min(max, value + getStep(value, 'up')))}
+          disabled={disabled || value >= max}
           className="p-1 rounded-md text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover transition-colors disabled:opacity-30"
         >
           <Plus size={14} />
@@ -48,7 +56,7 @@ export function DurationPicker({
       </div>
 
       <div className="grid grid-cols-5 gap-1">
-        {PRESETS.map(preset => (
+        {presets.map(preset => (
           <button
             key={preset}
             onClick={() => onChange(preset)}

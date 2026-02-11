@@ -20,6 +20,7 @@ export interface TaskNode {
   content?: string;
   workDurationMinutes?: number;
   color?: string;
+  dueDate?: string;
 }
 
 export type SessionType = 'WORK' | 'BREAK' | 'LONG_BREAK';
@@ -117,6 +118,17 @@ export interface NoteNode {
   deletedAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SoundTag {
+  id: number;
+  name: string;
+  color: string;
+}
+
+export interface SoundDisplayMeta {
+  soundId: string;
+  displayName: string | null;
 }
 
 export interface MigrationPayload {

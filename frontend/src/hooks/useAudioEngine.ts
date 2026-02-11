@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import type { SoundMixerState } from './useLocalSoundMixer';
 
 interface AudioChannel {
@@ -7,9 +7,17 @@ interface AudioChannel {
   gain: GainNode;
 }
 
-const FADE_DURATION = 0.2;
+export interface AudioEngineResult {
+  resetAllPlayback: () => void;
+  seekSound: (soundId: string, time: number) => void;
+  channelPositions: Record<string, { currentTime: number; duration: number }>;
+  channelsRef: React.MutableRefObject<Map<string, AudioChannel>>;
+}
 
-export function useAudioEngine(mixer: SoundMixerState, soundSources: Record<string, string>, shouldPlay: boolean = true) {
+const FADE_DURATION = 0.2;
+const POSITION_UPDATE_INTERVAL = 250;
+
+export function useAudioEngine(mixer: SoundMixerState, soundSources: Record<string, string>, shouldPlay: boolean = true): AudioEngineResult {
   const contextRef = useRef<AudioContext | null>(null);
   const channelsRef = useRef<Map<string, AudioChannel>>(new Map());
   const mixerRef = useRef(mixer);
@@ -184,4 +192,43 @@ export function useAudioEngine(mixer: SoundMixerState, soundSources: Record<stri
       pauseTimeoutsRef.current.clear();
     };
   }, []);
+
+  // Track channel positions for seek UI
+  const [channelPositions, setChannelPositions] = useState<Record<string, { currentTime: number; duration: number }>>({});
+
+  useEffect(() => {
+    if (!shouldPlay) {
+      setChannelPositions({});
+      return;
+    }
+    const id = window.setInterval(() => {
+      const positions: Record<string, { currentTime: number; duration: number }> = {};
+      for (const [soundId, channel] of channelsRef.current.entries()) {
+        const dur = channel.audio.duration;
+        if (dur && !isNaN(dur) && dur > 0) {
+          positions[soundId] = {
+            currentTime: channel.audio.currentTime,
+            duration: dur,
+          };
+        }
+      }
+      setChannelPositions(positions);
+    }, POSITION_UPDATE_INTERVAL);
+    return () => clearInterval(id);
+  }, [shouldPlay]);
+
+  const resetAllPlayback = useCallback(() => {
+    for (const channel of channelsRef.current.values()) {
+      channel.audio.currentTime = 0;
+    }
+  }, []);
+
+  const seekSound = useCallback((soundId: string, time: number) => {
+    const channel = channelsRef.current.get(soundId);
+    if (channel) {
+      channel.audio.currentTime = time;
+    }
+  }, []);
+
+  return { resetAllPlayback, seekSound, channelPositions, channelsRef };
 }
