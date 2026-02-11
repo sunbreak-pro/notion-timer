@@ -24,7 +24,7 @@ jobs:
         run: npm run build
 
       - name: Package (macOS)
-        run: npx electron-builder --mac
+        run: npx electron-builder --mac --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
@@ -54,7 +54,7 @@ jobs:
         run: npm run build
 
       - name: Package (Windows)
-        run: npx electron-builder --win
+        run: npx electron-builder --win --publish never
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
