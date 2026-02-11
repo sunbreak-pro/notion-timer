@@ -2,13 +2,13 @@
 
 :root {
   --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #fef6e3;
-  --color-bg-subsidebar: #e9e9e9;
+  --color-bg-secondary: #99cbf9;
+  --color-bg-subsidebar: #dfefff;
   --color-text-primary: #37352F;
-  --color-text-secondary: #787774;
-  --color-border: #cececc;
+  --color-text-secondary: #6f7e83;
+  --color-border: #eaeaea;
   --color-accent: #2EAADC;
-  --color-hover: #EFEFEF;
+  --color-hover: #caecf1;
   --color-success: #0F7B6C;
   --color-danger: #E03E3E;
   --font-size-base: 16px;

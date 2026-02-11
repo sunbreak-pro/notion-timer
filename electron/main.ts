@@ -1,5 +1,5 @@
 import log from './logger';
-import { app, BrowserWindow, dialog } from 'electron';
+import { app, BrowserWindow, dialog, session } from 'electron';
 import * as path from 'path';
 import { getDatabase, closeDatabase } from './database/db';
 import { registerAllHandlers } from './ipc/registerAll';
@@ -8,6 +8,25 @@ import { createMenu } from './menu';
 import { initAutoUpdater } from './updater';
 
 const isDev = !app.isPackaged;
+
+if (isDev) {
+  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+}
+
+function setupCSP(): void {
+  const policy = isDev
+    ? "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https: http:; media-src 'self' blob:; font-src 'self'; connect-src 'self' ws://localhost:*; frame-src 'none'; object-src 'none'; base-uri 'self'"
+    : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: http:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'";
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [policy],
+      },
+    });
+  });
+}
 
 function createWindow(): BrowserWindow {
   const saved = loadWindowState();
@@ -44,6 +63,8 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  setupCSP();
+
   try {
     const db = getDatabase();
     registerAllHandlers(db);

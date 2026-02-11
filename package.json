@@ -8,9 +8,9 @@
     "dev": "cd electron && npx tsc && cd .. && concurrently -n vite,tsc,electron -c cyan,yellow,green \"cd frontend && npm run dev\" \"cd electron && npx tsc --watch\" \"wait-on http://localhost:5173 && electron .\"",
     "build": "cd frontend && npm run build && cd ../electron && npx tsc",
     "start": "npm run build && electron .",
-    "dist": "npm run build && electron-builder",
-    "dist:mac": "npm run build && electron-builder --mac",
-    "dist:win": "npm run build && electron-builder --win",
+    "dist": "rm -rf release && npm run build && electron-builder",
+    "dist:mac": "rm -rf release && npm run build && electron-builder --mac",
+    "dist:win": "rm -rf release && npm run build && electron-builder --win",
     "postinstall": "cd frontend && npm install && npx electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {

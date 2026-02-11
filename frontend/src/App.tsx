@@ -41,11 +41,19 @@ function App() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const timer = useTimerContext();
-  const { nodes, addNode, updateNode, softDelete, getTaskColor, getFolderTagForTask, persistError } = useTaskTreeContext();
+  const {
+    nodes,
+    addNode,
+    updateNode,
+    softDelete,
+    getTaskColor,
+    getFolderTagForTask,
+    persistError,
+  } = useTaskTreeContext();
   const { setSelectedDate: setMemoDate } = useMemoContext();
 
   const selectedTask = selectedTaskId
-    ? nodes.find(n => n.id === selectedTaskId && n.type === 'task') ?? null
+    ? (nodes.find((n) => n.id === selectedTaskId && n.type === "task") ?? null)
     : null;
 
   const handlePlayTask = (node: TaskNode) => {
@@ -55,7 +63,11 @@ function App() {
 
   const handlePlaySelectedTask = () => {
     if (!selectedTask) return;
-    timer.openForTask(selectedTask.id, selectedTask.title, selectedTask.workDurationMinutes);
+    timer.openForTask(
+      selectedTask.id,
+      selectedTask.title,
+      selectedTask.workDurationMinutes,
+    );
     setIsTimerModalOpen(true);
   };
 
@@ -72,7 +84,9 @@ function App() {
 
   const handleDurationChange = (minutes: number) => {
     if (!selectedTaskId) return;
-    updateNode(selectedTaskId, { workDurationMinutes: minutes === 0 ? undefined : minutes });
+    updateNode(selectedTaskId, {
+      workDurationMinutes: minutes === 0 ? undefined : minutes,
+    });
   };
 
   const handleScheduledAtChange = (scheduledAt: string | undefined) => {
@@ -93,110 +107,286 @@ function App() {
   };
 
   const handleCreateFolder = (title: string) => {
-    addNode('folder', null, title);
+    addNode("folder", null, title);
   };
 
   const handleCreateTask = (title: string) => {
-    addNode('task', null, title);
+    addNode("task", null, title);
   };
 
   const handleCalendarSelectTask = (taskId: string) => {
     setSelectedTaskId(taskId);
-    setActiveSection('tasks');
+    setActiveSection("tasks");
   };
 
-  const handleCalendarCreateTask = useCallback((date: Date) => {
-    const scheduledDate = new Date(date);
-    scheduledDate.setHours(12, 0, 0, 0);
-    const newNode = addNode('task', null, 'Untitled', { scheduledAt: scheduledDate.toISOString() });
-    if (!newNode) return;
-    timer.openForTask(newNode.id, newNode.title, newNode.workDurationMinutes);
-    setIsTimerModalOpen(true);
-  }, [addNode, timer]);
+  const handleCalendarCreateTask = useCallback(
+    (date: Date) => {
+      const scheduledDate = new Date(date);
+      scheduledDate.setHours(12, 0, 0, 0);
+      const newNode = addNode("task", null, "Untitled", {
+        scheduledAt: scheduledDate.toISOString(),
+      });
+      if (!newNode) return;
+      timer.openForTask(newNode.id, newNode.title, newNode.workDurationMinutes);
+      setIsTimerModalOpen(true);
+    },
+    [addNode, timer],
+  );
 
-  const handleCalendarSelectMemo = useCallback((date: string) => {
-    setMemoDate(date);
-    setActiveSection('memo');
-  }, [setMemoDate]);
+  const handleCalendarSelectMemo = useCallback(
+    (date: string) => {
+      setMemoDate(date);
+      setActiveSection("memo");
+    },
+    [setMemoDate],
+  );
 
   const isInputFocused = useCallback(() => {
     const tag = document.activeElement?.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
-    if (document.activeElement?.getAttribute('contenteditable') === 'true') return true;
+    if (tag === "INPUT" || tag === "TEXTAREA") return true;
+    if (document.activeElement?.getAttribute("contenteditable") === "true")
+      return true;
     return false;
   }, []);
 
   // Command palette commands
-  const commands: Command[] = useMemo(() => [
-    // Navigation
-    { id: 'nav-tasks', title: 'Go to Tasks', category: 'Navigation', shortcut: '⌘1', icon: ListTodo, action: () => setActiveSection('tasks') },
-    { id: 'nav-memo', title: 'Go to Memo', category: 'Navigation', icon: StickyNote, action: () => setActiveSection('memo') },
-    { id: 'nav-session', title: 'Go to Session', category: 'Navigation', shortcut: '⌘2', icon: Timer, action: () => setActiveSection('session') },
-    { id: 'nav-calendar', title: 'Go to Calendar', category: 'Navigation', shortcut: '⌘3', icon: Calendar, action: () => setActiveSection('calendar') },
-    { id: 'nav-analytics', title: 'Go to Analytics', category: 'Navigation', shortcut: '⌘4', icon: BarChart3, action: () => setActiveSection('analytics') },
-    { id: 'nav-settings', title: 'Go to Settings', category: 'Navigation', shortcut: '⌘,', icon: SettingsIcon, action: () => setActiveSection('settings') },
-    { id: 'nav-tips', title: 'Go to Tips', category: 'Navigation', icon: Lightbulb, action: () => setActiveSection('tips') },
-    // Task
-    { id: 'task-create', title: 'Create new task', category: 'Task', shortcut: 'n', icon: Plus, action: () => addNode('task', null, 'New Task') },
-    { id: 'task-create-folder', title: 'Create new folder', category: 'Task', icon: FolderPlus, action: () => addNode('folder', null, 'New Folder') },
-    { id: 'task-delete', title: 'Delete selected task', category: 'Task', shortcut: 'Del', icon: Trash2, action: () => { if (selectedTask) { softDelete(selectedTask.id); setSelectedTaskId(null); } } },
-    // Timer
-    { id: 'timer-modal', title: 'Open timer modal', category: 'Timer', shortcut: '⌘⇧T', icon: Timer, action: () => setIsTimerModalOpen(true) },
-    { id: 'timer-toggle', title: timer.isRunning ? 'Pause timer' : 'Start timer', category: 'Timer', shortcut: 'Space', icon: timer.isRunning ? Pause : Play, action: () => { if (timer.isRunning) timer.pause(); else timer.start(); } },
-    { id: 'timer-reset', title: 'Reset timer', category: 'Timer', shortcut: 'r', icon: RotateCcw, action: () => timer.reset() },
-    // View
-    { id: 'view-left-sidebar', title: 'Toggle left sidebar', category: 'View', shortcut: '⌘.', icon: PanelLeft, action: () => window.dispatchEvent(new KeyboardEvent('keydown', { key: '.', code: 'Period', metaKey: true, bubbles: true })) },
-    { id: 'view-right-sidebar', title: 'Toggle right sidebar', category: 'View', shortcut: '⌘⇧.', icon: PanelRight, action: () => window.dispatchEvent(new KeyboardEvent('keydown', { key: '.', code: 'Period', metaKey: true, shiftKey: true, bubbles: true })) },
-  ], [addNode, selectedTask, softDelete, timer]);
+  const commands: Command[] = useMemo(
+    () => [
+      // Navigation
+      {
+        id: "nav-tasks",
+        title: "Go to Tasks",
+        category: "Navigation",
+        shortcut: "⌘1",
+        icon: ListTodo,
+        action: () => setActiveSection("tasks"),
+      },
+      {
+        id: "nav-memo",
+        title: "Go to Memo",
+        category: "Navigation",
+        icon: StickyNote,
+        action: () => setActiveSection("memo"),
+      },
+      {
+        id: "nav-session",
+        title: "Go to Session",
+        category: "Navigation",
+        shortcut: "⌘2",
+        icon: Timer,
+        action: () => setActiveSection("session"),
+      },
+      {
+        id: "nav-calendar",
+        title: "Go to Calendar",
+        category: "Navigation",
+        shortcut: "⌘3",
+        icon: Calendar,
+        action: () => setActiveSection("calendar"),
+      },
+      {
+        id: "nav-analytics",
+        title: "Go to Analytics",
+        category: "Navigation",
+        shortcut: "⌘4",
+        icon: BarChart3,
+        action: () => setActiveSection("analytics"),
+      },
+      {
+        id: "nav-settings",
+        title: "Go to Settings",
+        category: "Navigation",
+        shortcut: "⌘,",
+        icon: SettingsIcon,
+        action: () => setActiveSection("settings"),
+      },
+      {
+        id: "nav-tips",
+        title: "Go to Tips",
+        category: "Navigation",
+        icon: Lightbulb,
+        action: () => setActiveSection("tips"),
+      },
+      // Task
+      {
+        id: "task-create",
+        title: "Create new task",
+        category: "Task",
+        shortcut: "n",
+        icon: Plus,
+        action: () => addNode("task", null, "New Task"),
+      },
+      {
+        id: "task-create-folder",
+        title: "Create new folder",
+        category: "Task",
+        icon: FolderPlus,
+        action: () => addNode("folder", null, "New Folder"),
+      },
+      {
+        id: "task-delete",
+        title: "Delete selected task",
+        category: "Task",
+        shortcut: "Del",
+        icon: Trash2,
+        action: () => {
+          if (selectedTask) {
+            softDelete(selectedTask.id);
+            setSelectedTaskId(null);
+          }
+        },
+      },
+      // Timer
+      {
+        id: "timer-modal",
+        title: "Open timer modal",
+        category: "Timer",
+        shortcut: "⌘⇧T",
+        icon: Timer,
+        action: () => setIsTimerModalOpen(true),
+      },
+      {
+        id: "timer-toggle",
+        title: timer.isRunning ? "Pause timer" : "Start timer",
+        category: "Timer",
+        shortcut: "Space",
+        icon: timer.isRunning ? Pause : Play,
+        action: () => {
+          if (timer.isRunning) timer.pause();
+          else timer.start();
+        },
+      },
+      {
+        id: "timer-reset",
+        title: "Reset timer",
+        category: "Timer",
+        shortcut: "r",
+        icon: RotateCcw,
+        action: () => timer.reset(),
+      },
+      // View
+      {
+        id: "view-left-sidebar",
+        title: "Toggle left sidebar",
+        category: "View",
+        shortcut: "⌘.",
+        icon: PanelLeft,
+        action: () =>
+          window.dispatchEvent(
+            new KeyboardEvent("keydown", {
+              key: ".",
+              code: "Period",
+              metaKey: true,
+              bubbles: true,
+            }),
+          ),
+      },
+      {
+        id: "view-right-sidebar",
+        title: "Toggle right sidebar",
+        category: "View",
+        shortcut: "⌘⇧.",
+        icon: PanelRight,
+        action: () =>
+          window.dispatchEvent(
+            new KeyboardEvent("keydown", {
+              key: ".",
+              code: "Period",
+              metaKey: true,
+              shiftKey: true,
+              bubbles: true,
+            }),
+          ),
+      },
+    ],
+    [addNode, selectedTask, softDelete, timer],
+  );
 
   // Handle native menu actions from Electron
   useEffect(() => {
     const cleanup = window.electronAPI?.onMenuAction((action: string) => {
       switch (action) {
-        case 'new-task': addNode('task', null, 'New Task'); break;
-        case 'new-folder': addNode('folder', null, 'New Folder'); break;
-        case 'navigate:settings': setActiveSection('settings'); break;
-        case 'navigate:tips': setActiveSection('tips'); break;
-        case 'toggle-timer-modal': setIsTimerModalOpen(prev => !prev); break;
-        case 'toggle-left-sidebar':
-          window.dispatchEvent(new KeyboardEvent('keydown', { key: '.', code: 'Period', metaKey: true, bubbles: true }));
+        case "new-task":
+          addNode("task", null, "New Task");
           break;
-        case 'toggle-right-sidebar':
-          window.dispatchEvent(new KeyboardEvent('keydown', { key: '.', code: 'Period', metaKey: true, shiftKey: true, bubbles: true }));
+        case "new-folder":
+          addNode("folder", null, "New Folder");
           break;
-        case 'export-data':
+        case "navigate:settings":
+          setActiveSection("settings");
+          break;
+        case "navigate:tips":
+          setActiveSection("tips");
+          break;
+        case "toggle-timer-modal":
+          setIsTimerModalOpen((prev) => !prev);
+          break;
+        case "toggle-left-sidebar":
+          window.dispatchEvent(
+            new KeyboardEvent("keydown", {
+              key: ".",
+              code: "Period",
+              metaKey: true,
+              bubbles: true,
+            }),
+          );
+          break;
+        case "toggle-right-sidebar":
+          window.dispatchEvent(
+            new KeyboardEvent("keydown", {
+              key: ".",
+              code: "Period",
+              metaKey: true,
+              shiftKey: true,
+              bubbles: true,
+            }),
+          );
+          break;
+        case "export-data":
           getDataService().exportData().catch(console.warn);
           break;
-        case 'import-data':
-          getDataService().importData().then(ok => { if (ok) window.location.reload(); }).catch(console.warn);
+        case "import-data":
+          getDataService()
+            .importData()
+            .then((ok) => {
+              if (ok) window.location.reload();
+            })
+            .catch(console.warn);
           break;
       }
     });
-    return () => { cleanup?.(); };
+    return () => {
+      cleanup?.();
+    };
   }, [addNode]);
 
   useEffect(() => {
     const sectionMap: Record<string, SectionId> = {
-      '1': 'tasks', '2': 'session', '3': 'calendar', '4': 'analytics', '5': 'settings',
+      "1": "tasks",
+      "2": "session",
+      "3": "calendar",
+      "4": "analytics",
+      "5": "settings",
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd+K → Command Palette (but defer to TipTap Link when editor has selection)
-      if (e.metaKey && !e.shiftKey && e.code === 'KeyK') {
+      if (e.metaKey && !e.shiftKey && e.code === "KeyK") {
         const el = document.activeElement;
-        const isEditorWithSelection = el?.getAttribute('contenteditable') === 'true' &&
+        const isEditorWithSelection =
+          el?.getAttribute("contenteditable") === "true" &&
           window.getSelection()?.toString();
         if (!isEditorWithSelection) {
           e.preventDefault();
-          setIsCommandPaletteOpen(prev => !prev);
+          setIsCommandPaletteOpen((prev) => !prev);
           return;
         }
       }
 
       // Cmd+, → Settings (works even when input is focused)
-      if (e.metaKey && e.code === 'Comma') {
+      if (e.metaKey && e.code === "Comma") {
         e.preventDefault();
-        setActiveSection('settings');
+        setActiveSection("settings");
         return;
       }
 
@@ -208,15 +398,15 @@ function App() {
       }
 
       // Cmd+Shift+T → Timer modal toggle (works even when input is focused)
-      if (e.metaKey && e.shiftKey && e.code === 'KeyT') {
+      if (e.metaKey && e.shiftKey && e.code === "KeyT") {
         e.preventDefault();
-        setIsTimerModalOpen(prev => !prev);
+        setIsTimerModalOpen((prev) => !prev);
         return;
       }
 
       if (isInputFocused()) return;
 
-      if (e.key === ' ') {
+      if (e.key === " ") {
         e.preventDefault();
         if (timer.isRunning) {
           timer.pause();
@@ -225,30 +415,37 @@ function App() {
         }
       }
 
-      if (e.key === 'n') {
+      if (e.key === "n") {
         e.preventDefault();
-        addNode('task', null, 'New Task');
+        addNode("task", null, "New Task");
       }
 
       // r → Timer reset
-      if (e.key === 'r') {
+      if (e.key === "r") {
         e.preventDefault();
         timer.reset();
       }
 
-      if (e.key === 'Escape' && isTimerModalOpen) {
+      if (e.key === "Escape" && isTimerModalOpen) {
         setIsTimerModalOpen(false);
       }
 
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedTask) {
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedTask) {
         e.preventDefault();
         handleDeleteSelectedTask();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [timer, isTimerModalOpen, selectedTask, addNode, isInputFocused, handleDeleteSelectedTask]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    timer,
+    isTimerModalOpen,
+    selectedTask,
+    addNode,
+    isInputFocused,
+    handleDeleteSelectedTask,
+  ]);
 
   const renderContent = () => {
     switch (activeSection) {
@@ -264,8 +461,10 @@ function App() {
             onDurationChange={handleDurationChange}
             onScheduledAtChange={handleScheduledAtChange}
             onFolderColorChange={handleFolderColorChange}
-            onNavigateToSettings={() => setActiveSection('settings')}
-            folderTag={selectedTask ? getFolderTagForTask(selectedTask.id) : undefined}
+            onNavigateToSettings={() => setActiveSection("settings")}
+            folderTag={
+              selectedTask ? getFolderTagForTask(selectedTask.id) : undefined
+            }
             taskColor={selectedTask ? getTaskColor(selectedTask.id) : undefined}
           />
         );
@@ -274,7 +473,13 @@ function App() {
       case "session":
         return <WorkScreen />;
       case "calendar":
-        return <CalendarView onSelectTask={handleCalendarSelectTask} onCreateTask={handleCalendarCreateTask} onSelectMemo={handleCalendarSelectMemo} />;
+        return (
+          <CalendarView
+            onSelectTask={handleCalendarSelectTask}
+            onCreateTask={handleCalendarCreateTask}
+            onSelectMemo={handleCalendarSelectMemo}
+          />
+        );
       case "analytics":
         return <AnalyticsView />;
       case "settings":
@@ -290,7 +495,7 @@ function App() {
     <>
       <UpdateNotification />
       {persistError && (
-        <div className="fixed top-0 left-0 right-0 z-[9999] bg-red-600 text-white text-sm px-4 py-2 text-center">
+        <div className="fixed top-0 left-0 right-0 z-9999 bg-red-600 text-white text-sm px-4 py-2 text-center">
           Save failed: {persistError}
         </div>
       )}
@@ -308,10 +513,7 @@ function App() {
       </Layout>
 
       {isTimerModalOpen && (
-        <WorkScreen
-          isOverlay
-          onClose={handleCloseTimerModal}
-        />
+        <WorkScreen isOverlay onClose={handleCloseTimerModal} />
       )}
 
       <CommandPalette
