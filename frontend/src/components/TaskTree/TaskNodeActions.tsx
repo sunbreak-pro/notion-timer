@@ -1,27 +1,44 @@
-import { Play, Pause, Trash2, LucideFolderPlus, Plus } from "lucide-react";
+import { Play, Pause, Trash2, LucideFolderPlus, Plus, CheckCircle2 } from "lucide-react";
 import type { TaskNode } from "../../types/taskTree";
 
 interface TaskNodeActionsProps {
   node: TaskNode;
   isDone: boolean;
   isTimerActive: boolean;
+  isFolderDone?: boolean;
   makeFolder: (node: TaskNode) => void;
   makeTask: (node: TaskNode) => void;
   onPlayTask?: (node: TaskNode) => void;
   onDelete: (id: string) => void;
+  onCompleteFolder?: () => void;
 }
 
 export function TaskNodeActions({
   node,
   isDone,
   isTimerActive,
+  isFolderDone,
   onPlayTask,
   onDelete,
   makeFolder,
   makeTask,
+  onCompleteFolder,
 }: TaskNodeActionsProps) {
   return (
     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+      {node.type === "folder" && onCompleteFolder && (
+        <button
+          onClick={onCompleteFolder}
+          className={`p-1 ${
+            isFolderDone
+              ? "text-notion-accent hover:text-notion-text-secondary"
+              : "text-notion-text-secondary hover:text-notion-success"
+          }`}
+          title={isFolderDone ? "Mark Incomplete" : "Complete Folder"}
+        >
+          <CheckCircle2 size={14} />
+        </button>
+      )}
       {node.type === "folder" && (
         <button
           onClick={() => makeTask(node)}

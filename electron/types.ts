@@ -107,6 +107,17 @@ export interface TaskTemplate {
   createdAt: string;
 }
 
+export interface NoteNode {
+  id: string;
+  title: string;
+  content: string;
+  isPinned: boolean;
+  isDeleted: boolean;
+  deletedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MigrationPayload {
   tasks?: TaskNode[];
   timerSettings?: Partial<TimerSettings>;

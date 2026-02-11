@@ -5,4 +5,5 @@ export const STORAGE_KEYS = {
   NOTIFICATIONS_ENABLED: 'sonic-flow-notifications-enabled',
   LEFT_SIDEBAR_OPEN: 'sonic-flow-left-sidebar-open',
   RIGHT_SIDEBAR_OPEN: 'sonic-flow-right-sidebar-open',
+  MEMO_TAB: 'sonic-flow-memo-tab',
 } as const;

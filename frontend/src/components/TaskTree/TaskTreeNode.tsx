@@ -19,6 +19,8 @@ import { TaskNodeTimer, TaskNodeTimerBar } from "./TaskNodeTimer";
 import { TaskNodeContextMenu } from "./TaskNodeContextMenu";
 import { TagBadge } from "../Tags/TagBadge";
 import { useTemplates } from "../../hooks/useTemplates";
+import { ConfirmDialog } from "../common/ConfirmDialog";
+import { computeFolderProgress } from "../../utils/folderProgress";
 
 interface TaskTreeNodeProps {
   node: TaskNode;
@@ -38,6 +40,7 @@ export function TaskTreeNode({
   selectedTaskId,
 }: TaskTreeNodeProps) {
   const {
+    nodes,
     getChildren,
     updateNode,
     toggleExpanded,
@@ -45,6 +48,8 @@ export function TaskTreeNode({
     softDelete,
     addNode,
     moveToRoot,
+    completeFolderWithChildren,
+    uncompleteFolder,
   } = useTaskTreeContext();
 
   const timer = useTimerContext();
@@ -56,6 +61,7 @@ export function TaskTreeNode({
     x: number;
     y: number;
   } | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const {
     attributes,
@@ -71,8 +77,14 @@ export function TaskTreeNode({
   const childIds = useMemo(() => children.map((c) => c.id), [children]);
   const isFolder = node.type === "folder";
   const isDone = node.type === "task" && node.status === "DONE";
+  const isFolderDone = isFolder && node.status === "DONE";
   const isTimerActive = timer.activeTask?.id === node.id && timer.isRunning;
   const isSelected = node.type === "task" && selectedTaskId === node.id;
+
+  const progress = useMemo(
+    () => isFolder ? computeFolderProgress(node.id, nodes) : undefined,
+    [isFolder, node.id, nodes],
+  );
 
   // Load tags for this node
   useEffect(() => {
@@ -115,6 +127,19 @@ export function TaskTreeNode({
     createTemplate(node.title, JSON.stringify(collected));
   }, [node, getChildren, createTemplate]);
 
+  const handleCompleteFolder = useCallback(() => {
+    if (isFolderDone) {
+      uncompleteFolder(node.id);
+    } else {
+      setShowConfirmDialog(true);
+    }
+  }, [isFolderDone, node.id, uncompleteFolder]);
+
+  const handleConfirmComplete = useCallback(() => {
+    completeFolderWithChildren(node.id);
+    setShowConfirmDialog(false);
+  }, [completeFolderWithChildren, node.id]);
+
   return (
     <div>
       <div
@@ -154,8 +179,9 @@ export function TaskTreeNode({
         ) : (
           <TaskNodeContent
             title={node.title}
-            isDone={isDone}
+            isDone={isDone || isFolderDone}
             isFolder={isFolder}
+            progress={progress}
             onSelectTask={onSelectTask}
             onStartEditing={() => setIsEditing(true)}
             onToggleExpand={() => toggleExpanded(node.id)}
@@ -181,10 +207,12 @@ export function TaskTreeNode({
           node={node}
           isDone={isDone}
           isTimerActive={isTimerActive}
+          isFolderDone={isFolderDone}
           makeFolder={(node) => addNode("folder", node.id, "New Folder")}
           makeTask={(node) => addNode("task", node.id, "New Task")}
           onPlayTask={onPlayTask}
           onDelete={softDelete}
+          onCompleteFolder={isFolder ? handleCompleteFolder : undefined}
         />
       </div>
 
@@ -194,6 +222,7 @@ export function TaskTreeNode({
           y={contextMenu.y}
           isFolder={isFolder}
           isDone={isDone}
+          isFolderDone={isFolderDone}
           hasParent={node.parentId !== null}
           onRename={() => setIsEditing(true)}
           onAddTask={() => addNode("task", node.id, "New Task")}
@@ -201,8 +230,17 @@ export function TaskTreeNode({
           onStartTimer={() => onPlayTask?.(node)}
           onMoveToRoot={() => moveToRoot(node.id)}
           onSaveAsTemplate={isFolder ? handleSaveAsTemplate : undefined}
+          onCompleteFolder={isFolder ? handleCompleteFolder : undefined}
           onDelete={() => softDelete(node.id)}
           onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {showConfirmDialog && (
+        <ConfirmDialog
+          message="フォルダ内の未完了タスクもすべて完了になります。よろしいですか？"
+          onConfirm={handleConfirmComplete}
+          onCancel={() => setShowConfirmDialog(false)}
         />
       )}
 

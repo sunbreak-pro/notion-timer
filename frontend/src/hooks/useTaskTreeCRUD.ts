@@ -30,7 +30,7 @@ export function useTaskTreeCRUD(
       title,
       parentId,
       order: siblings.length,
-      status: type === 'task' ? 'TODO' : undefined,
+      status: 'TODO',
       isExpanded: type !== 'task' ? true : undefined,
       createdAt: new Date().toISOString(),
       scheduledAt: type === 'task' ? (options?.scheduledAt ?? new Date().toISOString()) : undefined,
@@ -60,5 +60,38 @@ export function useTaskTreeCRUD(
     }));
   }, [nodes, persist]);
 
-  return { addNode, updateNode, toggleExpanded, toggleTaskStatus };
+  const completeFolderWithChildren = useCallback((folderId: string) => {
+    const now = new Date().toISOString();
+    const idsToComplete = new Set<string>();
+
+    const collectDescendants = (parentId: string) => {
+      idsToComplete.add(parentId);
+      for (const n of nodes) {
+        if (!n.isDeleted && n.parentId === parentId) {
+          if (n.type === 'folder') {
+            collectDescendants(n.id);
+          } else {
+            idsToComplete.add(n.id);
+          }
+        }
+      }
+    };
+    collectDescendants(folderId);
+
+    persist(nodes.map(n =>
+      idsToComplete.has(n.id) && n.status !== 'DONE'
+        ? { ...n, status: 'DONE' as TaskStatus, completedAt: now }
+        : n
+    ));
+  }, [nodes, persist]);
+
+  const uncompleteFolder = useCallback((folderId: string) => {
+    persist(nodes.map(n =>
+      n.id === folderId
+        ? { ...n, status: 'TODO' as TaskStatus, completedAt: undefined }
+        : n
+    ));
+  }, [nodes, persist]);
+
+  return { addNode, updateNode, toggleExpanded, toggleTaskStatus, completeFolderWithChildren, uncompleteFolder };
 }

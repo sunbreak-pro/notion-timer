@@ -9,6 +9,9 @@ export function runMigrations(db: Database.Database): void {
   if (currentVersion < 2) {
     migrateV2(db);
   }
+  if (currentVersion < 3) {
+    migrateV3(db);
+  }
 }
 
 function migrateV1(db: Database.Database): void {
@@ -133,5 +136,36 @@ function migrateV2(db: Database.Database): void {
     );
 
     PRAGMA user_version = 2;
+  `);
+}
+
+function migrateV3(db: Database.Database): void {
+  db.exec(`
+    -- Notes (free-form memos)
+    CREATE TABLE IF NOT EXISTS notes (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL DEFAULT 'Untitled',
+      content TEXT NOT NULL DEFAULT '',
+      is_pinned INTEGER NOT NULL DEFAULT 0,
+      is_deleted INTEGER NOT NULL DEFAULT 0,
+      deleted_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_notes_deleted ON notes(is_deleted);
+    CREATE INDEX IF NOT EXISTS idx_notes_pinned ON notes(is_pinned);
+
+    -- Note-Tag associations
+    CREATE TABLE IF NOT EXISTS note_tags (
+      note_id TEXT NOT NULL,
+      tag_id INTEGER NOT NULL,
+      PRIMARY KEY (note_id, tag_id),
+      FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE,
+      FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_note_tags_note ON note_tags(note_id);
+    CREATE INDEX IF NOT EXISTS idx_note_tags_tag ON note_tags(tag_id);
+
+    PRAGMA user_version = 3;
   `);
 }

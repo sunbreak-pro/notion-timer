@@ -46,6 +46,8 @@ export function registerDataIOHandlers(db: Database.Database): void {
         memos: safeQuery(db, 'SELECT * FROM memos'),
         tags: safeQuery(db, 'SELECT * FROM tags'),
         taskTags: safeQuery(db, 'SELECT * FROM task_tags'),
+        notes: safeQuery(db, 'SELECT * FROM notes'),
+        noteTags: safeQuery(db, 'SELECT * FROM note_tags'),
         templates: safeQuery(db, 'SELECT * FROM task_templates'),
         aiSettings: safeQueryOne(db, 'SELECT * FROM ai_settings WHERE id = 1'),
       },
@@ -88,6 +90,8 @@ export function registerDataIOHandlers(db: Database.Database): void {
       const importAll = db.transaction(() => {
         // Clear all tables
         db.exec(`
+          DELETE FROM note_tags;
+          DELETE FROM notes;
           DELETE FROM task_tags;
           DELETE FROM tags;
           DELETE FROM task_templates;
@@ -187,6 +191,25 @@ export function registerDataIOHandlers(db: Database.Database): void {
           `);
           for (const t of data.templates) {
             insertTemplate.run(t);
+          }
+        }
+
+        // Import notes
+        if (Array.isArray(data.notes)) {
+          const insertNote = db.prepare(`
+            INSERT INTO notes (id, title, content, is_pinned, is_deleted, deleted_at, created_at, updated_at)
+            VALUES (@id, @title, @content, @is_pinned, @is_deleted, @deleted_at, @created_at, @updated_at)
+          `);
+          for (const n of data.notes) {
+            insertNote.run(n);
+          }
+        }
+
+        // Import note_tags
+        if (Array.isArray(data.noteTags)) {
+          const insertNoteTag = db.prepare(`INSERT INTO note_tags (note_id, tag_id) VALUES (@note_id, @tag_id)`);
+          for (const nt of data.noteTags) {
+            insertNoteTag.run(nt);
           }
         }
 

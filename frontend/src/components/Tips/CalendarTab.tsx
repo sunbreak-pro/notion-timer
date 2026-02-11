@@ -19,7 +19,7 @@ export function CalendarTab() {
       <Section title="Task Display">
         <ul className="list-disc pl-5 space-y-1.5">
           <li>Tasks with a <Strong>scheduledAt</Strong> date appear on their calendar day.</li>
-          <li>Task colors are inherited from their parent folder's color.</li>
+          <li>Task colors are inherited from their parent folder&apos;s color.</li>
           <li>Click a task chip to navigate to the Tasks view with that task selected.</li>
         </ul>
       </Section>
@@ -38,6 +38,15 @@ export function CalendarTab() {
           <li>Only non-deleted tasks with scheduled dates appear on the calendar.</li>
         </ul>
       </Section>
+
+      <Section title="Keyboard Shortcuts">
+        <ul className="list-disc pl-5 space-y-1.5">
+          <li><Kbd>j</Kbd> &mdash; Navigate to the next month or week.</li>
+          <li><Kbd>k</Kbd> &mdash; Navigate to the previous month or week.</li>
+          <li><Kbd>t</Kbd> &mdash; Jump to today.</li>
+          <li><Kbd>m</Kbd> &mdash; Toggle between month and week view.</li>
+        </ul>
+      </Section>
     </div>
   );
 }
@@ -53,4 +62,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Strong({ children }: { children: React.ReactNode }) {
   return <span className="font-medium text-notion-text">{children}</span>;
+}
+
+function Kbd({ children }: { children: string }) {
+  return (
+    <kbd className="inline-block px-1.5 py-0.5 text-xs font-mono bg-notion-hover border border-notion-border rounded text-notion-text">
+      {children}
+    </kbd>
+  );
 }

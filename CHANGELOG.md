@@ -4,6 +4,18 @@
 
 ---
 
+## Tips セクション補完 (2026-02-11)
+
+- ShortcutsTab を 6 カテゴリ/29 件に拡充（Global, Navigation, View, Task Tree, Timer, Calendar）
+- MemoTab 新規作成（5 セクション: Daily Memo, Date Navigation, Rich Text Editor, Calendar Integration, Deleting Memos）
+- AnalyticsTab 新規作成（3 セクション: Overview Metrics, Completion Rates, Accessing Analytics）
+- Tips.tsx に memo/analytics タブ追加（5 タブ → 7 タブ構成）
+- TasksTab に Context Menu / Tags / Templates セクション追加、Task Details にショートカット追記
+- TimerTab に `r` リセット、`⌘⇧T` モーダル開閉を追記
+- CalendarTab に Keyboard Shortcuts セクション追加（j/k/t/m）
+
+---
+
 ## Windows 互換性対応 (2026-02-11)
 
 - `utils/platform.ts` 新規作成: `isMac`, `modSymbol`, `modKey` ユーティリティ

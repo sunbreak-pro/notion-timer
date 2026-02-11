@@ -34,20 +34,6 @@ import { TagFilter } from "../Tags/TagFilter";
 import { TemplateDialog } from "../Templates/TemplateDialog";
 import type { TaskNode } from "../../types/taskTree";
 
-function isFolderFullyCompleted(
-  folderId: string,
-  activeNodes: TaskNode[],
-): boolean {
-  const children = activeNodes.filter((n) => n.parentId === folderId);
-  if (children.length === 0) return true;
-  return children.every((child) => {
-    if (child.type === "task") return child.status === "DONE";
-    if (child.type === "folder")
-      return isFolderFullyCompleted(child.id, activeNodes);
-    return false;
-  });
-}
-
 interface TaskTreeProps {
   onPlayTask?: (node: TaskNode) => void;
   onSelectTask?: (id: string) => void;
@@ -100,9 +86,9 @@ export function TaskTree({
   const folders = useMemo(
     () =>
       rootChildren.filter(
-        (n) => n.type === "folder" && !isFolderFullyCompleted(n.id, nodes),
+        (n) => n.type === "folder" && n.status !== "DONE",
       ),
-    [rootChildren, nodes],
+    [rootChildren],
   );
 
   const completedRootTasks = useMemo(
@@ -112,9 +98,9 @@ export function TaskTree({
   const completedFolders = useMemo(
     () =>
       rootChildren.filter(
-        (n) => n.type === "folder" && isFolderFullyCompleted(n.id, nodes),
+        (n) => n.type === "folder" && n.status === "DONE",
       ),
-    [rootChildren, nodes],
+    [rootChildren],
   );
   const hasCompleted =
     completedRootTasks.length > 0 || completedFolders.length > 0;

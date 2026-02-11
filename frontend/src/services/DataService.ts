@@ -4,6 +4,7 @@ import type { SoundSettings, SoundPreset } from '../types/sound';
 import type { MemoNode } from '../types/memo';
 import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../types/ai';
 import type { CustomSoundMeta } from '../types/customSound';
+import type { NoteNode } from '../types/note';
 import type { Tag } from '../types/tag';
 import type { TaskTemplate } from '../types/template';
 import type { LogEntry, IpcChannelMetrics, SystemInfo } from '../types/diagnostics';
@@ -40,6 +41,19 @@ export interface DataService {
   fetchMemoByDate(date: string): Promise<MemoNode | null>;
   upsertMemo(date: string, content: string): Promise<MemoNode>;
   deleteMemo(date: string): Promise<void>;
+
+  // Notes
+  fetchAllNotes(): Promise<NoteNode[]>;
+  fetchDeletedNotes(): Promise<NoteNode[]>;
+  createNote(id: string, title: string): Promise<NoteNode>;
+  updateNote(id: string, updates: Partial<Pick<NoteNode, 'title' | 'content' | 'isPinned'>>): Promise<NoteNode>;
+  softDeleteNote(id: string): Promise<void>;
+  restoreNote(id: string): Promise<void>;
+  permanentDeleteNote(id: string): Promise<void>;
+  searchNotes(query: string): Promise<NoteNode[]>;
+  fetchTagsForNote(noteId: string): Promise<Tag[]>;
+  setTagsForNote(noteId: string, tagIds: number[]): Promise<void>;
+  fetchAllNoteTags(): Promise<Array<{ note_id: string; tag_id: number }>>;
 
   // Custom Sounds
   saveCustomSound(id: string, data: ArrayBuffer, meta: CustomSoundMeta): Promise<void>;

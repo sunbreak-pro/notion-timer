@@ -1,3 +1,8 @@
+import { isMac } from '../../utils/platform';
+
+const mod = isMac ? '⌘' : 'Ctrl';
+const shift = isMac ? '⇧' : 'Shift';
+
 export function TimerTab() {
   return (
     <div className="space-y-6 text-sm text-notion-text-secondary">
@@ -14,6 +19,7 @@ export function TimerTab() {
           <li>Click the <Strong>play button</Strong> on any task to start a focused session.</li>
           <li>Or go to the <Strong>Session</Strong> screen for a free (untied) timer.</li>
           <li>Press <Kbd>Space</Kbd> to toggle play/pause when not typing.</li>
+          <li>Press <Kbd>r</Kbd> to reset the timer when not typing.</li>
         </ul>
       </Section>
 
@@ -21,6 +27,7 @@ export function TimerTab() {
         <ul className="list-disc pl-5 space-y-1.5">
           <li>The timer runs as a <Strong>modal overlay</Strong> on top of any screen.</li>
           <li>Close the modal with <Kbd>Escape</Kbd> &mdash; the timer keeps running in the background.</li>
+          <li>Press <Kbd>{`${mod} + ${shift} + T`}</Kbd> to toggle the timer modal from any screen.</li>
           <li>A mini timer widget appears in the left sidebar while active.</li>
         </ul>
       </Section>

@@ -1,6 +1,6 @@
 # Feature Plans
 
-将来実装予定の機能仕様ストック。
+実装プラン（起案〜進行中）を管理するディレクトリ。
 
 ## 命名規則
 
@@ -10,6 +10,20 @@ NNN-<slug>.md
 
 - `NNN`: 3桁の連番（ディレクトリ内で独立採番）
 - `<slug>`: ケバブケースの短い説明
+
+## ステータスヘッダー
+
+各ファイルの先頭に以下を記載:
+
+```markdown
+---
+Status: PLANNED | IN_PROGRESS
+Started: YYYY-MM-DD  # IN_PROGRESS 時に追加
+---
+```
+
+- `PLANNED`: 起案済み・未着手
+- `IN_PROGRESS`: 作業中
 
 ## TODO.md との関係
 
@@ -26,4 +40,9 @@ NNN-<slug>.md
 
 ## ライフサイクル
 
-作業開始時に `current_plans/` へ移動。
+```
+feature_plans/ (PLANNED → IN_PROGRESS) → archive/ (COMPLETED)
+```
+
+- 作業開始時にステータスを `IN_PROGRESS` に変更し `Started` 日付を追加
+- 完了時に `Completed: YYYY-MM-DD` を追加して `archive/` へ移動

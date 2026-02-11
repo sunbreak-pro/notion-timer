@@ -14,8 +14,10 @@ import { registerSoundHandlers } from './soundHandlers';
 import { registerMemoHandlers } from './memoHandlers';
 import { registerAIHandlers } from './aiHandlers';
 import { registerAppHandlers } from './appHandlers';
+import { createNoteRepository } from '../database/noteRepository';
 import { createCustomSoundRepository } from '../database/customSoundRepository';
 import { registerCustomSoundHandlers } from './customSoundHandlers';
+import { registerNoteHandlers } from './noteHandlers';
 import { registerTagHandlers } from './tagHandlers';
 import { registerTemplateHandlers } from './templateHandlers';
 import { registerDataIOHandlers } from './dataIOHandlers';
@@ -29,6 +31,7 @@ export function registerAllHandlers(db: Database.Database): void {
   const sound = createSoundRepository(db);
   const memo = createMemoRepository(db);
   const ai = createAIRepository(db);
+  const notes = createNoteRepository(db);
   const tags = createTagRepository(db);
   const templates = createTemplateRepository(db);
 
@@ -45,6 +48,7 @@ export function registerAllHandlers(db: Database.Database): void {
     ['Timer', () => registerTimerHandlers(timer)],
     ['Sound', () => registerSoundHandlers(sound)],
     ['Memo', () => registerMemoHandlers(memo)],
+    ['Notes', () => registerNoteHandlers(notes)],
     ['AI', () => registerAIHandlers(ai)],
     ['CustomSound', () => registerCustomSoundHandlers(createCustomSoundRepository())],
     ['Tags', () => registerTagHandlers(tags)],

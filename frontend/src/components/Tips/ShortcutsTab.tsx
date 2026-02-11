@@ -10,39 +10,67 @@ interface ShortcutGroup {
   shortcuts: ShortcutEntry[];
 }
 
-const mod = isMac ? '\u2318' : 'Ctrl';
+const mod = isMac ? '⌘' : 'Ctrl';
+const shift = isMac ? '⇧' : 'Shift';
 
 const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     category: 'Global',
     shortcuts: [
+      { keys: `${mod} + K`, description: 'Open command palette' },
       { keys: `${mod} + ,`, description: 'Open Settings' },
+      { keys: `${mod} + ${shift} + T`, description: 'Toggle timer modal' },
       { keys: 'Space', description: 'Play / Pause timer (when not typing)' },
       { keys: 'n', description: 'Create new task (when not typing)' },
-      { keys: 'Escape', description: 'Close timer modal' },
+      { keys: 'r', description: 'Reset timer (when not typing)' },
+      { keys: 'Escape', description: 'Close modal / dialog' },
     ],
   },
   {
-    category: 'Tasks',
+    category: 'Navigation',
     shortcuts: [
+      { keys: `${mod} + 1`, description: 'Go to Tasks' },
+      { keys: `${mod} + 2`, description: 'Go to Session' },
+      { keys: `${mod} + 3`, description: 'Go to Calendar' },
+      { keys: `${mod} + 4`, description: 'Go to Analytics' },
+      { keys: `${mod} + 5`, description: 'Go to Settings' },
+    ],
+  },
+  {
+    category: 'View',
+    shortcuts: [
+      { keys: `${mod} + .`, description: 'Toggle left sidebar' },
+      { keys: `${mod} + ${shift} + .`, description: 'Toggle right sidebar' },
+    ],
+  },
+  {
+    category: 'Task Tree',
+    shortcuts: [
+      { keys: '↑ / ↓', description: 'Move between tasks' },
+      { keys: '→', description: 'Expand folder' },
+      { keys: '←', description: 'Collapse folder' },
+      { keys: `${mod} + Enter`, description: 'Toggle task completion' },
+      { keys: 'Tab', description: 'Indent (move into previous folder)' },
+      { keys: `${shift} + Tab`, description: 'Outdent (move to parent level)' },
       { keys: 'Delete / Backspace', description: 'Delete selected task' },
-      { keys: 'Drag & Drop', description: 'Reorder tasks or move into folders' },
-      { keys: 'Click task', description: 'Select task and view details' },
-      { keys: '\u25B6 button', description: 'Start timer for a task' },
+      { keys: 'Drag & Drop', description: 'Reorder or move into folders' },
     ],
   },
   {
     category: 'Timer',
     shortcuts: [
-      { keys: 'Space', description: 'Toggle play/pause' },
-      { keys: 'Escape', description: 'Close timer overlay' },
+      { keys: 'Space', description: 'Toggle play / pause' },
+      { keys: 'r', description: 'Reset timer' },
+      { keys: 'Escape', description: 'Close timer modal' },
     ],
   },
   {
     category: 'Calendar',
     shortcuts: [
-      { keys: '\u2190 / \u2192', description: 'Navigate previous / next month or week' },
-      { keys: 'Click day cell', description: 'Create task on that date' },
+      { keys: 'j', description: 'Next month / week' },
+      { keys: 'k', description: 'Previous month / week' },
+      { keys: 't', description: 'Jump to today' },
+      { keys: 'm', description: 'Toggle month / week view' },
     ],
   },
 ];

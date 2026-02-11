@@ -3,6 +3,8 @@ import { ShortcutsTab } from './ShortcutsTab';
 import { TasksTab } from './TasksTab';
 import { TimerTab } from './TimerTab';
 import { CalendarTab } from './CalendarTab';
+import { MemoTab } from './MemoTab';
+import { AnalyticsTab } from './AnalyticsTab';
 import { EditorTab } from './EditorTab';
 
 const TABS = [
@@ -10,6 +12,8 @@ const TABS = [
   { id: 'tasks', label: 'Tasks' },
   { id: 'timer', label: 'Timer' },
   { id: 'calendar', label: 'Calendar' },
+  { id: 'memo', label: 'Memo' },
+  { id: 'analytics', label: 'Analytics' },
   { id: 'editor', label: 'Editor' },
 ] as const;
 
@@ -28,6 +32,10 @@ export function Tips() {
         return <TimerTab />;
       case 'calendar':
         return <CalendarTab />;
+      case 'memo':
+        return <MemoTab />;
+      case 'analytics':
+        return <AnalyticsTab />;
       case 'editor':
         return <EditorTab />;
     }

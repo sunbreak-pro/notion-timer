@@ -5,6 +5,7 @@ import type { SoundSettings, SoundPreset } from '../types/sound';
 import type { MemoNode } from '../types/memo';
 import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../types/ai';
 import type { CustomSoundMeta } from '../types/customSound';
+import type { NoteNode } from '../types/note';
 import type { Tag } from '../types/tag';
 import type { TaskTemplate } from '../types/template';
 import type { LogEntry, IpcChannelMetrics, SystemInfo } from '../types/diagnostics';
@@ -92,6 +93,41 @@ export class ElectronDataService implements DataService {
   }
   deleteMemo(date: string): Promise<void> {
     return invoke('db:memo:delete', date);
+  }
+
+  // Notes
+  fetchAllNotes(): Promise<NoteNode[]> {
+    return invoke('db:notes:fetchAll');
+  }
+  fetchDeletedNotes(): Promise<NoteNode[]> {
+    return invoke('db:notes:fetchDeleted');
+  }
+  createNote(id: string, title: string): Promise<NoteNode> {
+    return invoke('db:notes:create', id, title);
+  }
+  updateNote(id: string, updates: Partial<Pick<NoteNode, 'title' | 'content' | 'isPinned'>>): Promise<NoteNode> {
+    return invoke('db:notes:update', id, updates);
+  }
+  softDeleteNote(id: string): Promise<void> {
+    return invoke('db:notes:softDelete', id);
+  }
+  restoreNote(id: string): Promise<void> {
+    return invoke('db:notes:restore', id);
+  }
+  permanentDeleteNote(id: string): Promise<void> {
+    return invoke('db:notes:permanentDelete', id);
+  }
+  searchNotes(query: string): Promise<NoteNode[]> {
+    return invoke('db:notes:search', query);
+  }
+  fetchTagsForNote(noteId: string): Promise<Tag[]> {
+    return invoke('db:notes:tagsForNote', noteId);
+  }
+  setTagsForNote(noteId: string, tagIds: number[]): Promise<void> {
+    return invoke('db:notes:setTags', noteId, tagIds);
+  }
+  fetchAllNoteTags(): Promise<Array<{ note_id: string; tag_id: number }>> {
+    return invoke('db:notes:allNoteTags');
   }
 
   // Custom Sounds

@@ -1,3 +1,8 @@
+import { isMac } from '../../utils/platform';
+
+const mod = isMac ? '⌘' : 'Ctrl';
+const shift = isMac ? '⇧' : 'Shift';
+
 export function TasksTab() {
   return (
     <div className="space-y-6 text-sm text-notion-text-secondary">
@@ -22,6 +27,8 @@ export function TasksTab() {
           <li>Click a task to view its detail panel on the right.</li>
           <li>Edit the title inline, add a rich-text memo, set a scheduled date, or adjust the work duration.</li>
           <li>The <Strong>play button</Strong> starts a focused timer session for that task.</li>
+          <li>Press <Kbd>{`${mod} + Enter`}</Kbd> to toggle a task between completed and incomplete.</li>
+          <li>Use <Kbd>Tab</Kbd> / <Kbd>{`${shift} + Tab`}</Kbd> to indent or outdent a task in the tree.</li>
         </ul>
       </Section>
 
@@ -36,6 +43,30 @@ export function TasksTab() {
         <ul className="list-disc pl-5 space-y-1.5">
           <li>Deleting a task moves it to the trash (soft delete).</li>
           <li>Go to <Strong>Settings &rarr; Trash</Strong> to restore or permanently delete items.</li>
+        </ul>
+      </Section>
+
+      <Section title="Context Menu">
+        <ul className="list-disc pl-5 space-y-1.5">
+          <li>Right-click a task or folder in the tree to open the context menu.</li>
+          <li>Available actions: <Strong>Rename</Strong>, <Strong>Add Task</Strong>, <Strong>Add Folder</Strong>, <Strong>Start Timer</Strong>, <Strong>Move to Root</Strong>, <Strong>Delete</Strong>.</li>
+          <li>Folders also have a <Strong>Save as Template</Strong> option to save the entire structure.</li>
+        </ul>
+      </Section>
+
+      <Section title="Tags">
+        <ul className="list-disc pl-5 space-y-1.5">
+          <li>Create and manage tags in <Strong>Settings &rarr; Tag Manager</Strong> (name + color).</li>
+          <li>Assign tags to tasks from the task detail panel.</li>
+          <li>Use the tag filter at the top of the task tree to show only matching tasks.</li>
+        </ul>
+      </Section>
+
+      <Section title="Templates">
+        <ul className="list-disc pl-5 space-y-1.5">
+          <li>Right-click a folder &rarr; <Strong>Save as Template</Strong> to save its full structure.</li>
+          <li>Click the template icon in the Projects header to apply a saved template.</li>
+          <li>Templates duplicate the hierarchy, titles, memos, and work durations.</li>
         </ul>
       </Section>
     </div>

@@ -8,6 +8,8 @@ import {
   ArrowUp,
   Trash2,
   Save,
+  CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 
 interface MenuAction {
@@ -22,6 +24,7 @@ interface TaskNodeContextMenuProps {
   y: number;
   isFolder: boolean;
   isDone: boolean;
+  isFolderDone?: boolean;
   hasParent: boolean;
   onRename: () => void;
   onAddTask: () => void;
@@ -29,6 +32,7 @@ interface TaskNodeContextMenuProps {
   onStartTimer: () => void;
   onMoveToRoot: () => void;
   onSaveAsTemplate?: () => void;
+  onCompleteFolder?: () => void;
   onDelete: () => void;
   onClose: () => void;
 }
@@ -38,6 +42,7 @@ export function TaskNodeContextMenu({
   y,
   isFolder,
   isDone,
+  isFolderDone,
   hasParent,
   onRename,
   onAddTask,
@@ -45,6 +50,7 @@ export function TaskNodeContextMenu({
   onStartTimer,
   onMoveToRoot,
   onSaveAsTemplate,
+  onCompleteFolder,
   onDelete,
   onClose,
 }: TaskNodeContextMenuProps) {
@@ -108,6 +114,13 @@ export function TaskNodeContextMenu({
         label: "Save as Template",
         icon: <Save size={14} />,
         onClick: onSaveAsTemplate,
+      });
+    }
+    if (onCompleteFolder) {
+      actions.push({
+        label: isFolderDone ? "Mark Incomplete" : "Complete Folder",
+        icon: isFolderDone ? <RotateCcw size={14} /> : <CheckCircle2 size={14} />,
+        onClick: onCompleteFolder,
       });
     }
   }

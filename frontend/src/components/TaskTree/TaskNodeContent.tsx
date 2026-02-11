@@ -1,7 +1,10 @@
+import type { FolderProgress } from "../../utils/folderProgress";
+
 interface TaskNodeContentProps {
   title: string;
   isDone: boolean;
   isFolder: boolean;
+  progress?: FolderProgress;
   onSelectTask?: (id: string) => void;
   onStartEditing: () => void;
   onToggleExpand?: () => void;
@@ -12,6 +15,7 @@ export function TaskNodeContent({
   title,
   isDone,
   isFolder,
+  progress,
   onSelectTask,
   onStartEditing,
   onToggleExpand,
@@ -36,6 +40,11 @@ export function TaskNodeContent({
       } ${isFolder ? "font-medium" : ""}`}
     >
       {title}
+      {isFolder && progress && progress.total > 0 && (
+        <span className="ml-1.5 text-xs text-notion-text-secondary font-normal">
+          {progress.completed}/{progress.total}
+        </span>
+      )}
     </span>
   );
 }

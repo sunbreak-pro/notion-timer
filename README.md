@@ -17,13 +17,14 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **デスクトップ通知**: タイマーセッション完了時にブラウザ通知
 - **キーボードショートカット**: Space（タイマー）、n（新規タスク）、Escape（モーダル閉じ）、Delete（タスク削除）、Cmd/Ctrl+.（左サイドバー開閉）、Cmd/Ctrl+Shift+.（右サイドバー開閉）、Cmd/Ctrl+,（Settings遷移）、Cmd/Ctrl+1〜5（セクション切替）、↑/↓（タスク移動）、Tab/Shift+Tab（インデント）、r（タイマーリセット）、Cmd/Ctrl+Shift+T（モーダル）、j/k/t/m（カレンダー操作）
 - **Settings画面**: 外観設定、通知設定、ゴミ箱（削除タスクの復元・完全削除）
-- **Tips画面**: ショートカット一覧、タスク/タイマー/カレンダー/エディタの操作ガイド（5タブ構成）
+- **Tips画面**: ショートカット一覧（6カテゴリ/29件）、タスク/タイマー/カレンダー/メモ/アナリティクス/エディタの操作ガイド（7タブ構成）
 - **リッチテキストエディタ**: TipTap拡張（Toggle List/Table/Callout/Image）、スラッシュコマンド対応、テキスト選択時Bubbleツールバー（Bold/Italic/Strikethrough/Code/Link/TextColor）
 - **コマンドパレット**: ⌘Kで起動、16コマンド（Navigation/Task/Timer/View）をリアルタイム検索・実行
 - **カレンダー**: 月/週表示切替、タスクを日付別に表示、フィルタリング（incomplete/completed）
 - **アナリティクス**: 基本統計（総タスク数、完了率、フォルダ数）
 - **データ管理**: SQLite永続化（better-sqlite3）、JSON Export/Import、バックアップ付きインポート
-- **タグ**: タスクにカラータグ付与、フィルタリング
+- **自由メモ（Notes）**: 日付に縛られないフリーフォームノート、ピン留め、全文検索、ソート切替（更新日/作成日/タイトル）、タグ付け・タグフィルタリング、ソフトデリート対応
+- **タグ**: タスク・ノートにカラータグ付与、フィルタリング
 - **テンプレート**: タスクツリー構造をテンプレート保存・展開
 - **自動アップデート**: electron-updater + GitHub Releases、ユーザー確認型ダウンロード・インストール
 - **構造化ログ**: electron-logによるファイル出力、Settings画面でログ閲覧・フィルタ・エクスポート
@@ -57,6 +58,47 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-11 - 自由メモ（Notes）機能追加
+
+#### 概要
+MemoView内にDaily/Notesタブ切替を追加し、日付に縛られないフリーフォームのノート機能を実装。SQLite V3マイグレーション（notes + note_tagsテーブル）、NoteRepository、IPC 11チャンネル、NoteContext、フロントエンドUI（NoteList/NotesView/NoteTagBar）を一括実装。
+
+#### 変更内容
+- **Backend**: `migrations.ts` V3追加（notes, note_tags）、`noteRepository.ts` 新規、`noteHandlers.ts` 新規（11チャンネル）、`preload.ts` チャンネル追加、`registerAll.ts` Notes登録追加、`dataIOHandlers.ts` export/import対応
+- **Frontend サービス層**: `DataService.ts` / `ElectronDataService.ts` に11メソッド追加、`note.ts` 型定義新規
+- **Frontend 状態管理**: `useNotes.ts`（楽観的更新 + fire-and-forget DB同期）、`NoteContext.tsx` / `useNoteContext.ts` 新規、`main.tsx` NoteProvider追加
+- **Frontend UI**: `MemoView.tsx` タブコンテナ化、`DailyMemoView.tsx` 既存日記ビュー抽出、`NotesView.tsx`（タイトル編集+ピン+タグ+TipTapエディタ）、`NoteList.tsx`（検索/ソート/タグフィルタ/ピン優先表示）、`NoteTagBar.tsx`（タグ追加・削除UI）
+- **TrashBin拡張**: 削除済みノートのセクション追加（復元・完全削除対応）
+- **ストレージ**: `MEMO_TAB` localStorage キー追加
+
+### 2026-02-11 - Tips セクション補完
+
+#### 概要
+Tips画面のドキュメントを大幅に補完。ShortcutsTabを4カテゴリ/~12件から6カテゴリ/29件に拡充。Memo・Analyticsの新タブを追加（7タブ構成）。既存タブにもコンテキストメニュー、タグ、テンプレート、キーボードショートカット等の欠落情報を追記。
+
+#### 変更内容
+- **ShortcutsTab**: 全25+ショートカットを6カテゴリ（Global/Navigation/View/Task Tree/Timer/Calendar）に整理
+- **MemoTab**: 新規作成（Daily Memo/Date Navigation/Rich Text Editor/Calendar Integration/Deleting Memos）
+- **AnalyticsTab**: 新規作成（Overview Metrics/Completion Rates/Accessing Analytics）
+- **Tips.tsx**: memo/analyticsタブ追加（5タブ→7タブ）
+- **TasksTab**: Context Menu/Tags/Templatesセクション追加、Task Detailsにショートカット追記
+- **TimerTab**: rリセット、⌘⇧Tモーダル開閉を追記
+- **CalendarTab**: Keyboard Shortcutsセクション追加（j/k/t/m）
+
+### 2026-02-11 - フォルダ手動完了機能
+
+#### 概要
+フォルダの完了判定を子タスクの自動判定から手動チェック方式に変更。フォルダにCheckCircle2ボタンを追加し、ユーザーが明示的に完了/未完了を切り替えられるようにした。
+
+#### 変更内容
+- **フォルダ完了方式変更**: `isFolderFullyCompleted()`（再帰的自動判定）を削除し、`node.status === 'DONE'`によるシンプルな判定に変更
+- **一括完了**: フォルダ完了時に全子孫（タスク・サブフォルダ）を再帰的にDONEに設定、確認ダイアログ付き
+- **完了解除**: フォルダのみTODOに戻す（子タスクは変更しない）
+- **進捗カウント表示**: フォルダ名の後ろに `completed/total` を表示（子孫タスクのみカウント）
+- **CheckCircle2ボタン**: フォルダ行のホバー時アクションに追加
+- **コンテキストメニュー**: 「Complete Folder」/「Mark Incomplete」アクションを追加
+- **汎用確認ダイアログ**: `ConfirmDialog`コンポーネントを新規作成
 
 ### 2026-02-11 - Windows 互換性対応
 
@@ -450,5 +492,4 @@ npm run dev    # Vite(5173) + tsc --watch + Electron 同時起動
 - [アーキテクチャ決定記録](.claude/docs/adr/)
 - [ロードマップ](TODO.md)
 - [完了履歴](CHANGELOG.md)
-- [進行中プラン](.claude/current_plans/)
-- [機能仕様ストック](.claude/feature_plans/)
+- [実装プラン](.claude/feature_plans/)

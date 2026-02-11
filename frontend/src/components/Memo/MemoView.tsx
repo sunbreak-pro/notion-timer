@@ -1,95 +1,55 @@
-import { lazy, Suspense, useCallback } from "react";
-import { useMemoContext } from "../../hooks/useMemoContext";
-import { MemoDateList } from "./MemoDateList";
+import { useState } from "react";
+import { BookOpen, StickyNote } from "lucide-react";
+import { STORAGE_KEYS } from "../../constants/storageKeys";
+import { DailyMemoView } from "./DailyMemoView";
+import { NotesView } from "./NotesView";
 
-const MemoEditor = lazy(() =>
-  import("../TaskDetail/MemoEditor").then((m) => ({ default: m.MemoEditor })),
-);
+type MemoTab = "daily" | "notes";
 
-function formatDateHeading(dateStr: string): string {
-  const date = new Date(dateStr + "T00:00:00");
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-function getTodayKey(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+function getInitialTab(): MemoTab {
+  const saved = localStorage.getItem(STORAGE_KEYS.MEMO_TAB);
+  return saved === "notes" ? "notes" : "daily";
 }
 
 export function MemoView() {
-  const {
-    memos,
-    selectedDate,
-    setSelectedDate,
-    selectedMemo,
-    upsertMemo,
-    deleteMemo,
-  } = useMemoContext();
-  const todayKey = getTodayKey();
+  const [activeTab, setActiveTab] = useState<MemoTab>(getInitialTab);
 
-  const handleUpdate = useCallback(
-    (content: string) => {
-      upsertMemo(selectedDate, content);
-    },
-    [selectedDate, upsertMemo],
-  );
-
-  const handleCreateToday = useCallback(() => {
-    setSelectedDate(todayKey);
-    // Create an empty memo for today if it doesn't exist
-    if (!memos.some((m) => m.date === todayKey)) {
-      upsertMemo(todayKey, "");
-    }
-  }, [todayKey, setSelectedDate, memos, upsertMemo]);
-
-  const handleDelete = useCallback(
-    (date: string) => {
-      deleteMemo(date);
-      if (selectedDate === date) {
-        setSelectedDate(todayKey);
-      }
-    },
-    [deleteMemo, selectedDate, setSelectedDate, todayKey],
-  );
+  const handleTabChange = (tab: MemoTab) => {
+    setActiveTab(tab);
+    localStorage.setItem(STORAGE_KEYS.MEMO_TAB, tab);
+  };
 
   return (
-    <div className="min-h-170 max-h-fit flex">
-      <MemoDateList
-        memos={memos}
-        selectedDate={selectedDate}
-        todayKey={todayKey}
-        onSelectDate={setSelectedDate}
-        onCreateToday={handleCreateToday}
-        onDelete={handleDelete}
-      />
+    <div className="min-h-170 max-h-fit flex flex-col">
+      {/* Tab bar */}
+      <div className="flex border-b border-notion-border shrink-0">
+        <button
+          onClick={() => handleTabChange("daily")}
+          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
+            activeTab === "daily"
+              ? "border-notion-primary text-notion-text"
+              : "border-transparent text-notion-text-secondary hover:text-notion-text"
+          }`}
+        >
+          <BookOpen size={15} />
+          Daily
+        </button>
+        <button
+          onClick={() => handleTabChange("notes")}
+          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
+            activeTab === "notes"
+              ? "border-notion-primary text-notion-text"
+              : "border-transparent text-notion-text-secondary hover:text-notion-text"
+          }`}
+        >
+          <StickyNote size={15} />
+          Notes
+        </button>
+      </div>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-8 py-6">
-          <h2 className="text-lg font-semibold text-notion-text mb-4">
-            {formatDateHeading(selectedDate)}
-          </h2>
-          <Suspense
-            fallback={
-              <div className="text-notion-text-secondary text-sm">
-                Loading editor...
-              </div>
-            }
-          >
-            <MemoEditor
-              taskId={selectedDate}
-              initialContent={selectedMemo?.content}
-              onUpdate={handleUpdate}
-            />
-          </Suspense>
-        </div>
+      {/* Tab content */}
+      <div className="flex-1 min-h-0">
+        {activeTab === "daily" ? <DailyMemoView /> : <NotesView />}
       </div>
     </div>
   );

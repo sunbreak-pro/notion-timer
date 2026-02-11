@@ -28,6 +28,18 @@ const ALLOWED_CHANNELS = new Set([
   'db:memo:fetchByDate',
   'db:memo:upsert',
   'db:memo:delete',
+  // Notes
+  'db:notes:fetchAll',
+  'db:notes:fetchDeleted',
+  'db:notes:create',
+  'db:notes:update',
+  'db:notes:softDelete',
+  'db:notes:restore',
+  'db:notes:permanentDelete',
+  'db:notes:search',
+  'db:notes:tagsForNote',
+  'db:notes:setTags',
+  'db:notes:allNoteTags',
   // Custom Sound
   'db:customSound:fetchMetas',
   'db:customSound:save',

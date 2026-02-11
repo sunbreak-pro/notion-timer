@@ -193,17 +193,16 @@ type: `feat` / `fix` / `docs` / `style` / `refactor` / `test` / `chore`
 
 | ディレクトリ | 用途 |
 |------------|------|
-| `.claude/current_plans/` | 進行中の実装プラン |
-| `.claude/feature_plans/` | 将来の機能仕様ストック |
+| `.claude/feature_plans/` | 実装プラン（PLANNED / IN_PROGRESS） |
 | `.claude/archive/` | 完了済みプラン |
 | `.claude/docs/Application_Overview.md` | 仕様書 |
 | `.claude/docs/adr/` | アーキテクチャ決定記録 |
 | `TODO.md` | ロードマップ |
 | `CHANGELOG.md` | 完了タスク履歴 |
 
-ライフサイクル: `feature_plans/` → `current_plans/` → `archive/`
+ライフサイクル: `feature_plans/` → `archive/`
 
 **プラン完了時の手順**:
 1. プランファイル内の Status を `COMPLETED` に更新
-2. `current_plans/` から `archive/` へファイルを移動
+2. `feature_plans/` から `archive/` へファイルを移動
 3. `CHANGELOG.md` に完了内容を追記
