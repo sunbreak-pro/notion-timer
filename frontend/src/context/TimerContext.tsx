@@ -48,6 +48,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const [isRunning, setIsRunning] = useState(false);
   const [completedSessions, setCompletedSessions] = useState(0);
   const [activeTask, setActiveTask] = useState<ActiveTask | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
   const intervalRef = useRef<number | null>(null);
   const currentSessionIdRef = useRef<number | null>(null);
 
@@ -110,23 +111,52 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     endCurrentSession(completedDuration, true);
 
     if (currentSessionType === 'WORK') {
+      // Show completion modal instead of auto-transitioning
+      setShowCompletionModal(true);
+      sendNotification('WORK完了！');
+    } else {
+      // REST completed → auto-transition to WORK
       const newCompleted = currentCompleted + 1;
       setCompletedSessions(newCompleted);
-      if (newCompleted % currentConfig.sessionsBeforeLongBreak === 0) {
-        setSessionType('LONG_BREAK');
-        setRemainingSeconds(currentConfig.longBreakDuration);
-        sendNotification('WORK完了！長めの休憩に入ります');
-      } else {
-        setSessionType('BREAK');
-        setRemainingSeconds(currentConfig.breakDuration);
-        sendNotification('WORK完了！休憩に入ります');
-      }
-    } else {
       setSessionType('WORK');
       setRemainingSeconds(currentConfig.workDuration);
       sendNotification('休憩終了！作業を再開しましょう');
     }
   }, [clearTimer, endCurrentSession]);
+
+  const extendWork = useCallback((minutes: number) => {
+    setShowCompletionModal(false);
+    setRemainingSeconds(minutes * 60);
+    setIsRunning(true);
+    const task = activeTaskRef.current;
+    getDataService().startTimerSession('WORK', task?.id).then((session) => {
+      currentSessionIdRef.current = session.id;
+    }).catch((e) => console.warn('[Timer] start session:', e.message));
+  }, []);
+
+  const startRest = useCallback(() => {
+    setShowCompletionModal(false);
+    const currentCompleted = completedSessionsRef.current + 1;
+    setCompletedSessions(currentCompleted);
+    const currentConfig = configRef.current;
+    const task = activeTaskRef.current;
+    if (currentCompleted % currentConfig.sessionsBeforeLongBreak === 0) {
+      setSessionType('LONG_BREAK');
+      setRemainingSeconds(currentConfig.longBreakDuration);
+    } else {
+      setSessionType('BREAK');
+      setRemainingSeconds(currentConfig.breakDuration);
+    }
+    setIsRunning(true);
+    const st = currentCompleted % currentConfig.sessionsBeforeLongBreak === 0 ? 'LONG_BREAK' : 'BREAK';
+    getDataService().startTimerSession(st, task?.id).then((session) => {
+      currentSessionIdRef.current = session.id;
+    }).catch((e) => console.warn('[Timer] start session:', e.message));
+  }, []);
+
+  const dismissCompletionModal = useCallback(() => {
+    setShowCompletionModal(false);
+  }, []);
 
   useEffect(() => {
     if (!isRunning) {
@@ -265,6 +295,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       breakDurationMinutes,
       longBreakDurationMinutes,
       activeTask,
+      showCompletionModal,
       start,
       pause,
       reset,
@@ -277,6 +308,9 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       setBreakDurationMinutes,
       setLongBreakDurationMinutes,
       setSessionsBeforeLongBreak,
+      extendWork,
+      startRest,
+      dismissCompletionModal,
     }}>
       {children}
     </TimerContext.Provider>

@@ -6,6 +6,7 @@ interface SoundSettingsRow {
   sound_type: string;
   volume: number;
   enabled: number;
+  session_category: string;
   updated_at: string;
 }
 
@@ -22,6 +23,7 @@ function settingsRowToObj(row: SoundSettingsRow): SoundSettings {
     soundType: row.sound_type,
     volume: row.volume,
     enabled: !!row.enabled,
+    sessionCategory: row.session_category as 'WORK' | 'REST',
     updatedAt: row.updated_at,
   };
 }
@@ -38,13 +40,14 @@ function presetRowToObj(row: SoundPresetRow): SoundPreset {
 export function createSoundRepository(db: Database.Database) {
   const stmts = {
     fetchSettings: db.prepare(`SELECT * FROM sound_settings ORDER BY sound_type ASC`),
+    fetchSettingsByCategory: db.prepare(`SELECT * FROM sound_settings WHERE session_category = ? ORDER BY sound_type ASC`),
     upsertSetting: db.prepare(`
-      INSERT INTO sound_settings (sound_type, volume, enabled, updated_at)
-      VALUES (@soundType, @volume, @enabled, datetime('now'))
-      ON CONFLICT(sound_type) DO UPDATE SET
+      INSERT INTO sound_settings (sound_type, volume, enabled, session_category, updated_at)
+      VALUES (@soundType, @volume, @enabled, @sessionCategory, datetime('now'))
+      ON CONFLICT(sound_type, session_category) DO UPDATE SET
         volume = @volume, enabled = @enabled, updated_at = datetime('now')
     `),
-    fetchSettingByType: db.prepare(`SELECT * FROM sound_settings WHERE sound_type = ?`),
+    fetchSettingByTypeAndCategory: db.prepare(`SELECT * FROM sound_settings WHERE sound_type = ? AND session_category = ?`),
     fetchPresets: db.prepare(`SELECT * FROM sound_presets ORDER BY created_at DESC`),
     createPreset: db.prepare(`
       INSERT INTO sound_presets (name, settings_json, created_at)
@@ -55,13 +58,16 @@ export function createSoundRepository(db: Database.Database) {
   };
 
   return {
-    fetchSettings(): SoundSettings[] {
+    fetchSettings(sessionCategory?: string): SoundSettings[] {
+      if (sessionCategory) {
+        return (stmts.fetchSettingsByCategory.all(sessionCategory) as SoundSettingsRow[]).map(settingsRowToObj);
+      }
       return (stmts.fetchSettings.all() as SoundSettingsRow[]).map(settingsRowToObj);
     },
 
-    updateSetting(soundType: string, volume: number, enabled: boolean): SoundSettings {
-      stmts.upsertSetting.run({ soundType, volume, enabled: enabled ? 1 : 0 });
-      const row = stmts.fetchSettingByType.get(soundType) as SoundSettingsRow;
+    updateSetting(soundType: string, volume: number, enabled: boolean, sessionCategory: string = 'WORK'): SoundSettings {
+      stmts.upsertSetting.run({ soundType, volume, enabled: enabled ? 1 : 0, sessionCategory });
+      const row = stmts.fetchSettingByTypeAndCategory.get(soundType, sessionCategory) as SoundSettingsRow;
       return settingsRowToObj(row);
     },
 

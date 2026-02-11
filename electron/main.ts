@@ -45,6 +45,7 @@ function createWindow(): BrowserWindow {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      backgroundThrottling: false,
     },
   });
 

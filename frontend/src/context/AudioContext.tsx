@@ -15,7 +15,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     [customSounds]
   );
 
-  const { mixer, toggleSound, setVolume } = useLocalSoundMixer(customSoundIds);
+  const workMixerHook = useLocalSoundMixer(customSoundIds, 'WORK');
+  const restMixerHook = useLocalSoundMixer(customSoundIds, 'REST');
+
+  const activeMixer = timer.sessionType === 'WORK'
+    ? workMixerHook.mixer
+    : restMixerHook.mixer;
 
   const soundSources = useMemo(() => {
     const sources: Record<string, string> = {};
@@ -28,18 +33,29 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     return sources;
   }, [blobUrls]);
 
-  const shouldPlay = timer.isRunning && timer.sessionType === 'WORK';
+  const shouldPlay = timer.isRunning;
 
-  useAudioEngine(mixer, soundSources, shouldPlay);
+  useAudioEngine(activeMixer, soundSources, shouldPlay);
 
   const value: AudioContextValue = useMemo(() => ({
-    mixer,
-    toggleSound,
-    setVolume,
+    mixer: activeMixer,
+    toggleSound: timer.sessionType === 'WORK' ? workMixerHook.toggleSound : restMixerHook.toggleSound,
+    setVolume: timer.sessionType === 'WORK' ? workMixerHook.setVolume : restMixerHook.setVolume,
+    workMixer: workMixerHook.mixer,
+    restMixer: restMixerHook.mixer,
+    toggleWorkSound: workMixerHook.toggleSound,
+    toggleRestSound: restMixerHook.toggleSound,
+    setWorkVolume: workMixerHook.setVolume,
+    setRestVolume: restMixerHook.setVolume,
     customSounds,
     addSound,
     removeSound,
-  }), [mixer, toggleSound, setVolume, customSounds, addSound, removeSound]);
+  }), [
+    activeMixer, timer.sessionType,
+    workMixerHook.mixer, workMixerHook.toggleSound, workMixerHook.setVolume,
+    restMixerHook.mixer, restMixerHook.toggleSound, restMixerHook.setVolume,
+    customSounds, addSound, removeSound,
+  ]);
 
   return (
     <AudioContext.Provider value={value}>

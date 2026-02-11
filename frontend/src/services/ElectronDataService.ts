@@ -65,11 +65,11 @@ export class ElectronDataService implements DataService {
   }
 
   // Sound
-  fetchSoundSettings(): Promise<SoundSettings[]> {
-    return invoke('db:sound:fetchSettings');
+  fetchSoundSettings(sessionCategory?: string): Promise<SoundSettings[]> {
+    return invoke('db:sound:fetchSettings', sessionCategory);
   }
-  updateSoundSetting(soundType: string, volume: number, enabled: boolean): Promise<SoundSettings> {
-    return invoke('db:sound:updateSetting', soundType, volume, enabled);
+  updateSoundSetting(soundType: string, volume: number, enabled: boolean, sessionCategory?: string): Promise<SoundSettings> {
+    return invoke('db:sound:updateSetting', soundType, volume, enabled, sessionCategory);
   }
   fetchSoundPresets(): Promise<SoundPreset[]> {
     return invoke('db:sound:fetchPresets');

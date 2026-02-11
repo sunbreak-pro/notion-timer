@@ -18,6 +18,7 @@ export interface TimerContextValue {
   breakDurationMinutes: number;
   longBreakDurationMinutes: number;
   activeTask: ActiveTask | null;
+  showCompletionModal: boolean;
   start: () => void;
   pause: () => void;
   reset: () => void;
@@ -30,6 +31,9 @@ export interface TimerContextValue {
   setBreakDurationMinutes: (min: number) => void;
   setLongBreakDurationMinutes: (min: number) => void;
   setSessionsBeforeLongBreak: (count: number) => void;
+  extendWork: (minutes: number) => void;
+  startRest: () => void;
+  dismissCompletionModal: () => void;
 }
 
 export const TimerContext = createContext<TimerContextValue | null>(null);

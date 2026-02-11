@@ -168,38 +168,6 @@ export function useAudioEngine(mixer: SoundMixerState, soundSources: Record<stri
     }
   }, [soundSources]);
 
-  // Handle tab visibility changes
-  useEffect(() => {
-    const handleVisibility = () => {
-      const ctx = contextRef.current;
-      if (!ctx) return;
-
-      if (document.hidden) {
-        // Mute all when tab hidden
-        for (const channel of channelsRef.current.values()) {
-          channel.gain.gain.cancelScheduledValues(ctx.currentTime);
-          channel.gain.gain.setValueAtTime(channel.gain.gain.value, ctx.currentTime);
-          channel.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.05);
-        }
-      } else {
-        // Restore volumes when tab visible (only if shouldPlay is true)
-        if (!shouldPlayRef.current) return;
-        const currentMixer = mixerRef.current;
-        for (const [id, channel] of channelsRef.current.entries()) {
-          const state = currentMixer[id];
-          if (state?.enabled) {
-            const targetVolume = state.volume / 100;
-            channel.gain.gain.cancelScheduledValues(ctx.currentTime);
-            channel.gain.gain.setValueAtTime(channel.gain.gain.value, ctx.currentTime);
-            channel.gain.gain.linearRampToValueAtTime(targetVolume, ctx.currentTime + FADE_DURATION);
-          }
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, []);
 
   // Cleanup on unmount
   useEffect(() => {

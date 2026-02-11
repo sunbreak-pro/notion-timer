@@ -4,6 +4,17 @@
 
 ---
 
+## ポモドーロタイマー強化 (2026-02-11)
+
+- WORK完了時セッション完了モーダル追加（延長5〜30分/休憩選択/タスク完了）
+- WorkScreen上のタスク完了ボタン追加
+- REST中サウンド再生対応（Work/Rest別のサウンドミキサー）
+- SoundMixerにWork/Restタブ切替UI追加
+- DBマイグレーションV4: sound_settingsにsession_categoryカラム追加
+- 変更ファイル: 15ファイル（新規1: SessionCompletionModal.tsx）
+
+---
+
 ## Tips セクション補完 (2026-02-11)
 
 - ShortcutsTab を 6 カテゴリ/29 件に拡充（Global, Navigation, View, Task Tree, Timer, Calendar）

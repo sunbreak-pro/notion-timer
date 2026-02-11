@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, CheckCircle2 } from 'lucide-react';
 import { useTimerContext } from '../../hooks/useTimerContext';
 import { useAudioContext } from '../../hooks/useAudioContext';
 import { TimerDisplay } from './TimerDisplay';
@@ -7,15 +7,22 @@ import { TimerProgressBar } from './TimerProgressBar';
 import { DurationSelector } from './DurationSelector';
 import { SoundMixer } from './SoundMixer';
 import { TaskSelector } from './TaskSelector';
+import { SessionCompletionModal } from './SessionCompletionModal';
 
 interface WorkScreenProps {
   isOverlay?: boolean;
   onClose?: () => void;
+  onCompleteTask?: () => void;
 }
 
-export function WorkScreen({ isOverlay = false, onClose }: WorkScreenProps) {
+export function WorkScreen({ isOverlay = false, onClose, onCompleteTask }: WorkScreenProps) {
   const timer = useTimerContext();
-  const { mixer, toggleSound, setVolume, customSounds, addSound, removeSound } = useAudioContext();
+  const {
+    workMixer, restMixer,
+    toggleWorkSound, toggleRestSound,
+    setWorkVolume, setRestVolume,
+    customSounds, addSound, removeSound,
+  } = useAudioContext();
 
   const title = timer.activeTask?.title ?? 'Free Session';
 
@@ -55,6 +62,16 @@ export function WorkScreen({ isOverlay = false, onClose }: WorkScreenProps) {
           onReset={timer.reset}
         />
 
+        {timer.activeTask && onCompleteTask && (
+          <button
+            onClick={onCompleteTask}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 rounded-lg transition-colors"
+          >
+            <CheckCircle2 size={16} />
+            タスクを完了する
+          </button>
+        )}
+
         <DurationSelector
           workDurationMinutes={timer.workDurationMinutes}
           onChangeDuration={timer.setWorkDurationMinutes}
@@ -69,16 +86,29 @@ export function WorkScreen({ isOverlay = false, onClose }: WorkScreenProps) {
       <div className="px-6 pb-6">
         <div className="max-w-md mx-auto">
           <SoundMixer
-            mixer={mixer}
-            onToggle={toggleSound}
-            onVolumeChange={setVolume}
+            workMixer={workMixer}
+            restMixer={restMixer}
+            onToggleWorkSound={toggleWorkSound}
+            onToggleRestSound={toggleRestSound}
+            onSetWorkVolume={setWorkVolume}
+            onSetRestVolume={setRestVolume}
             customSounds={customSounds}
             onAddSound={addSound}
             onRemoveSound={removeSound}
+            activeSessionType={timer.sessionType}
           />
         </div>
       </div>
     </div>
+  );
+
+  const completionModal = timer.showCompletionModal && (
+    <SessionCompletionModal
+      onExtend={timer.extendWork}
+      onStartRest={timer.startRest}
+      onDismiss={timer.dismissCompletionModal}
+      onCompleteTask={timer.activeTask && onCompleteTask ? onCompleteTask : undefined}
+    />
   );
 
   if (isOverlay) {
@@ -88,6 +118,7 @@ export function WorkScreen({ isOverlay = false, onClose }: WorkScreenProps) {
         <div className="relative z-10 w-full max-w-lg mx-4 bg-notion-bg rounded-xl shadow-2xl border border-notion-border max-h-[90vh] overflow-y-auto">
           {content}
         </div>
+        {completionModal}
       </div>
     );
   }
@@ -95,6 +126,7 @@ export function WorkScreen({ isOverlay = false, onClose }: WorkScreenProps) {
   return (
     <div className="h-full min-h-[calc(100vh-4rem)]">
       {content}
+      {completionModal}
     </div>
   );
 }

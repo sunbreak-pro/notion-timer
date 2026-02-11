@@ -49,6 +49,7 @@ function App() {
     addNode,
     updateNode,
     softDelete,
+    toggleTaskStatus,
     getTaskColor,
     getFolderTagForTask,
     persistError,
@@ -100,6 +101,17 @@ function App() {
   const handleFolderColorChange = (folderId: string, color: string) => {
     updateNode(folderId, { color });
   };
+
+  const handleCompleteTask = useCallback(() => {
+    const taskId = timer.activeTask?.id;
+    if (!taskId) return;
+    toggleTaskStatus(taskId);
+    timer.pause();
+    timer.reset();
+    if (timer.showCompletionModal) timer.dismissCompletionModal();
+    timer.clearTask();
+    setIsTimerModalOpen(false);
+  }, [timer, toggleTaskStatus]);
 
   const handleOpenTimerModal = () => {
     setIsTimerModalOpen(true);
@@ -443,7 +455,7 @@ function App() {
       case "memo":
         return <MemoView />;
       case "session":
-        return <WorkScreen />;
+        return <WorkScreen onCompleteTask={handleCompleteTask} />;
       case "calendar":
         return (
           <CalendarView
@@ -486,7 +498,7 @@ function App() {
       </Layout>
 
       {isTimerModalOpen && (
-        <WorkScreen isOverlay onClose={handleCloseTimerModal} />
+        <WorkScreen isOverlay onClose={handleCloseTimerModal} onCompleteTask={handleCompleteTask} />
       )}
 
       <CommandPalette

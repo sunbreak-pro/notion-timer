@@ -48,6 +48,7 @@ export interface SoundSettings {
   soundType: string;
   volume: number;
   enabled: boolean;
+  sessionCategory: 'WORK' | 'REST';
   updatedAt: string;
 }
 

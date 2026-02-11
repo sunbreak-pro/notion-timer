@@ -17,7 +17,7 @@ function getDefaultMixerState(): SoundMixerState {
   return initial;
 }
 
-export function useLocalSoundMixer(customSoundIds: string[] = []) {
+export function useLocalSoundMixer(customSoundIds: string[] = [], sessionCategory: string = 'WORK') {
   const [mixer, setMixer] = useState<SoundMixerState>(getDefaultMixerState);
 
   // Add custom sound entries to mixer when they don't exist yet
@@ -36,14 +36,17 @@ export function useLocalSoundMixer(customSoundIds: string[] = []) {
     });
   }, [customSoundIds]);
 
-  // Load from DataService on mount
+  // Load from DataService on mount and when sessionCategory changes
   useEffect(() => {
     let cancelled = false;
-    getDataService().fetchSoundSettings()
+    getDataService().fetchSoundSettings(sessionCategory)
       .then((settings) => {
-        if (cancelled || settings.length === 0) return;
-        setMixer(prev => {
-          const next = { ...prev };
+        if (cancelled) return;
+        setMixer(() => {
+          const next = getDefaultMixerState();
+          for (const id of customSoundIds) {
+            if (!next[id]) next[id] = { enabled: false, volume: 50 };
+          }
           for (const s of settings) {
             next[s.soundType] = { enabled: s.enabled, volume: s.volume };
           }
@@ -52,26 +55,26 @@ export function useLocalSoundMixer(customSoundIds: string[] = []) {
       })
       .catch((e) => console.warn('[Sound] fetch settings:', e.message));
     return () => { cancelled = true; };
-  }, []);
+  }, [sessionCategory, customSoundIds]);
 
   const toggleSound = useCallback((id: string) => {
     setMixer(prev => {
       const current = prev[id];
       const newEnabled = !current.enabled;
-      getDataService().updateSoundSetting(id, current.volume, newEnabled)
+      getDataService().updateSoundSetting(id, current.volume, newEnabled, sessionCategory)
         .catch((e) => console.warn('[Sound] sync:', e.message));
       return { ...prev, [id]: { ...current, enabled: newEnabled } };
     });
-  }, []);
+  }, [sessionCategory]);
 
   const setVolume = useCallback((id: string, volume: number) => {
     setMixer(prev => {
       const current = prev[id];
-      getDataService().updateSoundSetting(id, volume, current.enabled)
+      getDataService().updateSoundSetting(id, volume, current.enabled, sessionCategory)
         .catch((e) => console.warn('[Sound] sync:', e.message));
       return { ...prev, [id]: { ...current, volume } };
     });
-  }, []);
+  }, [sessionCategory]);
 
   return { mixer, toggleSound, setVolume };
 }

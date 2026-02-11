@@ -1,26 +1,31 @@
-import { useMemo } from 'react';
-import { BarChart3, CheckCircle2, Circle, FolderOpen } from 'lucide-react';
-import { useTaskTreeContext } from '../../hooks/useTaskTreeContext';
+import { useMemo } from "react";
+import { BarChart3, CheckCircle2, Circle, FolderOpen } from "lucide-react";
+import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 
 export function AnalyticsView() {
   const { nodes } = useTaskTreeContext();
+  <Toggle />;
 
   const stats = useMemo(() => {
-    const tasks = nodes.filter(n => n.type === 'task');
-    const folders = nodes.filter(n => n.type === 'folder');
-    const completed = tasks.filter(n => n.status === 'DONE');
-    const incomplete = tasks.filter(n => n.status !== 'DONE');
-    const completionRate = tasks.length > 0
-      ? Math.round((completed.length / tasks.length) * 100)
-      : 0;
+    const tasks = nodes.filter((n) => n.type === "task");
+    const folders = nodes.filter((n) => n.type === "folder");
+    const completed = tasks.filter((n) => n.status === "DONE");
+    const incomplete = tasks.filter((n) => n.status !== "DONE");
+    const completionRate =
+      tasks.length > 0
+        ? Math.round((completed.length / tasks.length) * 100)
+        : 0;
 
     const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const todayTasks = tasks.filter(t => (t.scheduledAt ?? t.createdAt)?.substring(0, 10) === todayStr);
-    const todayCompleted = todayTasks.filter(t => t.status === 'DONE');
-    const todayCompletionRate = todayTasks.length > 0
-      ? Math.round((todayCompleted.length / todayTasks.length) * 100)
-      : 0;
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const todayTasks = tasks.filter(
+      (t) => (t.scheduledAt ?? t.createdAt)?.substring(0, 10) === todayStr,
+    );
+    const todayCompleted = todayTasks.filter((t) => t.status === "DONE");
+    const todayCompletionRate =
+      todayTasks.length > 0
+        ? Math.round((todayCompleted.length / todayTasks.length) * 100)
+        : 0;
 
     return {
       totalTasks: tasks.length,
@@ -69,7 +74,9 @@ export function AnalyticsView() {
         {/* Today's completion rate */}
         <div className="bg-notion-bg-secondary rounded-lg p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-notion-text">Today&apos;s Completion Rate</span>
+            <span className="text-sm font-medium text-notion-text">
+              Today&apos;s Completion Rate
+            </span>
             <span className="text-sm font-bold text-notion-success">
               {stats.todayCompletionRate}%
               <span className="text-xs font-normal text-notion-text-secondary ml-1">
@@ -88,8 +95,12 @@ export function AnalyticsView() {
         {/* Total completion rate */}
         <div className="bg-notion-bg-secondary rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-notion-text">Total Completion Rate</span>
-            <span className="text-sm font-bold text-notion-accent">{stats.completionRate}%</span>
+            <span className="text-sm font-medium text-notion-text">
+              Total Completion Rate
+            </span>
+            <span className="text-sm font-bold text-notion-accent">
+              {stats.completionRate}%
+            </span>
           </div>
           <div className="w-full h-3 bg-notion-border rounded-full overflow-hidden">
             <div

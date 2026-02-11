@@ -6,6 +6,12 @@ export interface AudioContextValue {
   mixer: SoundMixerState;
   toggleSound: (id: string) => void;
   setVolume: (id: string, volume: number) => void;
+  workMixer: SoundMixerState;
+  restMixer: SoundMixerState;
+  toggleWorkSound: (id: string) => void;
+  toggleRestSound: (id: string) => void;
+  setWorkVolume: (id: string, volume: number) => void;
+  setRestVolume: (id: string, volume: number) => void;
   customSounds: CustomSoundMeta[];
   addSound: (file: File) => Promise<{ error?: string }>;
   removeSound: (id: string) => Promise<void>;

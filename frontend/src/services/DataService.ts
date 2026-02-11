@@ -30,8 +30,8 @@ export interface DataService {
   fetchSessionsByTaskId(taskId: string): Promise<TimerSession[]>;
 
   // Sound
-  fetchSoundSettings(): Promise<SoundSettings[]>;
-  updateSoundSetting(soundType: string, volume: number, enabled: boolean): Promise<SoundSettings>;
+  fetchSoundSettings(sessionCategory?: string): Promise<SoundSettings[]>;
+  updateSoundSetting(soundType: string, volume: number, enabled: boolean, sessionCategory?: string): Promise<SoundSettings>;
   fetchSoundPresets(): Promise<SoundPreset[]>;
   createSoundPreset(name: string, settingsJson: string): Promise<SoundPreset>;
   deleteSoundPreset(id: number): Promise<void>;

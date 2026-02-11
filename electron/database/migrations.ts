@@ -12,6 +12,9 @@ export function runMigrations(db: Database.Database): void {
   if (currentVersion < 3) {
     migrateV3(db);
   }
+  if (currentVersion < 4) {
+    migrateV4(db);
+  }
 }
 
 function migrateV1(db: Database.Database): void {
@@ -136,6 +139,28 @@ function migrateV2(db: Database.Database): void {
     );
 
     PRAGMA user_version = 2;
+  `);
+}
+
+function migrateV4(db: Database.Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sound_settings_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sound_type TEXT NOT NULL,
+      volume INTEGER NOT NULL DEFAULT 50,
+      enabled INTEGER NOT NULL DEFAULT 0,
+      session_category TEXT NOT NULL DEFAULT 'WORK',
+      updated_at TEXT NOT NULL,
+      UNIQUE(sound_type, session_category)
+    );
+
+    INSERT INTO sound_settings_new (sound_type, volume, enabled, session_category, updated_at)
+    SELECT sound_type, volume, enabled, 'WORK', updated_at FROM sound_settings;
+
+    DROP TABLE sound_settings;
+    ALTER TABLE sound_settings_new RENAME TO sound_settings;
+
+    PRAGMA user_version = 4;
   `);
 }
 
