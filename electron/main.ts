@@ -1,5 +1,7 @@
 import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
+import { getDatabase, closeDatabase } from './database/db';
+import { registerAllHandlers } from './ipc/registerAll';
 
 const isDev = !app.isPackaged;
 
@@ -28,6 +30,10 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  // Initialize database and register IPC handlers
+  const db = getDatabase();
+  registerAllHandlers(db);
+
   createWindow();
 
   // macOS: re-create window on dock click when no windows exist
@@ -43,4 +49,8 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('before-quit', () => {
+  closeDatabase();
 });

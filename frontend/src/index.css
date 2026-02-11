@@ -165,9 +165,9 @@ body {
 .memo-editor .toggle-arrow {
   all: unset;
   cursor: pointer;
-  font-size: 0.625rem;
+  font-size: 0.8rem;
   line-height: 1.7;
-  padding: 0 0.375rem 0 0;
+  padding: .27rem 0.375rem .27rem 0;
   flex-shrink: 0;
   transition: transform 0.15s;
   user-select: none;
@@ -175,6 +175,7 @@ body {
 
 .memo-editor .toggle-list[data-open="true"] .toggle-arrow {
   transform: rotate(90deg);
+  padding: .4rem 0.3rem 0;
 }
 
 .memo-editor .toggle-body {

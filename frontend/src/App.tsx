@@ -12,7 +12,7 @@ import type { Command } from "./components/CommandPalette/CommandPalette";
 import { useTimerContext } from "./hooks/useTimerContext";
 import { useTaskTreeContext } from "./hooks/useTaskTreeContext";
 import { useMemoContext } from "./hooks/useMemoContext";
-import { useMigration } from "./hooks/useMigration";
+
 import type { SectionId } from "./types/taskTree";
 import type { TaskNode } from "./types/taskTree";
 import {
@@ -41,8 +41,6 @@ function App() {
   const timer = useTimerContext();
   const { nodes, addNode, updateNode, softDelete, getTaskColor, getFolderTagForTask } = useTaskTreeContext();
   const { setSelectedDate: setMemoDate } = useMemoContext();
-
-  useMigration();
 
   const selectedTask = selectedTaskId
     ? nodes.find(n => n.id === selectedTaskId && n.type === 'task') ?? null

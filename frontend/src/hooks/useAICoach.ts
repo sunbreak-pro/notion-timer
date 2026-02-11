@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { fetchAIAdvice } from '../api/aiClient';
+import { getDataService } from '../services';
 import type { AIRequestType, AIAdviceResponse } from '../types/ai';
 
 interface UseAICoachReturn {
@@ -27,7 +27,7 @@ export function useAICoach(): UseAICoachReturn {
     setErrorCode(null);
 
     try {
-      const response = await fetchAIAdvice({
+      const response = await getDataService().fetchAIAdvice({
         taskTitle,
         taskContent: taskContent ?? '',
         requestType,

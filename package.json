@@ -11,9 +11,14 @@
     "dist": "npm run build && electron-builder",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:win": "npm run build && electron-builder --win",
-    "postinstall": "cd frontend && npm install"
+    "postinstall": "cd frontend && npm install && npx electron-rebuild -f -w better-sqlite3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0"
   },
   "devDependencies": {
+    "@electron/rebuild": "^3.7.0",
+    "@types/better-sqlite3": "^7.6.0",
     "concurrently": "^9.1.2",
     "electron": "^35.1.2",
     "electron-builder": "^26.0.12",

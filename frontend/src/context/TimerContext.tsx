@@ -4,19 +4,13 @@ import type { SessionType } from '../types/timer';
 import { TimerContext } from './TimerContextValue';
 import type { ActiveTask } from './TimerContextValue';
 import { STORAGE_KEYS } from '../constants/storageKeys';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import * as timerApi from '../api/timerClient';
+import { getDataService } from '../services';
 
 interface TimerConfig {
   workDuration: number;
   breakDuration: number;
   longBreakDuration: number;
   sessionsBeforeLongBreak: number;
-}
-
-function deserializeMinutes(raw: string, defaultVal: number, min: number, max: number): number {
-  const val = parseInt(raw, 10);
-  return (val >= min && val <= max) ? val : defaultVal;
 }
 
 function sendNotification(body: string) {
@@ -37,29 +31,10 @@ function getDuration(sessionType: SessionType, config: TimerConfig): number {
 }
 
 export function TimerProvider({ children }: { children: ReactNode }) {
-  const [workDurationMinutes, setWorkDurationMinutesState] = useLocalStorage<number>(
-    STORAGE_KEYS.WORK_DURATION,
-    25,
-    { serialize: String, deserialize: (raw) => deserializeMinutes(raw, 25, 5, 240) }
-  );
-
-  const [breakDurationMinutes, setBreakDurationMinutesState] = useLocalStorage<number>(
-    STORAGE_KEYS.BREAK_DURATION,
-    5,
-    { serialize: String, deserialize: (raw) => deserializeMinutes(raw, 5, 1, 60) }
-  );
-
-  const [longBreakDurationMinutes, setLongBreakDurationMinutesState] = useLocalStorage<number>(
-    STORAGE_KEYS.LONG_BREAK_DURATION,
-    15,
-    { serialize: String, deserialize: (raw) => deserializeMinutes(raw, 15, 1, 60) }
-  );
-
-  const [sessionsBeforeLongBreakState, setSessionsBeforeLongBreakState] = useLocalStorage<number>(
-    STORAGE_KEYS.SESSIONS_BEFORE_LONG_BREAK,
-    4,
-    { serialize: String, deserialize: (raw) => deserializeMinutes(raw, 4, 1, 20) }
-  );
+  const [workDurationMinutes, setWorkDurationMinutesRaw] = useState(25);
+  const [breakDurationMinutes, setBreakDurationMinutesRaw] = useState(5);
+  const [longBreakDurationMinutes, setLongBreakDurationMinutesRaw] = useState(15);
+  const [sessionsBeforeLongBreakState, setSessionsBeforeLongBreakRaw] = useState(4);
 
   const config: TimerConfig = useMemo(() => ({
     workDuration: workDurationMinutes * 60,
@@ -86,35 +61,20 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => { activeTaskRef.current = activeTask; }, [activeTask]);
 
-  // Load settings from backend on mount
+  // Load settings from DataService on mount
   useEffect(() => {
     let cancelled = false;
-    timerApi.fetchTimerSettings()
+    getDataService().fetchTimerSettings()
       .then((settings) => {
         if (cancelled) return;
-        if (settings.workDuration) setWorkDurationMinutesState(settings.workDuration);
-        if (settings.breakDuration) setBreakDurationMinutesState(settings.breakDuration);
-        if (settings.longBreakDuration) setLongBreakDurationMinutesState(settings.longBreakDuration);
-        if (settings.sessionsBeforeLongBreak) setSessionsBeforeLongBreakState(settings.sessionsBeforeLongBreak);
+        if (settings.workDuration) setWorkDurationMinutesRaw(settings.workDuration);
+        if (settings.breakDuration) setBreakDurationMinutesRaw(settings.breakDuration);
+        if (settings.longBreakDuration) setLongBreakDurationMinutesRaw(settings.longBreakDuration);
+        if (settings.sessionsBeforeLongBreak) setSessionsBeforeLongBreakRaw(settings.sessionsBeforeLongBreak);
       })
       .catch((e) => console.warn('[Timer] fetch settings:', e.message));
     return () => { cancelled = true; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Debounced sync settings to backend
-  const syncSettingsRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => {
-    clearTimeout(syncSettingsRef.current);
-    syncSettingsRef.current = setTimeout(() => {
-      timerApi.updateTimerSettings({
-        workDuration: workDurationMinutes,
-        breakDuration: breakDurationMinutes,
-        longBreakDuration: longBreakDurationMinutes,
-        sessionsBeforeLongBreak: sessionsBeforeLongBreakState,
-      }).catch((e) => console.warn('[Timer] sync settings:', e.message));
-    }, 500);
-    return () => clearTimeout(syncSettingsRef.current);
-  }, [workDurationMinutes, breakDurationMinutes, longBreakDurationMinutes, sessionsBeforeLongBreakState]);
+  }, []);
 
   const totalDuration = getDuration(sessionType, config);
   const progress = ((totalDuration - remainingSeconds) / totalDuration) * 100;
@@ -128,7 +88,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
 
   const endCurrentSession = useCallback((duration: number, completed: boolean) => {
     if (currentSessionIdRef.current !== null) {
-      timerApi.endTimerSession(currentSessionIdRef.current, duration, completed).catch((e) => console.warn('[Timer] end session:', e.message));
+      getDataService().endTimerSession(currentSessionIdRef.current, duration, completed).catch((e) => console.warn('[Timer] end session:', e.message));
       currentSessionIdRef.current = null;
     }
   }, []);
@@ -192,7 +152,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     // Record session start
     const st = sessionTypeRef.current;
     const task = activeTaskRef.current;
-    timerApi.startTimerSession(st, task?.id).then((session) => {
+    getDataService().startTimerSession(st, task?.id).then((session) => {
       currentSessionIdRef.current = session.id;
     }).catch((e) => console.warn('[Timer] start session:', e.message));
   }, []);
@@ -227,7 +187,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     setSessionType('WORK');
     setRemainingSeconds(workDurationMinutes * 60);
     setIsRunning(true);
-    timerApi.startTimerSession('WORK', id).then((session) => {
+    getDataService().startTimerSession('WORK', id).then((session) => {
       currentSessionIdRef.current = session.id;
     }).catch((e) => console.warn('[Timer] start session:', e.message));
   }, [clearTimer, workDurationMinutes, endCurrentSession]);
@@ -250,34 +210,47 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     setActiveTask(prev => prev ? { ...prev, title } : null);
   }, []);
 
+  const syncSettings = useCallback((w: number, b: number, lb: number, s: number) => {
+    getDataService().updateTimerSettings({
+      workDuration: w,
+      breakDuration: b,
+      longBreakDuration: lb,
+      sessionsBeforeLongBreak: s,
+    }).catch((e) => console.warn('[Timer] sync settings:', e.message));
+  }, []);
+
   const setWorkDurationMinutes = useCallback((min: number) => {
     const clamped = Math.max(5, Math.min(240, min));
-    setWorkDurationMinutesState(clamped);
+    setWorkDurationMinutesRaw(clamped);
     if (!isRunning && sessionType === 'WORK') {
       setRemainingSeconds(clamped * 60);
     }
-  }, [isRunning, sessionType, setWorkDurationMinutesState]);
+    syncSettings(clamped, breakDurationMinutes, longBreakDurationMinutes, sessionsBeforeLongBreakState);
+  }, [isRunning, sessionType, breakDurationMinutes, longBreakDurationMinutes, sessionsBeforeLongBreakState, syncSettings]);
 
   const setBreakDurationMinutes = useCallback((min: number) => {
     const clamped = Math.max(1, Math.min(60, min));
-    setBreakDurationMinutesState(clamped);
+    setBreakDurationMinutesRaw(clamped);
     if (!isRunning && sessionType === 'BREAK') {
       setRemainingSeconds(clamped * 60);
     }
-  }, [isRunning, sessionType, setBreakDurationMinutesState]);
+    syncSettings(workDurationMinutes, clamped, longBreakDurationMinutes, sessionsBeforeLongBreakState);
+  }, [isRunning, sessionType, workDurationMinutes, longBreakDurationMinutes, sessionsBeforeLongBreakState, syncSettings]);
 
   const setLongBreakDurationMinutes = useCallback((min: number) => {
     const clamped = Math.max(1, Math.min(60, min));
-    setLongBreakDurationMinutesState(clamped);
+    setLongBreakDurationMinutesRaw(clamped);
     if (!isRunning && sessionType === 'LONG_BREAK') {
       setRemainingSeconds(clamped * 60);
     }
-  }, [isRunning, sessionType, setLongBreakDurationMinutesState]);
+    syncSettings(workDurationMinutes, breakDurationMinutes, clamped, sessionsBeforeLongBreakState);
+  }, [isRunning, sessionType, workDurationMinutes, breakDurationMinutes, sessionsBeforeLongBreakState, syncSettings]);
 
   const setSessionsBeforeLongBreak = useCallback((count: number) => {
     const clamped = Math.max(1, Math.min(20, count));
-    setSessionsBeforeLongBreakState(clamped);
-  }, [setSessionsBeforeLongBreakState]);
+    setSessionsBeforeLongBreakRaw(clamped);
+    syncSettings(workDurationMinutes, breakDurationMinutes, longBreakDurationMinutes, clamped);
+  }, [workDurationMinutes, breakDurationMinutes, longBreakDurationMinutes, syncSettings]);
 
   return (
     <TimerContext.Provider value={{

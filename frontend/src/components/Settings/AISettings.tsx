@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Sparkles, Eye, EyeOff, Save, ExternalLink, Check, AlertCircle } from 'lucide-react';
-import { fetchAISettings, updateAISettings } from '../../api/aiClient';
+import { getDataService } from '../../services';
 
 export function AISettings() {
   const [apiKey, setApiKey] = useState('');
@@ -13,7 +13,7 @@ export function AISettings() {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    fetchAISettings()
+    getDataService().fetchAISettings()
       .then((settings) => {
         setMaskedKey(settings.apiKey);
         setModel(settings.model);
@@ -30,7 +30,7 @@ export function AISettings() {
     setErrorMessage('');
 
     try {
-      const settings = await updateAISettings({ apiKey, model });
+      const settings = await getDataService().updateAISettings({ apiKey, model });
       setMaskedKey(settings.apiKey);
       setHasApiKey(settings.hasApiKey);
       setApiKey('');

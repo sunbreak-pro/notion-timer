@@ -1,0 +1,102 @@
+// Duplicated from frontend/src/types/* because electron/tsconfig rootDir constraint
+// prevents cross-importing from ../frontend/
+
+export type NodeType = 'folder' | 'task';
+export type TaskStatus = 'TODO' | 'DONE';
+
+export interface TaskNode {
+  id: string;
+  type: NodeType;
+  title: string;
+  parentId: string | null;
+  order: number;
+  status?: TaskStatus;
+  isExpanded?: boolean;
+  isDeleted?: boolean;
+  deletedAt?: string;
+  createdAt: string;
+  completedAt?: string;
+  scheduledAt?: string;
+  content?: string;
+  workDurationMinutes?: number;
+  color?: string;
+}
+
+export type SessionType = 'WORK' | 'BREAK' | 'LONG_BREAK';
+
+export interface TimerSettings {
+  id: number;
+  workDuration: number;
+  breakDuration: number;
+  longBreakDuration: number;
+  sessionsBeforeLongBreak: number;
+  updatedAt: string;
+}
+
+export interface TimerSession {
+  id: number;
+  taskId: string | null;
+  sessionType: SessionType;
+  startedAt: string;
+  completedAt: string | null;
+  duration: number | null;
+  completed: boolean;
+}
+
+export interface SoundSettings {
+  id: number;
+  soundType: string;
+  volume: number;
+  enabled: boolean;
+  updatedAt: string;
+}
+
+export interface SoundPreset {
+  id: number;
+  name: string;
+  settingsJson: string;
+  createdAt: string;
+}
+
+export interface MemoNode {
+  id: string;
+  date: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AIRequestType = 'breakdown' | 'encouragement' | 'review';
+
+export interface AIAdviceRequest {
+  taskTitle: string;
+  taskContent?: string;
+  requestType: AIRequestType;
+}
+
+export interface AIAdviceResponse {
+  advice: string;
+  requestType: AIRequestType;
+}
+
+export interface AISettingsResponse {
+  apiKey: string;
+  model: string;
+  hasApiKey: boolean;
+}
+
+export interface CustomSoundMeta {
+  id: string;
+  label: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  createdAt: number;
+}
+
+export interface MigrationPayload {
+  tasks?: TaskNode[];
+  timerSettings?: Partial<TimerSettings>;
+  soundSettings?: Array<{ soundType: string; volume: number; enabled: boolean }>;
+  memos?: MemoNode[];
+}

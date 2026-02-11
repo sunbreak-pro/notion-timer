@@ -13,5 +13,5 @@
     "declaration": false,
     "sourceMap": true
   },
-  "include": ["main.ts", "preload.ts"]
+  "include": ["main.ts", "preload.ts", "types.ts", "database/**/*.ts", "ipc/**/*.ts", "services/**/*.ts"]
 }

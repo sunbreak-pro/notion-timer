@@ -1,9 +1,6 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { MemoNode } from '../types/memo';
-import { STORAGE_KEYS } from '../constants/storageKeys';
-import * as api from '../api/memoClient';
-
-const STORAGE_KEY = STORAGE_KEYS.MEMOS;
+import { getDataService } from '../services';
 
 function formatDateKey(date: Date): string {
   const y = date.getFullYear();
@@ -12,69 +9,32 @@ function formatDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function loadLocalMemos(): MemoNode[] {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch {
-      console.warn('[Memo] localStorage parse failed');
-      return [];
-    }
-  }
-  return [];
-}
-
-function saveLocalMemos(memos: MemoNode[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(memos));
-}
-
 export function useMemos() {
-  const [memos, setMemos] = useState<MemoNode[]>(loadLocalMemos);
+  const [memos, setMemos] = useState<MemoNode[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(formatDateKey(new Date()));
-  const [isBackendAvailable, setIsBackendAvailable] = useState(false);
-  const syncPending = useRef(false);
 
-  // Load from API on mount
+  // Load from DataService on mount
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const backendMemos = await api.fetchAllMemos();
+        const loaded = await getDataService().fetchAllMemos();
         if (!cancelled) {
-          setIsBackendAvailable(true);
-          if (backendMemos.length > 0 || loadLocalMemos().length === 0) {
-            setMemos(backendMemos);
-            saveLocalMemos(backendMemos);
-          }
+          setMemos(loaded);
         }
-      } catch {
-        if (!cancelled) {
-          setIsBackendAvailable(false);
-        }
+      } catch (e) {
+        console.warn('[Memo] fetch:', e instanceof Error ? e.message : e);
       }
     })();
     return () => { cancelled = true; };
   }, []);
 
-  const syncMemoToBackend = useCallback((date: string, content: string) => {
-    if (!isBackendAvailable) return;
-    if (syncPending.current) return;
-    syncPending.current = true;
-    setTimeout(() => {
-      api.upsertMemo(date, content).catch((e) => console.warn('[Memo] sync:', e.message)).finally(() => {
-        syncPending.current = false;
-      });
-    }, 500);
-  }, [isBackendAvailable]);
-
   const upsertMemo = useCallback((date: string, content: string) => {
     setMemos(prev => {
       const existing = prev.find(m => m.date === date);
       const now = new Date().toISOString();
-      let updated: MemoNode[];
       if (existing) {
-        updated = prev.map(m => m.date === date ? { ...m, content, updatedAt: now } : m);
+        return prev.map(m => m.date === date ? { ...m, content, updatedAt: now } : m);
       } else {
         const newMemo: MemoNode = {
           id: `memo-${date}`,
@@ -83,24 +43,16 @@ export function useMemos() {
           createdAt: now,
           updatedAt: now,
         };
-        updated = [newMemo, ...prev];
+        return [newMemo, ...prev];
       }
-      saveLocalMemos(updated);
-      return updated;
     });
-    syncMemoToBackend(date, content);
-  }, [syncMemoToBackend]);
+    getDataService().upsertMemo(date, content).catch((e) => console.warn('[Memo] sync:', e.message));
+  }, []);
 
   const deleteMemo = useCallback((date: string) => {
-    setMemos(prev => {
-      const updated = prev.filter(m => m.date !== date);
-      saveLocalMemos(updated);
-      return updated;
-    });
-    if (isBackendAvailable) {
-      api.deleteMemo(date).catch((e) => console.warn('[Memo] delete:', e.message));
-    }
-  }, [isBackendAvailable]);
+    setMemos(prev => prev.filter(m => m.date !== date));
+    getDataService().deleteMemo(date).catch((e) => console.warn('[Memo] delete:', e.message));
+  }, []);
 
   const getMemoForDate = useCallback((date: string): MemoNode | undefined => {
     return memos.find(m => m.date === date);

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { STORAGE_KEYS } from '../constants/storageKeys';
-import { getAudioBlob, saveAudioBlob, deleteAudioBlob } from '../storage/customSoundStorage';
+import { getDataService } from '../services';
 import type { CustomSoundMeta } from '../types/customSound';
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
@@ -19,20 +18,6 @@ async function validateAudioMagicBytes(file: File): Promise<boolean> {
   return false;
 }
 
-function loadMeta(): CustomSoundMeta[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.CUSTOM_SOUNDS);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    console.warn('[CustomSounds] localStorage parse failed');
-    return [];
-  }
-}
-
-function saveMeta(items: CustomSoundMeta[]) {
-  localStorage.setItem(STORAGE_KEYS.CUSTOM_SOUNDS, JSON.stringify(items));
-}
-
 export function useCustomSounds() {
   const [customSounds, setCustomSounds] = useState<CustomSoundMeta[]>([]);
   const [blobUrls, setBlobUrls] = useState<Record<string, string>>({});
@@ -44,14 +29,16 @@ export function useCustomSounds() {
     let cancelled = false;
 
     async function init() {
-      const metas = loadMeta();
+      const ds = getDataService();
+      const metas = await ds.fetchCustomSoundMetas();
       if (cancelled) return;
 
       const urls: Record<string, string> = {};
       for (const meta of metas) {
-        const blob = await getAudioBlob(meta.id);
+        const data = await ds.loadCustomSound(meta.id);
         if (cancelled) break;
-        if (blob) {
+        if (data) {
+          const blob = new Blob([data], { type: meta.mimeType });
           urls[meta.id] = URL.createObjectURL(blob);
         }
       }
@@ -63,9 +50,6 @@ export function useCustomSounds() {
 
       // Filter out metas whose blobs are missing
       const validMetas = metas.filter(m => urls[m.id]);
-      if (validMetas.length !== metas.length) {
-        saveMeta(validMetas);
-      }
 
       blobUrlsRef.current = urls;
       setCustomSounds(validMetas);
@@ -97,10 +81,7 @@ export function useCustomSounds() {
 
     const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const label = file.name.replace(/\.[^.]+$/, '');
-    const blob = new Blob([await file.arrayBuffer()], { type: file.type });
-
-    await saveAudioBlob(id, blob);
-    const url = URL.createObjectURL(blob);
+    const arrayBuffer = await file.arrayBuffer();
 
     const meta: CustomSoundMeta = {
       id,
@@ -111,11 +92,12 @@ export function useCustomSounds() {
       createdAt: Date.now(),
     };
 
-    setCustomSounds(prev => {
-      const next = [...prev, meta];
-      saveMeta(next);
-      return next;
-    });
+    await getDataService().saveCustomSound(id, arrayBuffer, meta);
+
+    const blob = new Blob([arrayBuffer], { type: file.type });
+    const url = URL.createObjectURL(blob);
+
+    setCustomSounds(prev => [...prev, meta]);
     setBlobUrls(prev => {
       const next = { ...prev, [id]: url };
       blobUrlsRef.current = next;
@@ -130,14 +112,9 @@ export function useCustomSounds() {
     const url = blobUrlsRef.current[id];
     if (url) URL.revokeObjectURL(url);
 
-    // Delete from IndexedDB
-    await deleteAudioBlob(id);
+    await getDataService().deleteCustomSound(id);
 
-    setCustomSounds(prev => {
-      const next = prev.filter(s => s.id !== id);
-      saveMeta(next);
-      return next;
-    });
+    setCustomSounds(prev => prev.filter(s => s.id !== id));
     setBlobUrls(prev => {
       const next = { ...prev };
       delete next[id];

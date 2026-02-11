@@ -1,0 +1,130 @@
+import type Database from 'better-sqlite3';
+import type { TaskNode } from '../types';
+
+interface TaskRow {
+  id: string;
+  type: string;
+  title: string;
+  parent_id: string | null;
+  order: number;
+  status: string | null;
+  is_expanded: number | null;
+  is_deleted: number | null;
+  deleted_at: string | null;
+  created_at: string;
+  completed_at: string | null;
+  scheduled_at: string | null;
+  content: string | null;
+  work_duration_minutes: number | null;
+  color: string | null;
+}
+
+function rowToNode(row: TaskRow): TaskNode {
+  return {
+    id: row.id,
+    type: row.type as TaskNode['type'],
+    title: row.title,
+    parentId: row.parent_id,
+    order: row.order,
+    status: (row.status as TaskNode['status']) ?? undefined,
+    isExpanded: row.is_expanded ? true : undefined,
+    isDeleted: row.is_deleted ? true : undefined,
+    deletedAt: row.deleted_at ?? undefined,
+    createdAt: row.created_at,
+    completedAt: row.completed_at ?? undefined,
+    scheduledAt: row.scheduled_at ?? undefined,
+    content: row.content ?? undefined,
+    workDurationMinutes: row.work_duration_minutes ?? undefined,
+    color: row.color ?? undefined,
+  };
+}
+
+export function createTaskRepository(db: Database.Database) {
+  const stmts = {
+    fetchTree: db.prepare(`SELECT * FROM tasks WHERE is_deleted = 0 ORDER BY "order" ASC`),
+    fetchDeleted: db.prepare(`SELECT * FROM tasks WHERE is_deleted = 1 ORDER BY deleted_at DESC`),
+    fetchById: db.prepare(`SELECT * FROM tasks WHERE id = ?`),
+    insert: db.prepare(`
+      INSERT INTO tasks (id, type, title, parent_id, "order", status, is_expanded, is_deleted, deleted_at, created_at, completed_at, scheduled_at, content, work_duration_minutes, color)
+      VALUES (@id, @type, @title, @parentId, @order, @status, @isExpanded, @isDeleted, @deletedAt, @createdAt, @completedAt, @scheduledAt, @content, @workDurationMinutes, @color)
+    `),
+    update: db.prepare(`
+      UPDATE tasks SET type=@type, title=@title, parent_id=@parentId, "order"=@order, status=@status,
+        is_expanded=@isExpanded, is_deleted=@isDeleted, deleted_at=@deletedAt, created_at=@createdAt,
+        completed_at=@completedAt, scheduled_at=@scheduledAt, content=@content,
+        work_duration_minutes=@workDurationMinutes, color=@color
+      WHERE id=@id
+    `),
+    softDelete: db.prepare(`UPDATE tasks SET is_deleted = 1, deleted_at = datetime('now') WHERE id = ?`),
+    restore: db.prepare(`UPDATE tasks SET is_deleted = 0, deleted_at = NULL WHERE id = ?`),
+    permanentDelete: db.prepare(`DELETE FROM tasks WHERE id = ?`),
+    deleteAll: db.prepare(`DELETE FROM tasks`),
+  };
+
+  function nodeToParams(node: TaskNode) {
+    return {
+      id: node.id,
+      type: node.type,
+      title: node.title,
+      parentId: node.parentId,
+      order: node.order,
+      status: node.status ?? null,
+      isExpanded: node.isExpanded ? 1 : 0,
+      isDeleted: node.isDeleted ? 1 : 0,
+      deletedAt: node.deletedAt ?? null,
+      createdAt: node.createdAt,
+      completedAt: node.completedAt ?? null,
+      scheduledAt: node.scheduledAt ?? null,
+      content: node.content ?? null,
+      workDurationMinutes: node.workDurationMinutes ?? null,
+      color: node.color ?? null,
+    };
+  }
+
+  return {
+    fetchTree(): TaskNode[] {
+      return (stmts.fetchTree.all() as TaskRow[]).map(rowToNode);
+    },
+
+    fetchDeleted(): TaskNode[] {
+      return (stmts.fetchDeleted.all() as TaskRow[]).map(rowToNode);
+    },
+
+    create(node: TaskNode): TaskNode {
+      stmts.insert.run(nodeToParams(node));
+      const row = stmts.fetchById.get(node.id) as TaskRow;
+      return rowToNode(row);
+    },
+
+    update(id: string, updates: Partial<TaskNode>): TaskNode {
+      const existing = stmts.fetchById.get(id) as TaskRow | undefined;
+      if (!existing) throw new Error(`Task not found: ${id}`);
+      const current = rowToNode(existing);
+      const merged = { ...current, ...updates, id };
+      stmts.update.run(nodeToParams(merged));
+      const row = stmts.fetchById.get(id) as TaskRow;
+      return rowToNode(row);
+    },
+
+    syncTree: db.transaction((nodes: TaskNode[]) => {
+      stmts.deleteAll.run();
+      for (const node of nodes) {
+        stmts.insert.run(nodeToParams(node));
+      }
+    }),
+
+    softDelete(id: string): void {
+      stmts.softDelete.run(id);
+    },
+
+    restore(id: string): void {
+      stmts.restore.run(id);
+    },
+
+    permanentDelete(id: string): void {
+      stmts.permanentDelete.run(id);
+    },
+  };
+}
+
+export type TaskRepository = ReturnType<typeof createTaskRepository>;

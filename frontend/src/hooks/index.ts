@@ -8,7 +8,7 @@ export type { SoundState, SoundMixerState } from './useLocalSoundMixer';
 export { useLocalStorage } from './useLocalStorage';
 export { useMemoContext } from './useMemoContext';
 export { useMemos } from './useMemos';
-export { useMigration } from './useMigration';
+
 export { useSlashCommand } from './useSlashCommand';
 export { useTaskTree } from './useTaskTree';
 export { useTaskTreeAPI } from './useTaskTreeAPI';

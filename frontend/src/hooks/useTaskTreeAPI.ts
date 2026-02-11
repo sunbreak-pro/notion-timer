@@ -1,30 +1,11 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { TaskNode, NodeType } from '../types/taskTree';
-import { STORAGE_KEYS } from '../constants/storageKeys';
 import { useTaskTreeCRUD } from './useTaskTreeCRUD';
 import { useTaskTreeDeletion } from './useTaskTreeDeletion';
 import { useTaskTreeMovement } from './useTaskTreeMovement';
 import { resolveTaskColor } from '../utils/folderColor';
 import { getFolderTag } from '../utils/folderTag';
-import * as api from '../api/taskClient';
-
-const STORAGE_KEY = STORAGE_KEYS.TASK_TREE;
-
-function loadLocalNodes(): TaskNode[] {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch {
-      return [];
-    }
-  }
-  return [];
-}
-
-function saveLocalNodes(nodes: TaskNode[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(nodes));
-}
+import { getDataService } from '../services';
 
 let idCounter = Date.now();
 function generateId(type: NodeType): string {
@@ -32,31 +13,22 @@ function generateId(type: NodeType): string {
 }
 
 export function useTaskTreeAPI() {
-  const [nodes, setNodes] = useState<TaskNode[]>(loadLocalNodes);
+  const [nodes, setNodes] = useState<TaskNode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isBackendAvailable, setIsBackendAvailable] = useState(false);
-  const syncPending = useRef(false);
 
-  // Load from API on mount
+  // Load from DataService on mount
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const tree = await api.fetchTaskTree();
+        const tree = await getDataService().fetchTaskTree();
         if (!cancelled) {
-          setIsBackendAvailable(true);
-          // Only replace local state if backend has data or local is empty
-          if (tree.length > 0 || loadLocalNodes().length === 0) {
-            setNodes(tree);
-            saveLocalNodes(tree);
-          }
+          setNodes(tree);
         }
       } catch (e) {
-        // Backend unavailable, use localStorage
         if (!cancelled) {
-          setIsBackendAvailable(false);
-          setError(e instanceof Error ? e.message : 'Backend unavailable');
+          setError(e instanceof Error ? e.message : 'Failed to load tasks');
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -65,23 +37,10 @@ export function useTaskTreeAPI() {
     return () => { cancelled = true; };
   }, []);
 
-  // Sync to backend in background (debounced)
-  const syncToBackend = useCallback((updated: TaskNode[]) => {
-    if (!isBackendAvailable) return;
-    if (syncPending.current) return;
-    syncPending.current = true;
-    setTimeout(() => {
-      api.syncTaskTree(updated).catch((e) => console.warn('[TaskTree] sync:', e.message)).finally(() => {
-        syncPending.current = false;
-      });
-    }, 500);
-  }, [isBackendAvailable]);
-
   const persist = useCallback((updated: TaskNode[]) => {
     setNodes(updated);
-    saveLocalNodes(updated);
-    syncToBackend(updated);
-  }, [syncToBackend]);
+    getDataService().syncTaskTree(updated).catch((e) => console.warn('[TaskTree] sync:', e.message));
+  }, []);
 
   const activeNodes = useMemo(() => nodes.filter(n => !n.isDeleted), [nodes]);
   const deletedNodes = useMemo(() => nodes.filter(n => n.isDeleted), [nodes]);
@@ -115,7 +74,6 @@ export function useTaskTreeAPI() {
     getChildren,
     isLoading,
     error,
-    isBackendAvailable,
     getTaskColor,
     getFolderTagForTask,
     ...crud,
