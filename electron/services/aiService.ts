@@ -112,8 +112,12 @@ export async function getAdvice(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30_000),
     });
   } catch (e) {
+    if (e instanceof DOMException && e.name === 'TimeoutError') {
+      throw { error: 'AIサービスがタイムアウトしました。しばらく待ってから再試行してください。', errorCode: 'TIMEOUT' };
+    }
     throw { error: 'AIサービスに接続できませんでした', errorCode: 'NETWORK_ERROR' };
   }
 

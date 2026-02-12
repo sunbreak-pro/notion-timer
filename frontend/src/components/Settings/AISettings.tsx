@@ -21,7 +21,7 @@ export function AISettings() {
         setModel(settings.model);
         setHasApiKey(settings.hasApiKey);
       })
-      .catch(() => {});
+      .catch((e) => console.error('[AISettings] fetchAISettings failed:', e));
   }, []);
 
   const handleSave = async () => {

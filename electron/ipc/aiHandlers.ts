@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron';
+import log from '../logger';
 import type { AIRepository } from '../database/aiRepository';
 import type { AIAdviceRequest } from '../types';
 import { getAdvice } from '../services/aiService';
@@ -29,10 +30,12 @@ export function registerAIHandlers(repo: AIRepository): void {
   });
 
   ipcMain.handle('ai:fetchSettings', () => {
-    return repo.fetchSettings();
+    try { return repo.fetchSettings(); }
+    catch (e) { log.error('[AI] fetchSettings failed:', e); throw e; }
   });
 
   ipcMain.handle('ai:updateSettings', (_event, settings: { apiKey?: string; model?: string }) => {
-    return repo.updateSettings(settings);
+    try { return repo.updateSettings(settings); }
+    catch (e) { log.error('[AI] updateSettings failed:', e); throw e; }
   });
 }

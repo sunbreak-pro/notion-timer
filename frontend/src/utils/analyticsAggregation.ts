@@ -1,4 +1,5 @@
 import type { TimerSession } from '../types/timer';
+import { formatDateKey as toDateStr } from './dateKey';
 
 export interface DayBucket {
   date: string; // YYYY-MM-DD
@@ -11,10 +12,6 @@ export interface TaskBucket {
   taskName: string;
   totalMinutes: number;
   sessionCount: number;
-}
-
-function toDateStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function startOfWeek(d: Date): Date {

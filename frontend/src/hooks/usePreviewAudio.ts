@@ -32,7 +32,8 @@ export function usePreviewAudio() {
       setPreviewingId(null);
       audioRef.current = null;
     };
-    audio.play().catch(() => {
+    audio.play().catch((e) => {
+      console.warn('[PreviewAudio] play failed:', e);
       setPreviewingId(null);
       audioRef.current = null;
     });

@@ -356,15 +356,24 @@ function migrateV5(db: Database.Database): void {
   `);
 }
 
-function migrateV9(db: Database.Database): void {
-  db.exec(`
-    DROP TABLE IF EXISTS task_tags;
-    DROP TABLE IF EXISTS task_tag_definitions;
-    DROP TABLE IF EXISTS note_tags;
-    DROP TABLE IF EXISTS note_tag_definitions;
+function backupTableIfExists(db: Database.Database, table: string, suffix: string): void {
+  const exists = db.prepare(
+    `SELECT 1 FROM sqlite_master WHERE type='table' AND name=?`
+  ).get(table);
+  if (exists) {
+    db.exec(`ALTER TABLE "${table}" RENAME TO "${table}_backup_${suffix}"`);
+  }
+}
 
-    PRAGMA user_version = 9;
-  `);
+function migrateV9(db: Database.Database): void {
+  const migrate = db.transaction(() => {
+    backupTableIfExists(db, 'task_tags', 'v9');
+    backupTableIfExists(db, 'task_tag_definitions', 'v9');
+    backupTableIfExists(db, 'note_tags', 'v9');
+    backupTableIfExists(db, 'note_tag_definitions', 'v9');
+  });
+  migrate();
+  db.pragma('user_version = 9');
 }
 
 function migrateV10(db: Database.Database): void {

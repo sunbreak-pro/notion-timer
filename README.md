@@ -64,6 +64,19 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 
 ## 開発ジャーナル
 
+### 2026-02-13 - コードベースリファクタリング（Critical+High優先度）
+
+#### 概要
+コードベース全体の品質調査で発見されたCritical+High優先度の約20項目を修正。DB起動安全性、IPCエラーハンドリング、データインポートバリデーション、フロントエンドユーティリティ抽出、型安全性向上。
+
+#### 変更点
+- **Phase 1**: DB初期化失敗時にapp.quit()で起動阻止、migrateV9でDROP前にバックアップテーブルへRENAME、customSoundRepository防御的ロック追加
+- **Phase 2**: 全14 IPCハンドラファイルにtry-catch+ログ追加（noteHandlers等の既存対応済みを除く11ファイル修正）、AIサービスに30秒タイムアウト（AbortSignal.timeout）追加
+- **Phase 3**: データインポートにバージョンチェック、validateImportData()追加（配列フィールド型チェック、tasks必須フィールド検証）
+- **Phase 4**: `useClickOutside`フック新規作成、6コンポーネントのclick outside重複コード置換、`formatDateKey`をutils/dateKey.tsに集約（useCalendar/useMemos/analyticsAggregationから参照）、hooks/index.ts・utils/index.tsバレルファイル拡充
+- **Phase 5**: BubbleToolbar二重型アサーション修正、サイレントcatch改善（WorkScreen/AISettings/usePreviewAudio）、WorkScreen useEffectにキャンセルパターン追加、MusicSlotItem/MusicSoundItemのvoid式除去+未使用props削除、CalendarViewキーボードナビ重複解消（handleNext/handlePrev再利用）
+- **Phase 6**: ルートTypeScript ~5.8.3→~5.9.3統一、4テストファイル追加（useClickOutside/dateKey/analyticsAggregation/formatRelativeDate）、CLAUDE.mdのテーブル一覧・リポジトリ数・ハンドラファイル数を現状反映
+
 ### 2026-02-13 - Work/Restサウンド分離廃止・WorkScreenモーダルピッカー追加
 
 #### 概要

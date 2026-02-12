@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { Settings2, Search, X, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAudioContext } from '../../hooks/useAudioContext';
-import { usePreviewAudio } from '../../hooks/usePreviewAudio';
 import { SOUND_TYPES } from '../../constants/sounds';
 import { useSoundTags } from '../../hooks/useSoundTags';
 import { SoundTagManager } from './SoundTagManager';
@@ -12,7 +11,6 @@ import { MusicSoundItem } from './MusicSoundItem';
 export function MusicScreen() {
   const audio = useAudioContext();
   const soundTagState = useSoundTags();
-  const preview = usePreviewAudio();
   const { t } = useTranslation();
   const [showTagManager, setShowTagManager] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,8 +113,6 @@ export function MusicScreen() {
               soundTagState={soundTagState}
               toggleWorkscreenSelection={audio.toggleWorkscreenSelection}
               isWorkscreenSelected={audio.isWorkscreenSelected}
-              isPreviewing={preview.previewingId === s.id}
-              onTogglePreview={() => preview.togglePreview(s.id, audio.soundSources[s.id])}
             />
           ))}
         </div>

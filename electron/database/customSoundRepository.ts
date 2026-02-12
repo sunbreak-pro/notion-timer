@@ -28,25 +28,43 @@ function writeMetas(metas: CustomSoundMeta[]): void {
 }
 
 export function createCustomSoundRepository() {
+  let writing = false;
+
+  function withWriteLock<T>(fn: () => T): T {
+    if (writing) {
+      throw new Error('[CustomSound] Concurrent write detected');
+    }
+    writing = true;
+    try {
+      return fn();
+    } finally {
+      writing = false;
+    }
+  }
+
   return {
     fetchAllMetas(): CustomSoundMeta[] {
       return loadMetas();
     },
 
     saveMeta(meta: CustomSoundMeta): void {
-      const metas = loadMetas();
-      const idx = metas.findIndex(m => m.id === meta.id);
-      if (idx >= 0) {
-        metas[idx] = meta;
-      } else {
-        metas.push(meta);
-      }
-      writeMetas(metas);
+      withWriteLock(() => {
+        const metas = loadMetas();
+        const idx = metas.findIndex(m => m.id === meta.id);
+        if (idx >= 0) {
+          metas[idx] = meta;
+        } else {
+          metas.push(meta);
+        }
+        writeMetas(metas);
+      });
     },
 
     deleteMeta(id: string): void {
-      const metas = loadMetas().filter(m => m.id !== id);
-      writeMetas(metas);
+      withWriteLock(() => {
+        const metas = loadMetas().filter(m => m.id !== id);
+        writeMetas(metas);
+      });
     },
 
     saveBlob(id: string, data: Buffer): void {

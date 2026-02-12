@@ -31,14 +31,17 @@ export function WorkScreen({
 
   const [todaySummary, setTodaySummary] = useState({ sessions: 0, totalMinutes: 0 });
   useEffect(() => {
+    let cancelled = false;
     getDataService().fetchTimerSessions().then((sessions) => {
+      if (cancelled) return;
       const todayStr = new Date().toISOString().substring(0, 10);
       const todaySessions = sessions.filter(
         (s) => s.sessionType === 'WORK' && s.completed && s.startedAt && String(s.startedAt).substring(0, 10) === todayStr
       );
       const totalMinutes = todaySessions.reduce((acc, s) => acc + (s.duration ?? 0), 0);
       setTodaySummary({ sessions: todaySessions.length, totalMinutes: Math.round(totalMinutes / 60) });
-    }).catch(() => {});
+    }).catch((e) => console.error('[WorkScreen] fetchTimerSessions failed:', e));
+    return () => { cancelled = true; };
   }, [timer.completedSessions]);
 
   const handleCompleteSession = useCallback(() => {

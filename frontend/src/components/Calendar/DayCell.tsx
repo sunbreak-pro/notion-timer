@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Plus } from "lucide-react";
 import type { TaskNode } from "../../types/taskTree";
 import type { MemoNode } from "../../types/memo";
 import { CalendarTaskItem } from "./CalendarTaskItem";
+import { useClickOutside } from "../../hooks/useClickOutside";
 
 interface DayCellProps {
   date: Date;
@@ -38,16 +39,8 @@ export function DayCell({
   const [showMore, setShowMore] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!showMore) return;
-    const handler = (e: MouseEvent) => {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setShowMore(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [showMore]);
+  const closeMore = useCallback(() => setShowMore(false), []);
+  useClickOutside(moreRef, closeMore, showMore);
 
   return (
     <div

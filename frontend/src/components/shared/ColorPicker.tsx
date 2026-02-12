@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { FOLDER_COLORS, getTextColorForBg } from "../../constants/folderColors";
 import { Check } from "lucide-react";
+import { useClickOutside } from "../../hooks/useClickOutside";
 
 interface ColorPickerProps {
   currentColor?: string;
@@ -14,16 +15,7 @@ export function ColorPicker({
   onClose,
 }: ColorPickerProps) {
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handleMouseDown);
-    return () => document.removeEventListener("mousedown", handleMouseDown);
-  }, [onClose]);
+  useClickOutside(ref, onClose);
 
   const pastelColors = FOLDER_COLORS.slice(0, 10);
   const vividColors = FOLDER_COLORS.slice(10);

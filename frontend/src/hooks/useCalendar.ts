@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { TaskNode } from '../types/taskTree';
+import { formatDateKey } from '../utils/dateKey';
 
 export function useCalendar(
   nodes: TaskNode[],
@@ -82,9 +83,5 @@ export function useCalendar(
   return { tasksByDate, calendarDays, weekDays };
 }
 
-export function formatDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+// Re-export from canonical location for backward compatibility
+export { formatDateKey } from '../utils/dateKey';

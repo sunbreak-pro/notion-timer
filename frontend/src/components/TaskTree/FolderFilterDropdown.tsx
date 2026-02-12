@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { ChevronDown, Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { flattenFolders } from "../../utils/flattenFolders";
+import { useClickOutside } from "../../hooks/useClickOutside";
 
 interface FolderFilterDropdownProps {
   filterFolderId: string | null;
@@ -21,19 +22,8 @@ export function FolderFilterDropdown({
   const folders = flattenFolders(nodes);
   const activeFolder = folders.find((f) => f.id === filterFolderId);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [isOpen]);
+  const closeDropdown = useCallback(() => setIsOpen(false), []);
+  useClickOutside(dropdownRef, closeDropdown, isOpen);
 
   return (
     <div className="relative" ref={dropdownRef}>

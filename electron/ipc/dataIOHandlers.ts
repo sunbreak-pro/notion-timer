@@ -22,43 +22,46 @@ function safeQueryOne(db: Database.Database, sql: string): unknown | null {
 
 export function registerDataIOHandlers(db: Database.Database): void {
   ipcMain.handle('data:export', async () => {
-    const win = BrowserWindow.getFocusedWindow();
-    if (!win) return false;
+    try {
+      const win = BrowserWindow.getFocusedWindow();
+      if (!win) return false;
 
-    const result = await dialog.showSaveDialog(win, {
-      title: 'Export Data',
-      defaultPath: `sonic-flow-export-${formatTimestamp()}.json`,
-      filters: [{ name: 'JSON', extensions: ['json'] }],
-    });
+      const result = await dialog.showSaveDialog(win, {
+        title: 'Export Data',
+        defaultPath: `sonic-flow-export-${formatTimestamp()}.json`,
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
 
-    if (result.canceled || !result.filePath) return false;
+      if (result.canceled || !result.filePath) return false;
 
-    const data = {
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      app: 'Sonic Flow',
-      data: {
-        tasks: safeQuery(db, 'SELECT * FROM tasks'),
-        timerSettings: safeQueryOne(db, 'SELECT * FROM timer_settings WHERE id = 1'),
-        timerSessions: safeQuery(db, 'SELECT * FROM timer_sessions'),
-        soundSettings: safeQuery(db, 'SELECT * FROM sound_settings'),
-        soundPresets: safeQuery(db, 'SELECT * FROM sound_presets'),
-        memos: safeQuery(db, 'SELECT * FROM memos'),
-        notes: safeQuery(db, 'SELECT * FROM notes'),
-        templates: safeQuery(db, 'SELECT * FROM task_templates'),
-        soundTagDefinitions: safeQuery(db, 'SELECT * FROM sound_tag_definitions'),
-        soundTagAssignments: safeQuery(db, 'SELECT * FROM sound_tag_assignments'),
-        soundDisplayMeta: safeQuery(db, 'SELECT * FROM sound_display_meta'),
-        calendars: safeQuery(db, 'SELECT * FROM calendars'),
-        aiSettings: safeQueryOne(db, 'SELECT * FROM ai_settings WHERE id = 1'),
-      },
-    };
+      const data = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        app: 'Sonic Flow',
+        data: {
+          tasks: safeQuery(db, 'SELECT * FROM tasks'),
+          timerSettings: safeQueryOne(db, 'SELECT * FROM timer_settings WHERE id = 1'),
+          timerSessions: safeQuery(db, 'SELECT * FROM timer_sessions'),
+          soundSettings: safeQuery(db, 'SELECT * FROM sound_settings'),
+          soundPresets: safeQuery(db, 'SELECT * FROM sound_presets'),
+          memos: safeQuery(db, 'SELECT * FROM memos'),
+          notes: safeQuery(db, 'SELECT * FROM notes'),
+          templates: safeQuery(db, 'SELECT * FROM task_templates'),
+          soundTagDefinitions: safeQuery(db, 'SELECT * FROM sound_tag_definitions'),
+          soundTagAssignments: safeQuery(db, 'SELECT * FROM sound_tag_assignments'),
+          soundDisplayMeta: safeQuery(db, 'SELECT * FROM sound_display_meta'),
+          calendars: safeQuery(db, 'SELECT * FROM calendars'),
+          aiSettings: safeQueryOne(db, 'SELECT * FROM ai_settings WHERE id = 1'),
+        },
+      };
 
-    fs.writeFileSync(result.filePath, JSON.stringify(data, null, 2), 'utf-8');
-    return true;
+      fs.writeFileSync(result.filePath, JSON.stringify(data, null, 2), 'utf-8');
+      return true;
+    } catch (e) { log.error('[DataIO] export failed:', e); throw e; }
   });
 
   ipcMain.handle('data:import', async () => {
+    try {
     const win = BrowserWindow.getFocusedWindow();
     if (!win) return false;
 
@@ -77,6 +80,14 @@ export function registerDataIOHandlers(db: Database.Database): void {
     if (!imported.app || imported.app !== 'Sonic Flow' || !imported.data) {
       throw new Error('Invalid Sonic Flow export file');
     }
+
+    // Version check
+    if (typeof imported.version !== 'number' || imported.version < 1 || imported.version > 1) {
+      throw new Error(`Unsupported export version: ${imported.version}. Expected version 1.`);
+    }
+
+    // Schema validation
+    validateImportData(imported.data);
 
     // Create backup before import
     const dbPath = path.join(app.getPath('userData'), 'sonic-flow.db');
@@ -250,7 +261,36 @@ export function registerDataIOHandlers(db: Database.Database): void {
       }
       throw e;
     }
+    } catch (e) { log.error('[DataIO] import failed:', e); throw e; }
   });
+}
+
+function validateImportData(data: Record<string, unknown>): void {
+  const arrayFields = [
+    'tasks', 'timerSessions', 'soundSettings', 'soundPresets',
+    'memos', 'notes', 'templates', 'soundTagDefinitions',
+    'soundTagAssignments', 'soundDisplayMeta', 'calendars',
+  ];
+  for (const field of arrayFields) {
+    if (data[field] !== undefined && !Array.isArray(data[field])) {
+      throw new Error(`Invalid import data: "${field}" must be an array`);
+    }
+  }
+
+  // Validate tasks have required fields
+  if (Array.isArray(data.tasks)) {
+    for (const task of data.tasks as Record<string, unknown>[]) {
+      if (!task.id || typeof task.id !== 'string') {
+        throw new Error('Invalid import data: each task must have a string "id"');
+      }
+      if (!task.type || (task.type !== 'folder' && task.type !== 'task')) {
+        throw new Error(`Invalid import data: task "${task.id}" has invalid type "${task.type}"`);
+      }
+      if (!task.created_at || typeof task.created_at !== 'string') {
+        throw new Error(`Invalid import data: task "${task.id}" must have a string "created_at"`);
+      }
+    }
+  }
 }
 
 function formatTimestamp(): string {

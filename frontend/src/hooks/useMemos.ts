@@ -2,13 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { MemoNode } from '../types/memo';
 import { getDataService } from '../services';
 import { logServiceError } from '../utils/logError';
-
-function formatDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+import { formatDateKey } from '../utils/dateKey';
 
 export function useMemos() {
   const [memos, setMemos] = useState<MemoNode[]>([]);

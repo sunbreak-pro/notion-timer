@@ -24,8 +24,6 @@ interface MusicSlotItemProps {
   channelPositions: Record<string, { currentTime: number; duration: number }>;
   onSeek: (id: string, time: number) => void;
   onRemove: () => void;
-  isPreviewing: boolean;
-  onTogglePreview: () => void;
 }
 
 export function MusicSlotItem({
@@ -38,8 +36,6 @@ export function MusicSlotItem({
   channelPositions,
   onSeek,
   onRemove,
-  isPreviewing: _isPreviewing,
-  onTogglePreview: _onTogglePreview,
 }: MusicSlotItemProps) {
   const { t } = useTranslation();
   const soundState = mixer[soundId];
@@ -49,9 +45,6 @@ export function MusicSlotItem({
 
   // Resolve sound type icon
   const SoundIcon = SOUND_TYPES.find(s => s.id === soundId)?.icon ?? Music2;
-
-  // Force re-render when tag cache changes
-  void soundTagState.version;
 
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(displayName);

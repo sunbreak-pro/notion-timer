@@ -65,7 +65,7 @@ Repository層 (better-sqlite3 → userData/sonic-flow.db)
 ### データ永続化
 **SQLite (better-sqlite3)** でローカルファイルに永続化。DBファイル: `userData/sonic-flow.db`（WALモード）。
 
-テーブル: tasks, timer_settings, timer_sessions, sound_settings, sound_presets, memos, ai_settings, tags, task_tags, task_templates, custom_sounds
+テーブル: tasks, timer_settings, timer_sessions, sound_settings, sound_presets, memos, ai_settings, task_templates, notes, calendars, pomodoro_presets, sound_tag_definitions, sound_tag_assignments, sound_display_meta, sound_workscreen_selections
 
 **localStorage は UI状態のみ**（12キー、`constants/storageKeys.ts`）: theme, font-size, language, sidebar幅(左右), サイドバー開閉(左右), 通知ON/OFF, メモタブ, エフェクト音量, アクティブカレンダーID, フォルダフィルタ。
 
@@ -98,10 +98,10 @@ electron/
 ├── database/
 │   ├── db.ts            # better-sqlite3 シングルトン初期化
 │   ├── migrations.ts    # テーブルスキーマ定義
-│   └── *Repository.ts   # 8つのリポジトリ（task/timer/sound/memo/ai/tag/template/customSound）
+│   └── *Repository.ts   # 10リポジトリ（task/timer/sound/memo/ai/template/customSound/note/calendar/pomodoroPreset）
 ├── ipc/
 │   ├── registerAll.ts   # 全ハンドラ一括登録（個別try/catch付き）
-│   └── *Handlers.ts     # ドメイン別IPCハンドラ（10ファイル）
+│   └── *Handlers.ts     # ドメイン別IPCハンドラ（14ファイル、全ハンドラtry-catch付き）
 └── services/
     ├── aiService.ts         # Gemini API呼び出し
     └── safeStorageService.ts  # APIキー安全保存

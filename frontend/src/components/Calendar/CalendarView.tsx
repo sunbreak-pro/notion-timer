@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useMemoContext } from "../../hooks/useMemoContext";
@@ -66,7 +66,7 @@ export function CalendarView({
     return map;
   }, [memos]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (viewMode === "week") {
       setWeekStartDate((prev) => {
         const d = new Date(prev);
@@ -79,9 +79,9 @@ export function CalendarView({
         setYear((y) => y - 1);
       } else setMonth((m) => m - 1);
     }
-  };
+  }, [viewMode, month]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (viewMode === "week") {
       setWeekStartDate((prev) => {
         const d = new Date(prev);
@@ -94,14 +94,14 @@ export function CalendarView({
         setYear((y) => y + 1);
       } else setMonth((m) => m + 1);
     }
-  };
+  }, [viewMode, month]);
 
-  const handleToday = () => {
+  const handleToday = useCallback(() => {
     const now = new Date();
     setYear(now.getFullYear());
     setMonth(now.getMonth());
     setWeekStartDate(getInitialWeekStart());
-  };
+  }, []);
 
   // Collect available tags from visible tasks
   const availableTags = useMemo(() => {
@@ -127,42 +127,17 @@ export function CalendarView({
 
       if (e.key === "j") {
         e.preventDefault();
-        if (viewMode === "week") {
-          setWeekStartDate((prev) => {
-            const d = new Date(prev);
-            d.setDate(d.getDate() + 7);
-            return d;
-          });
-        } else {
-          if (month === 11) {
-            setMonth(0);
-            setYear((y) => y + 1);
-          } else setMonth((m) => m + 1);
-        }
+        handleNext();
         return;
       }
       if (e.key === "k") {
         e.preventDefault();
-        if (viewMode === "week") {
-          setWeekStartDate((prev) => {
-            const d = new Date(prev);
-            d.setDate(d.getDate() - 7);
-            return d;
-          });
-        } else {
-          if (month === 0) {
-            setMonth(11);
-            setYear((y) => y - 1);
-          } else setMonth((m) => m - 1);
-        }
+        handlePrev();
         return;
       }
       if (e.key === "t") {
         e.preventDefault();
-        const now = new Date();
-        setYear(now.getFullYear());
-        setMonth(now.getMonth());
-        setWeekStartDate(getInitialWeekStart());
+        handleToday();
         return;
       }
       if (e.key === "m") {
@@ -174,7 +149,7 @@ export function CalendarView({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [viewMode, month]);
+  }, [handleNext, handlePrev, handleToday]);
 
   // Filter tasksByDate by tag
   const filteredTasksByDate = useMemo(() => {

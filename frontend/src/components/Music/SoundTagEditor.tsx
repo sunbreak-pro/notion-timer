@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Plus, X } from "lucide-react";
 import type { useSoundTags } from "../../hooks/useSoundTags";
+import { useClickOutside } from "../../hooks/useClickOutside";
 
 const DEFAULT_COLORS = [
   "#808080",
@@ -34,19 +35,8 @@ export function SoundTagEditor({
   const currentTags = getTagsForSound(soundId);
   const currentTagIds = currentTags.map((t) => t.id);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [isOpen]);
+  const closeDropdown = useCallback(() => setIsOpen(false), []);
+  useClickOutside(dropdownRef, closeDropdown, isOpen);
 
   const toggleTag = (tagId: number) => {
     const next = currentTagIds.includes(tagId)

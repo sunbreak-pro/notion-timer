@@ -41,8 +41,11 @@ export function BubbleToolbar({ editor }: BubbleToolbarProps) {
     ({ editor: ed, from, to }: { editor: Editor; from: number; to: number }) => {
       if (from === to) return false;
       if (ed.isActive('codeBlock')) return false;
-      const { node } = ed.state.selection as unknown as { node?: { type: { name: string } } };
-      if (node && node.type.name === 'image') return false;
+      const sel = ed.state.selection;
+      if ('node' in sel && sel.node && typeof sel.node === 'object' && 'type' in sel.node) {
+        const nodeType = (sel.node as { type: { name: string } }).type;
+        if (nodeType.name === 'image') return false;
+      }
       return true;
     },
     [],

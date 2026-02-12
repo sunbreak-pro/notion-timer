@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Calendar as CalendarIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { formatDateKey } from '../../hooks/useCalendar';
+import { formatDateKey } from '../../utils/dateKey';
 import { formatScheduleRange } from '../../utils/formatSchedule';
+import { useClickOutside } from '../../hooks/useClickOutside';
 
 interface DateTimeRangePickerProps {
   startValue?: string;
@@ -42,15 +43,8 @@ export function DateTimeRangePicker({
 
   const [selectingEnd, setSelectingEnd] = useState(false);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [open]);
+  const closeDropdown = useCallback(() => setOpen(false), []);
+  useClickOutside(ref, closeDropdown, open);
 
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();

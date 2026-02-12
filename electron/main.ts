@@ -73,8 +73,10 @@ app.whenReady().then(() => {
     log.error('[Main] Failed to initialize database/handlers:', e);
     dialog.showErrorBox(
       'Sonic Flow - Database Error',
-      `Failed to initialize the database. Your data will not be saved.\n\n${e instanceof Error ? e.message : String(e)}`
+      `Failed to initialize the database. The application will now quit.\n\n${e instanceof Error ? e.message : String(e)}`
     );
+    app.quit();
+    return;
   }
 
   const win = createWindow();

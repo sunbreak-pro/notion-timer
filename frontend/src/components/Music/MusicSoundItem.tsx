@@ -20,11 +20,9 @@ interface MusicSoundItemProps {
   soundTagState: ReturnType<typeof useSoundTags>;
   toggleWorkscreenSelection?: (soundId: string) => void;
   isWorkscreenSelected?: (soundId: string) => boolean;
-  isPreviewing: boolean;
-  onTogglePreview: () => void;
 }
 
-export function MusicSoundItem({ soundId, defaultLabel, isCustom, soundTagState, toggleWorkscreenSelection, isWorkscreenSelected, isPreviewing: _isPreviewing, onTogglePreview: _onTogglePreview }: MusicSoundItemProps) {
+export function MusicSoundItem({ soundId, defaultLabel, isCustom, soundTagState, toggleWorkscreenSelection, isWorkscreenSelected }: MusicSoundItemProps) {
   const { t } = useTranslation();
   const audio = useAudioContext();
   const mixer = audio.mixer;
@@ -40,9 +38,6 @@ export function MusicSoundItem({ soundId, defaultLabel, isCustom, soundTagState,
 
   // Resolve sound type icon
   const SoundIcon = SOUND_TYPES.find(s => s.id === soundId)?.icon ?? Music2;
-
-  // Force re-render when tag cache changes
-  void soundTagState.version;
 
   useEffect(() => {
     setEditValue(soundTagState.getDisplayName(soundId) || defaultLabel);
