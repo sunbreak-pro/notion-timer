@@ -1,4 +1,5 @@
 import { Sparkles, Loader2, X, Settings } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAICoach } from '../../hooks/useAICoach';
 import { AIRequestButtons } from './AIRequestButtons';
 import { AIAdviceDisplay } from './AIAdviceDisplay';
@@ -11,6 +12,7 @@ interface AICoachPanelProps {
 }
 
 export function AICoachPanel({ taskTitle, taskContent, onNavigateToSettings }: AICoachPanelProps) {
+  const { t } = useTranslation();
   const { advice, isLoading, error, errorCode, requestAdvice, clearAdvice } = useAICoach();
 
   const handleRequest = (type: AIRequestType) => {
@@ -24,7 +26,7 @@ export function AICoachPanel({ taskTitle, taskContent, onNavigateToSettings }: A
       <div className="flex items-center gap-2 mb-3">
         <Sparkles size={16} className="text-notion-accent" />
         <span className="text-sm font-medium text-notion-text-secondary">
-          AI Coach
+          {t('ai.title')}
         </span>
       </div>
 
@@ -33,7 +35,7 @@ export function AICoachPanel({ taskTitle, taskContent, onNavigateToSettings }: A
       {isLoading && (
         <div className="flex items-center gap-2 mt-4 text-notion-text-secondary text-sm">
           <Loader2 size={14} className="animate-spin" />
-          <span>考え中...</span>
+          <span>{t('ai.thinking')}</span>
         </div>
       )}
 
@@ -51,7 +53,7 @@ export function AICoachPanel({ taskTitle, taskContent, onNavigateToSettings }: A
               className="mt-2 inline-flex items-center gap-1 text-xs text-notion-accent hover:underline"
             >
               <Settings size={12} />
-              Settings でAPIキーを設定する
+              {t('ai.configureKey')}
             </button>
           )}
         </div>

@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Download, RotateCcw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getDataService } from '../../services';
 import type { UpdaterStatus } from '../../types/updater';
 
 export function UpdateSettings() {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<UpdaterStatus | null>(null);
   const [checking, setChecking] = useState(false);
 
@@ -36,17 +38,17 @@ export function UpdateSettings() {
     if (!status) return null;
     switch (status.event) {
       case 'checking':
-        return 'Checking for updates...';
+        return t('updates.checking');
       case 'available':
-        return `Update v${status.data?.version} is available.`;
+        return t('updates.available', { version: status.data?.version });
       case 'not-available':
-        return 'You are running the latest version.';
+        return t('updates.upToDate');
       case 'downloading':
-        return `Downloading... ${status.data?.percent ?? 0}%`;
+        return t('updates.downloading', { percent: status.data?.percent ?? 0 });
       case 'downloaded':
-        return `v${status.data?.version} downloaded. Restart to apply.`;
+        return t('updates.downloaded', { version: status.data?.version });
       case 'error':
-        return `Update error: ${status.data?.message ?? 'Unknown'}`;
+        return t('updates.error', { message: status.data?.message ?? t('updates.unknown') });
       default:
         return null;
     }
@@ -54,7 +56,7 @@ export function UpdateSettings() {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-notion-text mb-3">Updates</h3>
+      <h3 className="text-lg font-semibold text-notion-text mb-3">{t('updates.title')}</h3>
 
       <div className="space-y-3">
         <div className="flex items-center gap-3">
@@ -64,7 +66,7 @@ export function UpdateSettings() {
             className="flex items-center gap-2 px-4 py-2 rounded-md text-sm bg-notion-hover text-notion-text hover:bg-notion-border transition-colors"
           >
             <RefreshCw size={16} className={checking ? 'animate-spin' : ''} />
-            Check for Updates
+            {t('updates.checkForUpdates')}
           </button>
 
           {status?.event === 'available' && (
@@ -73,7 +75,7 @@ export function UpdateSettings() {
               className="flex items-center gap-2 px-4 py-2 rounded-md text-sm bg-notion-primary text-white hover:opacity-90 transition-opacity"
             >
               <Download size={16} />
-              Download
+              {t('updates.download')}
             </button>
           )}
 
@@ -83,12 +85,11 @@ export function UpdateSettings() {
               className="flex items-center gap-2 px-4 py-2 rounded-md text-sm bg-notion-primary text-white hover:opacity-90 transition-opacity"
             >
               <RotateCcw size={16} />
-              Restart to Update
+              {t('updates.restartToUpdate')}
             </button>
           )}
         </div>
 
-        {/* Progress bar */}
         {status?.event === 'downloading' && (
           <div className="w-full bg-notion-hover rounded-full h-2">
             <div

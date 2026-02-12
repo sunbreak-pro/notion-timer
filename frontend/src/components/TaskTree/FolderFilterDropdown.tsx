@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Filter } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTaskTreeContext } from '../../hooks/useTaskTreeContext';
 import { flattenFolders } from '../../utils/flattenFolders';
 
@@ -10,6 +11,7 @@ interface FolderFilterDropdownProps {
 
 export function FolderFilterDropdown({ filterFolderId, onFilterChange }: FolderFilterDropdownProps) {
   const { nodes } = useTaskTreeContext();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -36,11 +38,11 @@ export function FolderFilterDropdown({ filterFolderId, onFilterChange }: FolderF
             ? 'bg-notion-accent/10 text-notion-accent'
             : 'text-notion-text-secondary hover:text-notion-text'
         }`}
-        title="Filter by folder"
+        title={t('folderFilter.filterByFolder')}
       >
         <Filter size={10} />
         <span className="max-w-[80px] truncate">
-          {activeFolder ? activeFolder.title : 'All'}
+          {activeFolder ? activeFolder.title : t('folderFilter.all')}
         </span>
         <ChevronDown size={10} />
       </button>
@@ -55,7 +57,7 @@ export function FolderFilterDropdown({ filterFolderId, onFilterChange }: FolderF
                 : 'text-notion-text hover:bg-notion-hover'
             }`}
           >
-            All
+            {t('folderFilter.all')}
           </button>
           {folders.map(f => (
             <button

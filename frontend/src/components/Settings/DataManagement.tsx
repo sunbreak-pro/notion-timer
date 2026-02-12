@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import { Download, Upload } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getDataService } from '../../services';
 
 export function DataManagement() {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
 
   const handleExport = async () => {
     try {
       const success = await getDataService().exportData();
-      setStatus(success ? 'Data exported successfully.' : null);
+      setIsError(false);
+      setStatus(success ? t('data.exportSuccess') : null);
     } catch (e) {
-      setStatus(`Export failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      setIsError(true);
+      setStatus(t('data.exportFailed', { error: e instanceof Error ? e.message : t('data.unknownError') }));
     }
   };
 
@@ -18,17 +23,19 @@ export function DataManagement() {
     try {
       const success = await getDataService().importData();
       if (success) {
-        setStatus('Data imported. Reloading...');
+        setIsError(false);
+        setStatus(t('data.importSuccess'));
         setTimeout(() => window.location.reload(), 1000);
       }
     } catch (e) {
-      setStatus(`Import failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      setIsError(true);
+      setStatus(t('data.importFailed', { error: e instanceof Error ? e.message : t('data.unknownError') }));
     }
   };
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-notion-text mb-3">Data Management</h3>
+      <h3 className="text-lg font-semibold text-notion-text mb-3">{t('data.title')}</h3>
 
       <div className="space-y-3">
         <div className="flex items-center gap-3">
@@ -37,7 +44,7 @@ export function DataManagement() {
             className="flex items-center gap-2 px-4 py-2 rounded-md text-sm bg-notion-hover text-notion-text hover:bg-notion-border transition-colors"
           >
             <Download size={16} />
-            Export Data
+            {t('data.export')}
           </button>
 
           <button
@@ -45,16 +52,16 @@ export function DataManagement() {
             className="flex items-center gap-2 px-4 py-2 rounded-md text-sm bg-notion-hover text-notion-text hover:bg-notion-border transition-colors"
           >
             <Upload size={16} />
-            Import Data
+            {t('data.import')}
           </button>
         </div>
 
         <p className="text-xs text-notion-text-secondary">
-          Import will overwrite all current data. A backup is created automatically before importing.
+          {t('data.importWarning')}
         </p>
 
         {status && (
-          <p className={`text-sm ${status.includes('failed') ? 'text-notion-danger' : 'text-notion-success'}`}>
+          <p className={`text-sm ${isError ? 'text-notion-danger' : 'text-notion-success'}`}>
             {status}
           </p>
         )}

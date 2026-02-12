@@ -1,4 +1,5 @@
 import { ListTodo, Heart, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { AIRequestType } from '../../types/ai';
 
 interface AIRequestButtonsProps {
@@ -6,16 +7,17 @@ interface AIRequestButtonsProps {
   isLoading: boolean;
 }
 
-const buttons: { type: AIRequestType; label: string; icon: typeof ListTodo }[] = [
-  { type: 'breakdown', label: 'ステップ分解', icon: ListTodo },
-  { type: 'encouragement', label: '励まし', icon: Heart },
-  { type: 'review', label: 'レビュー', icon: CheckCircle2 },
+const buttons: { type: AIRequestType; labelKey: string; icon: typeof ListTodo }[] = [
+  { type: 'breakdown', labelKey: 'aiButtons.breakdown', icon: ListTodo },
+  { type: 'encouragement', labelKey: 'aiButtons.encouragement', icon: Heart },
+  { type: 'review', labelKey: 'aiButtons.review', icon: CheckCircle2 },
 ];
 
 export function AIRequestButtons({ onRequest, isLoading }: AIRequestButtonsProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex gap-2 flex-wrap">
-      {buttons.map(({ type, label, icon: Icon }) => (
+      {buttons.map(({ type, labelKey, icon: Icon }) => (
         <button
           key={type}
           onClick={() => onRequest(type)}
@@ -27,7 +29,7 @@ export function AIRequestButtons({ onRequest, isLoading }: AIRequestButtonsProps
             transition-colors"
         >
           <Icon size={14} />
-          {label}
+          {t(labelKey)}
         </button>
       ))}
     </div>

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback } from "react";
 import { Pin, PinOff, StickyNote } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useNoteContext } from "../../hooks/useNoteContext";
 import { NoteList } from "./NoteList";
 
@@ -8,6 +9,7 @@ const MemoEditor = lazy(() =>
 );
 
 export function NotesView() {
+  const { t } = useTranslation();
   const { selectedNote, updateNote, togglePin } = useNoteContext();
 
   const handleTitleChange = useCallback(
@@ -41,7 +43,7 @@ export function NotesView() {
                 type="text"
                 value={selectedNote.title}
                 onChange={handleTitleChange}
-                placeholder="Untitled"
+                placeholder={t('notesView.untitled')}
                 className="flex-1 text-lg font-semibold text-notion-text bg-transparent border-none outline-none placeholder:text-notion-text-secondary"
               />
               <button
@@ -51,7 +53,7 @@ export function NotesView() {
                     ? "text-notion-primary hover:text-notion-primary/70"
                     : "text-notion-text-secondary hover:text-notion-text"
                 }`}
-                title={selectedNote.isPinned ? "Unpin" : "Pin"}
+                title={selectedNote.isPinned ? t('notesView.unpin') : t('notesView.pin')}
               >
                 {selectedNote.isPinned ? (
                   <PinOff size={16} />
@@ -65,7 +67,7 @@ export function NotesView() {
             <Suspense
               fallback={
                 <div className="text-notion-text-secondary text-sm">
-                  Loading editor...
+                  {t('notesView.loadingEditor')}
                 </div>
               }
             >
@@ -79,7 +81,7 @@ export function NotesView() {
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-notion-text-secondary">
             <StickyNote size={48} strokeWidth={1} className="mb-3 opacity-30" />
-            <p className="text-sm">Select a note or create a new one</p>
+            <p className="text-sm">{t('notesView.emptyState')}</p>
           </div>
         )}
       </div>

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Sparkles, Eye, EyeOff, Save, ExternalLink, Check, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getDataService } from '../../services';
 
 export function AISettings() {
+  const { t } = useTranslation();
   const [apiKey, setApiKey] = useState('');
   const [maskedKey, setMaskedKey] = useState('');
   const [model, setModel] = useState('gemini-2.5-flash-lite');
@@ -19,9 +21,7 @@ export function AISettings() {
         setModel(settings.model);
         setHasApiKey(settings.hasApiKey);
       })
-      .catch(() => {
-        // Backend not available — ignore
-      });
+      .catch(() => {});
   }, []);
 
   const handleSave = async () => {
@@ -38,7 +38,7 @@ export function AISettings() {
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
       setSaveStatus('error');
-      setErrorMessage('保存に失敗しました。バックエンドが起動しているか確認してください。');
+      setErrorMessage(t('ai.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -48,18 +48,17 @@ export function AISettings() {
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Sparkles size={18} className="text-notion-accent" />
-        <h3 className="text-lg font-semibold text-notion-text">AI Coach</h3>
+        <h3 className="text-lg font-semibold text-notion-text">{t('ai.title')}</h3>
       </div>
 
-      {/* API Key */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-notion-text">
-          Gemini API Key
+          {t('ai.apiKey')}
         </label>
         {hasApiKey && !apiKey && (
           <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
             <Check size={12} />
-            設定済み: {maskedKey}
+            {t('ai.alreadySet')} {maskedKey}
           </p>
         )}
         <div className="relative">
@@ -67,7 +66,7 @@ export function AISettings() {
             type={showKey ? 'text' : 'password'}
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder={hasApiKey ? '新しいキーを入力して上書き...' : 'APIキーを入力...'}
+            placeholder={hasApiKey ? t('ai.overwritePlaceholder') : t('ai.keyPlaceholder')}
             className="w-full px-3 py-2 pr-10 text-sm rounded-md border border-notion-border bg-notion-bg text-notion-text placeholder:text-notion-text-secondary/50 focus:outline-none focus:ring-1 focus:ring-notion-accent"
           />
           <button
@@ -83,18 +82,16 @@ export function AISettings() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-xs text-notion-accent hover:underline"
         >
-          Google AI Studio でAPIキーを取得
+          {t('ai.getKey')}
           <ExternalLink size={12} />
         </a>
       </div>
 
-      {/* Model */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-notion-text">Model</label>
+        <label className="text-sm font-medium text-notion-text">{t('ai.model')}</label>
         <p className="text-sm text-notion-text-secondary">{model}</p>
       </div>
 
-      {/* Save button */}
       <div className="flex items-center gap-3">
         <button
           onClick={handleSave}
@@ -102,12 +99,12 @@ export function AISettings() {
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-notion-accent text-white hover:bg-notion-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <Save size={14} />
-          {saving ? '保存中...' : '保存'}
+          {saving ? t('ai.saving') : t('ai.save')}
         </button>
         {saveStatus === 'success' && (
           <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
             <Check size={14} />
-            保存しました
+            {t('ai.saved')}
           </span>
         )}
         {saveStatus === 'error' && (

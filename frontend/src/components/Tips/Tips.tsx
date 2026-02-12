@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ShortcutsTab } from './ShortcutsTab';
 import { TasksTab } from './TasksTab';
 import { TimerTab } from './TimerTab';
@@ -7,20 +8,23 @@ import { MemoTab } from './MemoTab';
 import { AnalyticsTab } from './AnalyticsTab';
 import { EditorTab } from './EditorTab';
 
-const TABS = [
-  { id: 'shortcuts', label: 'Shortcuts' },
-  { id: 'tasks', label: 'Tasks' },
-  { id: 'timer', label: 'Timer' },
-  { id: 'calendar', label: 'Calendar' },
-  { id: 'memo', label: 'Memo' },
-  { id: 'analytics', label: 'Analytics' },
-  { id: 'editor', label: 'Editor' },
-] as const;
+const TAB_IDS = ['shortcuts', 'tasks', 'timer', 'calendar', 'memo', 'analytics', 'editor'] as const;
 
-type TabId = (typeof TABS)[number]['id'];
+type TabId = (typeof TAB_IDS)[number];
+
+const TAB_LABEL_KEYS: Record<TabId, string> = {
+  shortcuts: 'tips.shortcuts',
+  tasks: 'tips.tasks',
+  timer: 'tips.timer',
+  calendar: 'tips.calendar',
+  memo: 'tips.memo',
+  analytics: 'tips.analytics',
+  editor: 'tips.editor',
+};
 
 export function Tips() {
   const [activeTab, setActiveTab] = useState<TabId>('shortcuts');
+  const { t } = useTranslation();
 
   const renderTab = () => {
     switch (activeTab) {
@@ -43,20 +47,20 @@ export function Tips() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-notion-text">Tips</h2>
+      <h2 className="text-2xl font-bold text-notion-text">{t('tips.title')}</h2>
 
       <div className="flex gap-1 border-b border-notion-border">
-        {TABS.map((tab) => (
+        {TAB_IDS.map((id) => (
           <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            key={id}
+            onClick={() => setActiveTab(id)}
             className={`px-4 py-2 text-sm font-medium rounded-t-md transition-colors ${
-              activeTab === tab.id
+              activeTab === id
                 ? 'text-notion-text border-b-2 border-notion-accent'
                 : 'text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover'
             }`}
           >
-            {tab.label}
+            {t(TAB_LABEL_KEYS[id])}
           </button>
         ))}
       </div>

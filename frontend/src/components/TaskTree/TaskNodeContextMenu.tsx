@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   RotateCcw,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface MenuAction {
   label: string;
@@ -54,6 +55,7 @@ export function TaskNodeContextMenu({
   onDelete,
   onClose,
 }: TaskNodeContextMenuProps) {
+  const { t } = useTranslation();
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -90,7 +92,7 @@ export function TaskNodeContextMenu({
 
   const actions: (MenuAction | "separator")[] = [
     {
-      label: "Rename",
+      label: t('contextMenu.rename'),
       icon: <Pencil size={14} />,
       onClick: onRename,
     },
@@ -99,26 +101,26 @@ export function TaskNodeContextMenu({
   if (isFolder) {
     actions.push(
       {
-        label: "Add Task",
+        label: t('contextMenu.addTask'),
         icon: <Plus size={14} />,
         onClick: onAddTask,
       },
       {
-        label: "Add Folder",
+        label: t('contextMenu.addFolder'),
         icon: <LucideFolderPlus size={14} />,
         onClick: onAddFolder,
       },
     );
     if (onSaveAsTemplate) {
       actions.push({
-        label: "Save as Template",
+        label: t('contextMenu.saveAsTemplate'),
         icon: <Save size={14} />,
         onClick: onSaveAsTemplate,
       });
     }
     if (onCompleteFolder) {
       actions.push({
-        label: isFolderDone ? "Mark Incomplete" : "Complete Folder",
+        label: isFolderDone ? t('contextMenu.markIncomplete') : t('contextMenu.completeFolder'),
         icon: isFolderDone ? <RotateCcw size={14} /> : <CheckCircle2 size={14} />,
         onClick: onCompleteFolder,
       });
@@ -127,7 +129,7 @@ export function TaskNodeContextMenu({
 
   if (!isFolder && !isDone) {
     actions.push({
-      label: "Start Timer",
+      label: t('contextMenu.startTimer'),
       icon: <Play size={14} />,
       onClick: onStartTimer,
     });
@@ -135,14 +137,14 @@ export function TaskNodeContextMenu({
 
   if (hasParent) {
     actions.push("separator", {
-      label: "Move to Root",
+      label: t('contextMenu.moveToRoot'),
       icon: <ArrowUp size={14} />,
       onClick: onMoveToRoot,
     });
   }
 
   actions.push("separator", {
-    label: "Delete",
+    label: t('contextMenu.delete'),
     icon: <Trash2 size={14} />,
     onClick: onDelete,
     danger: true,

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { KeyboardEvent } from "react";
 import { Play, Trash2, Clock, Flag } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { TaskNode } from "../../types/taskTree";
 import { getAncestors } from "../../utils/breadcrumb";
 import { DurationPicker } from "../shared/DurationPicker";
@@ -38,6 +39,7 @@ export function TaskDetailHeader({
   folderTag,
   taskColor,
 }: TaskDetailHeaderProps) {
+  const { t } = useTranslation();
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [colorPickerAncestorId, setColorPickerAncestorId] = useState<
     string | null
@@ -153,7 +155,7 @@ export function TaskDetailHeader({
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm bg-notion-accent text-white hover:opacity-90 transition-opacity"
         >
           <Play size={14} />
-          <span>Start</span>
+          <span>{t('taskDetail.start')}</span>
         </button>
         <div className="relative">
           <button
@@ -178,7 +180,7 @@ export function TaskDetailHeader({
                   onDurationChange?.(0);
                   setShowDurationPicker(false);
                 }}
-                defaultLabel={`Use global default (${globalWorkDuration}m)`}
+                defaultLabel={t('taskDetail.useGlobalDefault', { min: globalWorkDuration })}
               />
             </div>
           )}
@@ -193,7 +195,7 @@ export function TaskDetailHeader({
           value={task.dueDate}
           onChange={(val) => onDueDateChange?.(val)}
           icon={<Flag size={14} />}
-          label="Due"
+          label={t('taskDetail.due')}
           activeColor
         />
 

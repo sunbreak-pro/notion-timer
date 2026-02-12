@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { CheckCircle2, SkipForward } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useTimerContext } from "../../hooks/useTimerContext";
 import { useAudioContext } from "../../hooks/useAudioContext";
 import { TimerDisplay } from "./TimerDisplay";
@@ -15,6 +16,7 @@ interface WorkScreenProps {
 export function WorkScreen({
   onCompleteTask,
 }: WorkScreenProps) {
+  const { t } = useTranslation();
   const timer = useTimerContext();
   const audio = useAudioContext();
   const {
@@ -28,7 +30,7 @@ export function WorkScreen({
     workscreenSelections,
   } = audio;
 
-  const title = timer.activeTask?.title ?? "Free Session";
+  const title = timer.activeTask?.title ?? t('work.freeSession');
 
   const handleCompleteSession = useCallback(() => {
     if (timer.isRunning) timer.pause();
@@ -47,7 +49,7 @@ export function WorkScreen({
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30 rounded-lg transition-colors"
             >
               <SkipForward size={14} />
-              セッション完了
+              {t('work.sessionComplete')}
             </button>
           )}
           {timer.activeTask && onCompleteTask && (
@@ -56,7 +58,7 @@ export function WorkScreen({
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950/30 rounded-lg transition-colors"
             >
               <CheckCircle2 size={14} />
-              タスク完了
+              {t('work.taskComplete')}
             </button>
           )}
           <PomodoroSettings

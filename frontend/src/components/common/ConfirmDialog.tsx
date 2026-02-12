@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 interface ConfirmDialogProps {
   message: string;
@@ -8,6 +9,8 @@ interface ConfirmDialogProps {
 }
 
 export function ConfirmDialog({ message, onConfirm, onCancel }: ConfirmDialogProps) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onCancel();
@@ -28,13 +31,13 @@ export function ConfirmDialog({ message, onConfirm, onCancel }: ConfirmDialogPro
             onClick={onCancel}
             className="px-3 py-1.5 text-sm text-notion-text-secondary hover:text-notion-text rounded-md hover:bg-notion-hover transition-colors"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}
             className="px-3 py-1.5 text-sm text-white bg-notion-accent hover:bg-notion-accent/90 rounded-md transition-colors"
           >
-            OK
+            {t('common.ok')}
           </button>
         </div>
       </div>

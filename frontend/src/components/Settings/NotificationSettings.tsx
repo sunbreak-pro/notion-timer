@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react';
 import { Bell, BellOff, Volume2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { STORAGE_KEYS } from '../../constants/storageKeys';
 import { playEffectSound } from '../../utils/playEffectSound';
 
 export function NotificationSettings() {
+  const { t } = useTranslation();
   const [enabled, setEnabled] = useState(() =>
     localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED) === 'true'
   );
@@ -43,7 +45,7 @@ export function NotificationSettings() {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-notion-text mb-4">Notifications</h3>
+      <h3 className="text-lg font-semibold text-notion-text mb-4">{t('notifications.title')}</h3>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {enabled ? (
@@ -52,11 +54,11 @@ export function NotificationSettings() {
             <BellOff size={18} className="text-notion-text-secondary" />
           )}
           <div>
-            <p className="text-sm text-notion-text">Timer notifications</p>
+            <p className="text-sm text-notion-text">{t('notifications.timerNotifications')}</p>
             <p className="text-xs text-notion-text-secondary">
               {isBlocked
-                ? 'Notifications are blocked. Please enable them in browser settings.'
-                : 'Get notified when work/break sessions end'}
+                ? t('notifications.blocked')
+                : t('notifications.description')}
             </p>
           </div>
         </div>
@@ -75,9 +77,8 @@ export function NotificationSettings() {
         </button>
       </div>
 
-      {/* Effect sound volume */}
       <div className="mt-6">
-        <h3 className="text-lg font-semibold text-notion-text mb-4">Session Complete Sound</h3>
+        <h3 className="text-lg font-semibold text-notion-text mb-4">{t('notifications.completionSound')}</h3>
         <div className="flex items-center gap-3">
           <Volume2 size={18} className="text-notion-text-secondary shrink-0" />
           <input
@@ -95,7 +96,7 @@ export function NotificationSettings() {
             onClick={() => playEffectSound('/sounds/session_complete_sound.mp3')}
             className="px-2 py-1 text-xs rounded bg-notion-hover text-notion-text-secondary hover:text-notion-text transition-colors"
           >
-            Preview
+            {t('notifications.preview')}
           </button>
         </div>
       </div>

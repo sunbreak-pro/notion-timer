@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronDown, ChevronRight, Plus, Inbox, Folder, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useTimerContext } from "../../hooks/useTimerContext";
 import { useDebounce } from "../../hooks/useDebounce";
@@ -19,6 +20,7 @@ interface SectionItem {
 }
 
 export function TaskSelector({ currentTitle }: TaskSelectorProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [newTaskValue, setNewTaskValue] = useState("");
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
@@ -213,8 +215,8 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
   };
 
   const placeholder = parsedInput.folder
-    ? `New task in ${parsedInput.folder.title}...`
-    : "Create new task...";
+    ? t('taskSelector.newTaskIn', { folder: parsedInput.folder.title })
+    : t('taskSelector.createNewTask');
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -229,7 +231,7 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
             if (e.key === 'Escape') setIsEditingTitle(false);
           }}
           onBlur={commitRename}
-          placeholder="Task name..."
+          placeholder={t('taskSelector.taskName')}
           className="text-lg font-semibold text-notion-text bg-transparent outline-none border-b border-notion-accent max-w-full"
         />
       ) : (
@@ -318,7 +320,7 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
 
             {items.length === 0 && (
               <div className="px-3 py-4 text-sm text-notion-text-secondary text-center">
-                No tasks available
+                {t('taskSelector.noTasks')}
               </div>
             )}
           </div>
@@ -331,7 +333,7 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-notion-text-secondary hover:bg-notion-hover transition-colors"
               >
                 <X size={14} />
-                <span>Free Session</span>
+                <span>{t('work.freeSession')}</span>
               </button>
             </div>
           )}

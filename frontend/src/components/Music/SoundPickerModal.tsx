@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { X, Search, Volume2, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { SOUND_TYPES } from '../../constants/sounds';
 import { SoundTagFilter } from './SoundTagFilter';
 import type { CustomSoundMeta } from '../../types/customSound';
@@ -24,6 +25,7 @@ export function SoundPickerModal({
   onAddCustomSound,
   soundTagState,
 }: SoundPickerModalProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
 
   const allSounds = useMemo(() => {
@@ -72,7 +74,7 @@ export function SoundPickerModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <h2 className="text-base font-semibold text-notion-text">Select Sound</h2>
+          <h2 className="text-base font-semibold text-notion-text">{t('music.selectSound')}</h2>
           <button
             onClick={onClose}
             className="p-1 text-notion-text-secondary hover:text-notion-text rounded-md hover:bg-notion-hover transition-colors"
@@ -89,7 +91,7 @@ export function SoundPickerModal({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search sounds..."
+              placeholder={t('music.searchSounds')}
               className="w-full pl-9 pr-8 py-2 text-sm bg-notion-bg-secondary border border-notion-border rounded-lg text-notion-text outline-none focus:border-notion-accent transition-colors"
               autoFocus
             />
@@ -131,7 +133,7 @@ export function SoundPickerModal({
                 <span className="text-sm text-notion-text truncate flex-1">{displayName}</span>
                 {sound.isCustom && (
                   <span className="text-[10px] text-notion-text-secondary px-1.5 py-0.5 rounded bg-notion-hover">
-                    Custom
+                    {t('music.custom')}
                   </span>
                 )}
               </button>
@@ -140,7 +142,7 @@ export function SoundPickerModal({
 
           {filteredSounds.length === 0 && (
             <div className="text-center py-6 text-sm text-notion-text-secondary">
-              No sounds available
+              {t('music.noSoundsAvailable')}
             </div>
           )}
         </div>
@@ -155,7 +157,7 @@ export function SoundPickerModal({
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-notion-text-secondary hover:text-notion-accent hover:bg-notion-hover transition-colors"
           >
             <Plus size={14} />
-            <span>Add Custom Sound</span>
+            <span>{t('music.addCustomSound')}</span>
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { PanelRight, Plus, Calendar, List, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useCalendarContext } from '../../hooks/useCalendarContext';
 import { useTaskTreeContext } from '../../hooks/useTaskTreeContext';
 import { CalendarCreateDialog } from './CalendarCreateDialog';
@@ -12,6 +13,7 @@ interface CalendarSidebarProps {
 export function CalendarSidebar({ width, onToggle }: CalendarSidebarProps) {
   const { calendars, activeCalendarId, setActiveCalendarId, createCalendar, updateCalendar, deleteCalendar } = useCalendarContext();
   const { nodes } = useTaskTreeContext();
+  const { t } = useTranslation();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [contextMenuCalendarId, setContextMenuCalendarId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -66,13 +68,13 @@ export function CalendarSidebar({ width, onToggle }: CalendarSidebarProps) {
     >
       <div className="flex items-center justify-between px-3 py-3">
         <span className="text-[20px] font-semibold uppercase tracking-wider text-notion-text-secondary">
-          Calendars
+          {t('calendarSidebar.title')}
         </span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setShowCreateDialog(true)}
             className="p-1 text-notion-text-secondary hover:text-notion-text rounded transition-colors"
-            title="New calendar"
+            title={t('calendarSidebar.newCalendar')}
           >
             <Plus size={18} />
           </button>
@@ -96,7 +98,7 @@ export function CalendarSidebar({ width, onToggle }: CalendarSidebarProps) {
           }`}
         >
           <List size={14} className="shrink-0" />
-          <span className="truncate">All Tasks</span>
+          <span className="truncate">{t('calendarSidebar.allTasks')}</span>
         </button>
 
         {/* Calendar list */}
@@ -157,14 +159,14 @@ export function CalendarSidebar({ width, onToggle }: CalendarSidebarProps) {
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-notion-text hover:bg-notion-hover"
                 >
                   <Pencil size={13} />
-                  Rename
+                  {t('calendarSidebar.rename')}
                 </button>
                 <button
                   onClick={() => handleDelete(cal.id)}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-red-500 hover:bg-notion-hover"
                 >
                   <Trash2 size={13} />
-                  Delete
+                  {t('calendarSidebar.delete')}
                 </button>
               </div>
             )}
@@ -173,7 +175,7 @@ export function CalendarSidebar({ width, onToggle }: CalendarSidebarProps) {
 
         {calendars.length === 0 && (
           <p className="px-3 py-4 text-xs text-notion-text-secondary text-center">
-            No calendars yet. Create one to filter tasks by folder.
+            {t('calendarSidebar.empty')}
           </p>
         )}
       </div>

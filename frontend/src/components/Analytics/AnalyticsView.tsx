@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { BarChart3, CheckCircle2, Circle, FolderOpen } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 
 export function AnalyticsView() {
+  const { t } = useTranslation();
   const { nodes } = useTaskTreeContext();
   const stats = useMemo(() => {
     const tasks = nodes.filter((n) => n.type === "task");
@@ -40,40 +42,39 @@ export function AnalyticsView() {
   return (
     <div className="h-full flex flex-col overflow-auto">
       <div className="max-w-3xl mx-auto w-full px-8 py-6">
-        <h2 className="text-2xl font-bold text-notion-text mb-6">Analytics</h2>
+        <h2 className="text-2xl font-bold text-notion-text mb-6">{t('analytics.title')}</h2>
 
         <div className="grid grid-cols-2 gap-4 mb-8">
           <StatCard
             icon={<BarChart3 size={20} />}
-            label="Total Tasks"
+            label={t('analytics.totalTasks')}
             value={stats.totalTasks}
             color="text-notion-accent"
           />
           <StatCard
             icon={<CheckCircle2 size={20} />}
-            label="Completed"
+            label={t('analytics.completed')}
             value={stats.completedTasks}
             color="text-notion-success"
           />
           <StatCard
             icon={<Circle size={20} />}
-            label="In Progress"
+            label={t('analytics.inProgress')}
             value={stats.incompleteTasks}
             color="text-yellow-500"
           />
           <StatCard
             icon={<FolderOpen size={20} />}
-            label="Folders"
+            label={t('analytics.folders')}
             value={stats.totalFolders}
             color="text-notion-text-secondary"
           />
         </div>
 
-        {/* Today's completion rate */}
         <div className="bg-notion-bg-secondary rounded-lg p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-notion-text">
-              Today&apos;s Completion Rate
+              {t('analytics.todayRate')}
             </span>
             <span className="text-sm font-bold text-notion-success">
               {stats.todayCompletionRate}%
@@ -90,11 +91,10 @@ export function AnalyticsView() {
           </div>
         </div>
 
-        {/* Total completion rate */}
         <div className="bg-notion-bg-secondary rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-notion-text">
-              Total Completion Rate
+              {t('analytics.totalRate')}
             </span>
             <span className="text-sm font-bold text-notion-accent">
               {stats.completionRate}%
@@ -109,7 +109,7 @@ export function AnalyticsView() {
         </div>
 
         <p className="text-sm text-notion-text-secondary mt-8 text-center">
-          More detailed analytics coming soon.
+          {t('analytics.comingSoon')}
         </p>
       </div>
     </div>

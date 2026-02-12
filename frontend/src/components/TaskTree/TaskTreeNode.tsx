@@ -6,6 +6,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { TaskNode } from "../../types/taskTree";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useTimerContext } from "../../hooks/useTimerContext";
@@ -54,6 +55,7 @@ export function TaskTreeNode({
   } = useTaskTreeContext();
 
   const timer = useTimerContext();
+  const { t } = useTranslation();
 
   const { createTemplate } = useTemplates();
 
@@ -201,8 +203,8 @@ export function TaskTreeNode({
           isDone={isDone}
           isTimerActive={isTimerActive}
           isFolderDone={isFolderDone}
-          makeFolder={(node) => addNode("folder", node.id, "New Folder")}
-          makeTask={(node) => addNode("task", node.id, "New Task")}
+          makeFolder={(node) => addNode("folder", node.id, t('taskTree.newFolderDefault'))}
+          makeTask={(node) => addNode("task", node.id, t('taskTree.newTaskDefault'))}
           onPlayTask={onPlayTask}
           onDelete={softDelete}
           onCompleteFolder={isFolder ? handleCompleteFolder : undefined}
@@ -218,8 +220,8 @@ export function TaskTreeNode({
           isFolderDone={isFolderDone}
           hasParent={node.parentId !== null}
           onRename={() => setIsEditing(true)}
-          onAddTask={() => addNode("task", node.id, "New Task")}
-          onAddFolder={() => addNode("folder", node.id, "New Folder")}
+          onAddTask={() => addNode("task", node.id, t('taskTree.newTaskDefault'))}
+          onAddFolder={() => addNode("folder", node.id, t('taskTree.newFolderDefault'))}
           onStartTimer={() => onPlayTask?.(node)}
           onMoveToRoot={() => moveToRoot(node.id)}
           onSaveAsTemplate={isFolder ? handleSaveAsTemplate : undefined}
@@ -231,7 +233,7 @@ export function TaskTreeNode({
 
       {showConfirmDialog && (
         <ConfirmDialog
-          message="フォルダ内の未完了タスクもすべて完了になります。よろしいですか？"
+          message={t('taskTree.folderCompleteConfirm')}
           onConfirm={handleConfirmComplete}
           onCancel={() => setShowConfirmDialog(false)}
         />

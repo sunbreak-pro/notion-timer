@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Play, Square, Settings2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAudioContext } from '../../hooks/useAudioContext';
 import { SOUND_TYPES } from '../../constants/sounds';
 import { useSoundTags } from '../../hooks/useSoundTags';
@@ -13,6 +14,7 @@ const MAX_SLOTS = 6;
 export function MusicScreen() {
   const audio = useAudioContext();
   const soundTagState = useSoundTags();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'WORK' | 'REST'>('WORK');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showTagManager, setShowTagManager] = useState(false);
@@ -72,7 +74,7 @@ export function MusicScreen() {
       <div className="max-w-3xl mx-auto w-full p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-notion-text">Music</h1>
+          <h1 className="text-2xl font-bold text-notion-text">{t('music.title')}</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={audio.toggleManualPlay}
@@ -83,7 +85,7 @@ export function MusicScreen() {
               }`}
             >
               {audio.manualPlay ? <Square size={14} /> : <Play size={14} />}
-              <span>{audio.manualPlay ? 'Stop' : 'Play'}</span>
+              <span>{audio.manualPlay ? t('music.stop') : t('music.play')}</span>
             </button>
             <button
               onClick={() => setShowTagManager(v => !v)}
@@ -92,7 +94,7 @@ export function MusicScreen() {
                   ? 'bg-notion-accent text-white'
                   : 'text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover'
               }`}
-              title="Manage tags"
+              title={t('music.manageTags')}
             >
               <Settings2 size={16} />
             </button>
@@ -115,7 +117,7 @@ export function MusicScreen() {
                 : 'text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover'
             }`}
           >
-            <span>Work</span>
+            <span>{t('music.work')}</span>
             <span className={`text-xs px-1.5 py-0 rounded-full ${
               activeTab === 'WORK' ? 'bg-white/20' : 'bg-notion-hover'
             }`}>
@@ -130,7 +132,7 @@ export function MusicScreen() {
                 : 'text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover'
             }`}
           >
-            <span>Rest</span>
+            <span>{t('music.rest')}</span>
             <span className={`text-xs px-1.5 py-0 rounded-full ${
               activeTab === 'REST' ? 'bg-white/20' : 'bg-notion-hover'
             }`}>
@@ -168,9 +170,9 @@ export function MusicScreen() {
 
         {selectedIds.length === 0 && (
           <div className="text-center py-8 text-notion-text-secondary text-sm">
-            No sounds assigned to {activeTab === 'WORK' ? 'Work' : 'Rest'} phase yet.
+            {activeTab === 'WORK' ? t('music.noSoundsWork') : t('music.noSoundsRest')}
             <br />
-            Click &ldquo;Add Sound&rdquo; to get started.
+            {t('music.addSoundHint')}
           </div>
         )}
       </div>

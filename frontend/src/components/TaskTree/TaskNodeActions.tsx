@@ -1,4 +1,5 @@
 import { Play, Pause, Trash2, LucideFolderPlus, Plus, CheckCircle2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { TaskNode } from "../../types/taskTree";
 
 interface TaskNodeActionsProps {
@@ -24,6 +25,7 @@ export function TaskNodeActions({
   makeTask,
   onCompleteFolder,
 }: TaskNodeActionsProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
       {node.type === "folder" && onCompleteFolder && (
@@ -34,7 +36,7 @@ export function TaskNodeActions({
               ? "text-notion-accent hover:text-notion-text-secondary"
               : "text-notion-text-secondary hover:text-notion-success"
           }`}
-          title={isFolderDone ? "Mark Incomplete" : "Complete Folder"}
+          title={isFolderDone ? t('taskActions.markIncomplete') : t('taskActions.completeFolder')}
         >
           <CheckCircle2 size={14} />
         </button>

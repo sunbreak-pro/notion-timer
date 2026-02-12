@@ -1,0 +1,294 @@
+{
+  "sidebar": {
+    "tasks": "タスク",
+    "memo": "メモ",
+    "music": "ミュージック",
+    "work": "ワーク",
+    "calendar": "カレンダー",
+    "analytics": "分析",
+    "settings": "設定",
+    "tips": "ヒント",
+    "freeSession": "フリーセッション"
+  },
+  "settings": {
+    "title": "設定",
+    "general": "一般",
+    "notificationsTab": "通知",
+    "aiTab": "AI",
+    "dataTab": "データ",
+    "advancedTab": "詳細",
+    "appearance": "外観",
+    "darkMode": "ダークモード",
+    "darkModeDesc": "ライトテーマとダークテーマを切り替え",
+    "fontSize": "フォントサイズ",
+    "fontSizeSmall": "小",
+    "fontSizeLarge": "大",
+    "language": "言語",
+    "languageDesc": "インターフェース言語を選択",
+    "english": "English",
+    "japanese": "日本語"
+  },
+  "notifications": {
+    "title": "通知",
+    "timerNotifications": "タイマー通知",
+    "blocked": "通知がブロックされています。ブラウザ設定で有効にしてください。",
+    "description": "作業/休憩セッション終了時に通知を受け取る",
+    "completionSound": "セッション完了サウンド",
+    "preview": "プレビュー"
+  },
+  "ai": {
+    "title": "AIコーチ",
+    "apiKey": "Gemini APIキー",
+    "alreadySet": "設定済み:",
+    "overwritePlaceholder": "新しいキーを入力して上書き...",
+    "keyPlaceholder": "APIキーを入力...",
+    "getKey": "Google AI StudioでAPIキーを取得",
+    "model": "モデル",
+    "saving": "保存中...",
+    "save": "保存",
+    "saved": "保存しました",
+    "saveFailed": "保存に失敗しました。バックエンドが起動しているか確認してください。",
+    "configureKey": "SettingsでAPIキーを設定する",
+    "thinking": "考え中..."
+  },
+  "data": {
+    "title": "データ管理",
+    "export": "データをエクスポート",
+    "import": "データをインポート",
+    "importWarning": "インポートすると現在のデータがすべて上書きされます。インポート前にバックアップが自動作成されます。",
+    "exportSuccess": "データのエクスポートに成功しました。",
+    "exportFailed": "エクスポート失敗: {{error}}",
+    "importSuccess": "データをインポートしました。再読み込み中...",
+    "importFailed": "インポート失敗: {{error}}",
+    "unknownError": "不明なエラー"
+  },
+  "trash": {
+    "title": "ゴミ箱",
+    "empty": "ゴミ箱は空です",
+    "tasks": "タスク",
+    "notes": "ノート",
+    "restore": "復元",
+    "deletePermanently": "完全に削除",
+    "task": "タスク",
+    "note": "ノート"
+  },
+  "updates": {
+    "title": "アップデート",
+    "checkForUpdates": "アップデートを確認",
+    "download": "ダウンロード",
+    "restartToUpdate": "再起動して更新",
+    "checking": "アップデートを確認中...",
+    "available": "アップデート v{{version}} が利用可能です。",
+    "upToDate": "最新バージョンを使用しています。",
+    "downloading": "ダウンロード中... {{percent}}%",
+    "downloaded": "v{{version}} ダウンロード完了。再起動して適用します。",
+    "error": "アップデートエラー: {{message}}",
+    "unknown": "不明"
+  },
+  "performance": {
+    "title": "パフォーマンスモニター",
+    "appVersion": "アプリバージョン",
+    "electron": "Electron",
+    "dbSize": "DBサイズ",
+    "memory": "メモリ (RSS)",
+    "refresh": "更新",
+    "resetMetrics": "メトリクスをリセット",
+    "channelsTracked": "{{count}} チャンネルを記録",
+    "noMetrics": "IPCメトリクスはまだ記録されていません。アプリを使用してから更新してください。",
+    "channel": "チャンネル",
+    "calls": "呼び出し",
+    "avg": "平均 (ms)",
+    "max": "最大 (ms)",
+    "total": "合計 (ms)",
+    "dbTables": "データベーステーブル"
+  },
+  "logs": {
+    "title": "アプリケーションログ",
+    "all": "すべて",
+    "error": "エラー",
+    "warn": "警告",
+    "info": "情報",
+    "refresh": "更新",
+    "openFolder": "フォルダを開く",
+    "export": "エクスポート",
+    "loading": "読み込み中...",
+    "noEntries": "ログエントリが見つかりません。"
+  },
+  "work": {
+    "freeSession": "フリーセッション",
+    "sessionComplete": "セッション完了",
+    "taskComplete": "タスク完了"
+  },
+  "pomodoro": {
+    "title": "ポモドーロ設定",
+    "workDuration": "1セッションあたりの作業時間",
+    "breakDuration": "セッション間の休憩時間",
+    "longBreakDuration": "セット間の休憩時間",
+    "sessionsPerSet": "1セットあたりのセッション数"
+  },
+  "timer": {
+    "work": "ワーク",
+    "rest": "レスト",
+    "longRest": "ロングレスト"
+  },
+  "taskTree": {
+    "inbox": "インボックス",
+    "newTask": "新しいタスク...",
+    "projects": "プロジェクト",
+    "fromTemplate": "テンプレートから",
+    "newFolder": "新しいフォルダ...",
+    "completed": "完了済み",
+    "newFolderDefault": "新しいフォルダ",
+    "newTaskDefault": "新しいタスク",
+    "folderCompleteConfirm": "フォルダ内の未完了タスクもすべて完了になります。よろしいですか？"
+  },
+  "memo": {
+    "daily": "日記",
+    "notes": "ノート"
+  },
+  "analytics": {
+    "title": "分析",
+    "totalTasks": "全タスク",
+    "completed": "完了",
+    "inProgress": "進行中",
+    "folders": "フォルダ",
+    "todayRate": "今日の完了率",
+    "totalRate": "全体の完了率",
+    "comingSoon": "より詳細な分析は近日公開予定です。"
+  },
+  "tips": {
+    "title": "ヒント",
+    "shortcuts": "ショートカット",
+    "tasks": "タスク",
+    "timer": "タイマー",
+    "calendar": "カレンダー",
+    "memo": "メモ",
+    "analytics": "分析",
+    "editor": "エディタ"
+  },
+  "calendar": {
+    "incomplete": "未完了",
+    "completed": "完了",
+    "all": "すべて",
+    "inbox": "インボックス",
+    "memo": "メモ"
+  },
+  "common": {
+    "cancel": "キャンセル",
+    "ok": "OK",
+    "delete": "削除",
+    "confirm": "確認",
+    "save": "保存",
+    "close": "閉じる"
+  },
+  "commandPalette": {
+    "placeholder": "コマンドを入力...",
+    "noResults": "結果が見つかりません"
+  },
+  "music": {
+    "title": "ミュージック",
+    "stop": "停止",
+    "play": "再生",
+    "manageTags": "タグ管理",
+    "work": "ワーク",
+    "rest": "レスト",
+    "noSoundsWork": "ワークフェーズにサウンドが割り当てられていません。",
+    "noSoundsRest": "レストフェーズにサウンドが割り当てられていません。",
+    "addSoundHint": "「サウンドを追加」をクリックして始めましょう。",
+    "addSound": "サウンドを追加",
+    "selectSound": "サウンドを選択",
+    "searchSounds": "サウンドを検索...",
+    "noSoundsAvailable": "利用可能なサウンドはありません",
+    "addCustomSound": "カスタムサウンドを追加",
+    "custom": "カスタム"
+  },
+  "notes": {
+    "title": "ノート",
+    "newNote": "新しいノート",
+    "searchNotes": "ノートを検索...",
+    "noMatching": "一致するノートがありません",
+    "noNotes": "ノートはまだありません",
+    "untitled": "無題",
+    "sortUpdated": "更新日順",
+    "sortCreated": "作成日順",
+    "sortTitle": "タイトル順"
+  },
+  "contextMenu": {
+    "rename": "名前を変更",
+    "addTask": "タスクを追加",
+    "addFolder": "フォルダを追加",
+    "saveAsTemplate": "テンプレートとして保存",
+    "completeFolder": "フォルダを完了",
+    "markIncomplete": "未完了に戻す",
+    "startTimer": "タイマーを開始",
+    "moveToRoot": "ルートに移動",
+    "delete": "削除"
+  },
+  "taskActions": {
+    "completeFolder": "フォルダを完了",
+    "markIncomplete": "未完了に戻す"
+  },
+  "taskSelector": {
+    "createNewTask": "新しいタスクを作成...",
+    "newTaskIn": "{{folder}} に新しいタスク...",
+    "taskName": "タスク名...",
+    "noTasks": "タスクがありません"
+  },
+  "aiButtons": {
+    "breakdown": "ステップ分解",
+    "encouragement": "励まし",
+    "review": "レビュー"
+  },
+  "sessionModal": {
+    "workComplete": "WORK完了！",
+    "takeBreak": "休憩する",
+    "completeTask": "タスクを完了する",
+    "extend": "延長する",
+    "minutes": "{{min}}分"
+  },
+  "calendarHeader": {
+    "today": "今日",
+    "month": "月表示",
+    "week": "週表示"
+  },
+  "calendarSidebar": {
+    "title": "カレンダー",
+    "newCalendar": "新しいカレンダー",
+    "allTasks": "すべてのタスク",
+    "rename": "名前を変更",
+    "delete": "削除",
+    "empty": "カレンダーはまだありません。フォルダでタスクをフィルターするために作成しましょう。"
+  },
+  "calendarCreate": {
+    "title": "新しいカレンダー",
+    "titleLabel": "タイトル",
+    "placeholder": "カレンダー名",
+    "folderLabel": "フォルダ",
+    "noFolders": "フォルダがありません。先にフォルダを作成してください。",
+    "cancel": "キャンセル",
+    "create": "作成"
+  },
+  "notesView": {
+    "untitled": "無題",
+    "unpin": "ピン解除",
+    "pin": "ピン留め",
+    "loadingEditor": "エディタを読み込み中...",
+    "emptyState": "ノートを選択するか、新しく作成してください"
+  },
+  "folderFilter": {
+    "all": "すべて",
+    "filterByFolder": "フォルダでフィルター"
+  },
+  "templates": {
+    "title": "テンプレート",
+    "empty": "テンプレートはまだありません。",
+    "hint": "フォルダを右クリックしてテンプレートとして保存できます。",
+    "apply": "テンプレートを適用",
+    "deleteTemplate": "テンプレートを削除"
+  },
+  "taskDetail": {
+    "start": "開始",
+    "useGlobalDefault": "デフォルトを使用 ({{min}}分)",
+    "due": "期限"
+  }
+}

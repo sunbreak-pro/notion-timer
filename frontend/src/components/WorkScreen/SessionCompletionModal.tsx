@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Coffee, Clock, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface SessionCompletionModalProps {
   onExtend: (minutes: number) => void;
@@ -16,6 +17,8 @@ export function SessionCompletionModal({
   onDismiss,
   onCompleteTask,
 }: SessionCompletionModalProps) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onDismiss();
@@ -32,7 +35,7 @@ export function SessionCompletionModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold text-notion-text text-center mb-4">
-          WORK完了！
+          {t('sessionModal.workComplete')}
         </h2>
 
         <div className="space-y-4">
@@ -41,7 +44,7 @@ export function SessionCompletionModal({
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-notion-accent text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
           >
             <Coffee size={18} />
-            休憩する
+            {t('sessionModal.takeBreak')}
           </button>
 
           {onCompleteTask && (
@@ -50,12 +53,12 @@ export function SessionCompletionModal({
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
             >
               <CheckCircle2 size={18} />
-              タスクを完了する
+              {t('sessionModal.completeTask')}
             </button>
           )}
 
           <div>
-            <p className="text-sm text-notion-text-secondary mb-2 text-center">延長する</p>
+            <p className="text-sm text-notion-text-secondary mb-2 text-center">{t('sessionModal.extend')}</p>
             <div className="grid grid-cols-3 gap-2">
               {EXTEND_OPTIONS.map((min) => (
                 <button
@@ -64,7 +67,7 @@ export function SessionCompletionModal({
                   className="flex items-center justify-center gap-1 px-3 py-2 text-sm text-notion-text bg-notion-hover rounded-lg hover:bg-notion-border transition-colors"
                 >
                   <Clock size={14} />
-                  {min}分
+                  {t('sessionModal.minutes', { min })}
                 </button>
               ))}
             </div>

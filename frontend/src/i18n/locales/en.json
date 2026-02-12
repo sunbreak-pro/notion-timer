@@ -1,0 +1,294 @@
+{
+  "sidebar": {
+    "tasks": "Tasks",
+    "memo": "Memo",
+    "music": "Music",
+    "work": "Work",
+    "calendar": "Calendar",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "tips": "Tips",
+    "freeSession": "Free Session"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "notificationsTab": "Notifications",
+    "aiTab": "AI",
+    "dataTab": "Data",
+    "advancedTab": "Advanced",
+    "appearance": "Appearance",
+    "darkMode": "Dark Mode",
+    "darkModeDesc": "Switch between light and dark themes",
+    "fontSize": "Font Size",
+    "fontSizeSmall": "Small",
+    "fontSizeLarge": "Large",
+    "language": "Language",
+    "languageDesc": "Choose interface language",
+    "english": "English",
+    "japanese": "Japanese"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "timerNotifications": "Timer notifications",
+    "blocked": "Notifications are blocked. Please enable them in browser settings.",
+    "description": "Get notified when work/break sessions end",
+    "completionSound": "Session Complete Sound",
+    "preview": "Preview"
+  },
+  "ai": {
+    "title": "AI Coach",
+    "apiKey": "Gemini API Key",
+    "alreadySet": "Already set:",
+    "overwritePlaceholder": "Enter new key to overwrite...",
+    "keyPlaceholder": "Enter API key...",
+    "getKey": "Get API key from Google AI Studio",
+    "model": "Model",
+    "saving": "Saving...",
+    "save": "Save",
+    "saved": "Saved",
+    "saveFailed": "Save failed. Please check if backend is running.",
+    "configureKey": "Configure API key in Settings",
+    "thinking": "Thinking..."
+  },
+  "data": {
+    "title": "Data Management",
+    "export": "Export Data",
+    "import": "Import Data",
+    "importWarning": "Import will overwrite all current data. A backup is created automatically before importing.",
+    "exportSuccess": "Data exported successfully.",
+    "exportFailed": "Export failed: {{error}}",
+    "importSuccess": "Data imported. Reloading...",
+    "importFailed": "Import failed: {{error}}",
+    "unknownError": "Unknown error"
+  },
+  "trash": {
+    "title": "Trash",
+    "empty": "Trash is empty",
+    "tasks": "Tasks",
+    "notes": "Notes",
+    "restore": "Restore",
+    "deletePermanently": "Delete permanently",
+    "task": "task",
+    "note": "note"
+  },
+  "updates": {
+    "title": "Updates",
+    "checkForUpdates": "Check for Updates",
+    "download": "Download",
+    "restartToUpdate": "Restart to Update",
+    "checking": "Checking for updates...",
+    "available": "Update v{{version}} is available.",
+    "upToDate": "You are running the latest version.",
+    "downloading": "Downloading... {{percent}}%",
+    "downloaded": "v{{version}} downloaded. Restart to apply.",
+    "error": "Update error: {{message}}",
+    "unknown": "Unknown"
+  },
+  "performance": {
+    "title": "Performance Monitor",
+    "appVersion": "App Version",
+    "electron": "Electron",
+    "dbSize": "DB Size",
+    "memory": "Memory (RSS)",
+    "refresh": "Refresh",
+    "resetMetrics": "Reset Metrics",
+    "channelsTracked": "{{count}} channels tracked",
+    "noMetrics": "No IPC metrics recorded yet. Use the app and refresh.",
+    "channel": "Channel",
+    "calls": "Calls",
+    "avg": "Avg (ms)",
+    "max": "Max (ms)",
+    "total": "Total (ms)",
+    "dbTables": "Database Tables"
+  },
+  "logs": {
+    "title": "Application Logs",
+    "all": "All",
+    "error": "Error",
+    "warn": "Warn",
+    "info": "Info",
+    "refresh": "Refresh",
+    "openFolder": "Open Folder",
+    "export": "Export",
+    "loading": "Loading...",
+    "noEntries": "No log entries found."
+  },
+  "work": {
+    "freeSession": "Free Session",
+    "sessionComplete": "Session Complete",
+    "taskComplete": "Task Complete"
+  },
+  "pomodoro": {
+    "title": "Pomodoro Settings",
+    "workDuration": "Work duration per session",
+    "breakDuration": "Break duration between sessions",
+    "longBreakDuration": "Long break duration between sets",
+    "sessionsPerSet": "Sessions per set"
+  },
+  "timer": {
+    "work": "WORK",
+    "rest": "REST",
+    "longRest": "LONG REST"
+  },
+  "taskTree": {
+    "inbox": "Inbox",
+    "newTask": "New task...",
+    "projects": "Projects",
+    "fromTemplate": "From template",
+    "newFolder": "New folder...",
+    "completed": "Completed",
+    "newFolderDefault": "New Folder",
+    "newTaskDefault": "New Task",
+    "folderCompleteConfirm": "All incomplete tasks in the folder will also be marked as completed. Are you sure?"
+  },
+  "memo": {
+    "daily": "Daily",
+    "notes": "Notes"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "totalTasks": "Total Tasks",
+    "completed": "Completed",
+    "inProgress": "In Progress",
+    "folders": "Folders",
+    "todayRate": "Today's Completion Rate",
+    "totalRate": "Total Completion Rate",
+    "comingSoon": "More detailed analytics coming soon."
+  },
+  "tips": {
+    "title": "Tips",
+    "shortcuts": "Shortcuts",
+    "tasks": "Tasks",
+    "timer": "Timer",
+    "calendar": "Calendar",
+    "memo": "Memo",
+    "analytics": "Analytics",
+    "editor": "Editor"
+  },
+  "calendar": {
+    "incomplete": "Incomplete",
+    "completed": "Completed",
+    "all": "All",
+    "inbox": "Inbox",
+    "memo": "Memo"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "ok": "OK",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "save": "Save",
+    "close": "Close"
+  },
+  "commandPalette": {
+    "placeholder": "Type a command...",
+    "noResults": "No results found"
+  },
+  "music": {
+    "title": "Music",
+    "stop": "Stop",
+    "play": "Play",
+    "manageTags": "Manage tags",
+    "work": "Work",
+    "rest": "Rest",
+    "noSoundsWork": "No sounds assigned to Work phase yet.",
+    "noSoundsRest": "No sounds assigned to Rest phase yet.",
+    "addSoundHint": "Click \"Add Sound\" to get started.",
+    "addSound": "Add Sound",
+    "selectSound": "Select Sound",
+    "searchSounds": "Search sounds...",
+    "noSoundsAvailable": "No sounds available",
+    "addCustomSound": "Add Custom Sound",
+    "custom": "Custom"
+  },
+  "notes": {
+    "title": "Notes",
+    "newNote": "New note",
+    "searchNotes": "Search notes...",
+    "noMatching": "No matching notes",
+    "noNotes": "No notes yet",
+    "untitled": "Untitled",
+    "sortUpdated": "Updated",
+    "sortCreated": "Created",
+    "sortTitle": "Title"
+  },
+  "contextMenu": {
+    "rename": "Rename",
+    "addTask": "Add Task",
+    "addFolder": "Add Folder",
+    "saveAsTemplate": "Save as Template",
+    "completeFolder": "Complete Folder",
+    "markIncomplete": "Mark Incomplete",
+    "startTimer": "Start Timer",
+    "moveToRoot": "Move to Root",
+    "delete": "Delete"
+  },
+  "taskActions": {
+    "completeFolder": "Complete Folder",
+    "markIncomplete": "Mark Incomplete"
+  },
+  "taskSelector": {
+    "createNewTask": "Create new task...",
+    "newTaskIn": "New task in {{folder}}...",
+    "taskName": "Task name...",
+    "noTasks": "No tasks available"
+  },
+  "aiButtons": {
+    "breakdown": "Step Breakdown",
+    "encouragement": "Encouragement",
+    "review": "Review"
+  },
+  "sessionModal": {
+    "workComplete": "WORK Complete!",
+    "takeBreak": "Take a break",
+    "completeTask": "Complete task",
+    "extend": "Extend",
+    "minutes": "{{min}}m"
+  },
+  "calendarHeader": {
+    "today": "Today",
+    "month": "Month",
+    "week": "Week"
+  },
+  "calendarSidebar": {
+    "title": "Calendars",
+    "newCalendar": "New calendar",
+    "allTasks": "All Tasks",
+    "rename": "Rename",
+    "delete": "Delete",
+    "empty": "No calendars yet. Create one to filter tasks by folder."
+  },
+  "calendarCreate": {
+    "title": "New Calendar",
+    "titleLabel": "Title",
+    "placeholder": "Calendar name",
+    "folderLabel": "Folder",
+    "noFolders": "No folders. Create a folder first.",
+    "cancel": "Cancel",
+    "create": "Create"
+  },
+  "notesView": {
+    "untitled": "Untitled",
+    "unpin": "Unpin",
+    "pin": "Pin",
+    "loadingEditor": "Loading editor...",
+    "emptyState": "Select a note or create a new one"
+  },
+  "folderFilter": {
+    "all": "All",
+    "filterByFolder": "Filter by folder"
+  },
+  "templates": {
+    "title": "Templates",
+    "empty": "No templates yet.",
+    "hint": "Right-click a folder to save it as a template.",
+    "apply": "Apply template",
+    "deleteTemplate": "Delete template"
+  },
+  "taskDetail": {
+    "start": "Start",
+    "useGlobalDefault": "Use global default ({{min}}m)",
+    "due": "Due"
+  }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, FileDown, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTemplates } from '../../hooks/useTemplates';
 import { useTaskTreeContext } from '../../hooks/useTaskTreeContext';
 import type { TaskNode } from '../../types/taskTree';
@@ -10,6 +11,7 @@ interface TemplateDialogProps {
 }
 
 export function TemplateDialog({ onClose }: TemplateDialogProps) {
+  const { t } = useTranslation();
   const { templates, deleteTemplate } = useTemplates();
   const { addNode, updateNode } = useTaskTreeContext();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -61,7 +63,7 @@ export function TemplateDialog({ onClose }: TemplateDialogProps) {
     >
       <div ref={dialogRef} className="bg-notion-bg rounded-lg shadow-xl w-96 max-h-[70vh] flex flex-col">
         <div className="flex items-center justify-between px-4 py-3 border-b border-notion-border">
-          <h3 className="text-lg font-semibold text-notion-text">Templates</h3>
+          <h3 className="text-lg font-semibold text-notion-text">{t('templates.title')}</h3>
           <button onClick={onClose} className="text-notion-text-secondary hover:text-notion-text">
             <X size={18} />
           </button>
@@ -70,8 +72,8 @@ export function TemplateDialog({ onClose }: TemplateDialogProps) {
         <div className="flex-1 overflow-auto p-2">
           {templates.length === 0 ? (
             <div className="text-center py-8 text-sm text-notion-text-secondary">
-              <p>No templates yet.</p>
-              <p className="mt-1">Right-click a folder to save it as a template.</p>
+              <p>{t('templates.empty')}</p>
+              <p className="mt-1">{t('templates.hint')}</p>
             </div>
           ) : (
             <div className="space-y-1">
@@ -84,14 +86,14 @@ export function TemplateDialog({ onClose }: TemplateDialogProps) {
                   <button
                     onClick={() => handleApply(template)}
                     className="opacity-0 group-hover:opacity-100 p-1 text-notion-accent hover:text-notion-accent/80"
-                    title="Apply template"
+                    title={t('templates.apply')}
                   >
                     <FileDown size={14} />
                   </button>
                   <button
                     onClick={() => deleteTemplate(template.id)}
                     className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-danger"
-                    title="Delete template"
+                    title={t('templates.deleteTemplate')}
                   >
                     <Trash2 size={14} />
                   </button>

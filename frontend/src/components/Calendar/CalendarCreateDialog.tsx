@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTaskTreeContext } from '../../hooks/useTaskTreeContext';
 import { flattenFolders } from '../../utils/flattenFolders';
 
@@ -9,6 +10,7 @@ interface CalendarCreateDialogProps {
 }
 
 export function CalendarCreateDialog({ onSubmit, onClose }: CalendarCreateDialogProps) {
+  const { t } = useTranslation();
   const { nodes } = useTaskTreeContext();
   const folders = flattenFolders(nodes);
   const [title, setTitle] = useState('');
@@ -28,7 +30,7 @@ export function CalendarCreateDialog({ onSubmit, onClose }: CalendarCreateDialog
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-notion-text">New Calendar</h3>
+          <h3 className="text-sm font-semibold text-notion-text">{t('calendarCreate.title')}</h3>
           <button
             type="button"
             onClick={onClose}
@@ -38,18 +40,18 @@ export function CalendarCreateDialog({ onSubmit, onClose }: CalendarCreateDialog
           </button>
         </div>
 
-        <label className="block text-xs text-notion-text-secondary mb-1">Title</label>
+        <label className="block text-xs text-notion-text-secondary mb-1">{t('calendarCreate.titleLabel')}</label>
         <input
           autoFocus
           value={title}
           onChange={e => setTitle(e.target.value)}
-          placeholder="Calendar name"
+          placeholder={t('calendarCreate.placeholder')}
           className="w-full px-2 py-1.5 mb-3 text-sm bg-notion-bg-secondary border border-notion-border rounded text-notion-text placeholder:text-notion-text-secondary/50 focus:outline-none focus:ring-1 focus:ring-notion-accent"
         />
 
-        <label className="block text-xs text-notion-text-secondary mb-1">Folder</label>
+        <label className="block text-xs text-notion-text-secondary mb-1">{t('calendarCreate.folderLabel')}</label>
         {folders.length === 0 ? (
-          <p className="text-xs text-notion-text-secondary mb-3">No folders. Create a folder first.</p>
+          <p className="text-xs text-notion-text-secondary mb-3">{t('calendarCreate.noFolders')}</p>
         ) : (
           <select
             value={folderId}
@@ -70,14 +72,14 @@ export function CalendarCreateDialog({ onSubmit, onClose }: CalendarCreateDialog
             onClick={onClose}
             className="px-3 py-1.5 text-xs text-notion-text-secondary hover:text-notion-text rounded transition-colors"
           >
-            Cancel
+            {t('calendarCreate.cancel')}
           </button>
           <button
             type="submit"
             disabled={!title.trim() || !folderId}
             className="px-3 py-1.5 text-xs bg-notion-accent text-white rounded hover:bg-notion-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Create
+            {t('calendarCreate.create')}
           </button>
         </div>
       </form>

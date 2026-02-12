@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { ComponentType } from 'react';
 
 export interface Command {
@@ -18,6 +19,7 @@ interface CommandPaletteProps {
 }
 
 export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -123,7 +125,7 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
           <input
             ref={inputRef}
             type="text"
-            placeholder="Type a command..."
+            placeholder={t('commandPalette.placeholder')}
             value={query}
             onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
             className="flex-1 bg-transparent border-none outline-none text-sm"
@@ -138,7 +140,7 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
               className="px-4 py-6 text-center text-sm"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              No results found
+              {t('commandPalette.noResults')}
             </div>
           )}
           {groups.map((group) => (

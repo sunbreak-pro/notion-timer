@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 
+import { useTranslation } from "react-i18next";
 import { useTaskTreeDnd } from "../../hooks/useTaskTreeDnd";
 import { useTaskTreeKeyboard } from "../../hooks/useTaskTreeKeyboard";
 import { TaskTreeNode } from "./TaskTreeNode";
@@ -136,6 +137,8 @@ export function TaskTree({
     return result;
   }, [inboxTasks, folders, getChildren]);
 
+  const { t } = useTranslation();
+
   useTaskTreeKeyboard({
     selectedTaskId: selectedTaskId ?? null,
     visibleNodes,
@@ -168,7 +171,7 @@ export function TaskTree({
                 <Inbox size={14} />
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center">
-                    Inbox{" "}
+                    {t('taskTree.inbox')}{" "}
                     {inboxTasks.length > 0 && (
                       <div className="font-normal">({inboxTasks.length})</div>
                     )}
@@ -189,7 +192,7 @@ export function TaskTree({
                 </div>
               </SortableContext>
               {isCreatingInboxTask && (
-                <InlineCreateInput placeholder="New task..." onSubmit={(title) => addNode("task", null, title)} onCancel={() => setIsCreatingInboxTask(false)} />
+                <InlineCreateInput placeholder={t('taskTree.newTask')} onSubmit={(title) => addNode("task", null, title)} onCancel={() => setIsCreatingInboxTask(false)} />
               )}
             </div>
           )}
@@ -209,7 +212,7 @@ export function TaskTree({
                 <FolderOpen size={14} />
                 <div className="flex-row flex items-center justify-between w-full">
                   <div className="flex items-center gap-1.5">
-                    Projects
+                    {t('taskTree.projects')}
                     <FolderFilterDropdown
                       filterFolderId={filterFolderId}
                       onFilterChange={setFilterFolderId}
@@ -219,7 +222,7 @@ export function TaskTree({
                     <button
                       onClick={(e) => { e.stopPropagation(); setIsTemplateDialogOpen(true); }}
                       className="hover:text-notion-text transition-colors"
-                      title="From template"
+                      title={t('taskTree.fromTemplate')}
                     >
                       <FileDown size={14} />
                     </button>
@@ -240,7 +243,7 @@ export function TaskTree({
                 </div>
               </SortableContext>
               {isCreatingProjectFolder && (
-                <InlineCreateInput placeholder="New folder..." onSubmit={(title) => addNode("folder", null, title)} onCancel={() => setIsCreatingProjectFolder(false)} />
+                <InlineCreateInput placeholder={t('taskTree.newFolder')} onSubmit={(title) => addNode("folder", null, title)} onCancel={() => setIsCreatingProjectFolder(false)} />
               )}
             </div>
           )}
@@ -264,7 +267,7 @@ export function TaskTree({
           >
             {showCompleted ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             <CheckCircle2 size={14} />
-            <span>Completed ({completedRootTasks.length + completedFolders.length})</span>
+            <span>{t('taskTree.completed')} ({completedRootTasks.length + completedFolders.length})</span>
           </button>
           {showCompleted && (
             <div className="space-y-0.5 opacity-60">

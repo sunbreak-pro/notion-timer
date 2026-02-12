@@ -1,4 +1,5 @@
 import { Play, Pause, RotateCcw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { SessionType } from "../../types/timer";
 
 interface TimerDisplayProps {
@@ -13,10 +14,10 @@ interface TimerDisplayProps {
   onReset: () => void;
 }
 
-const SESSION_LABELS: Record<SessionType, string> = {
-  WORK: "WORK",
-  BREAK: "REST",
-  LONG_BREAK: "LONG REST",
+const SESSION_LABEL_KEYS: Record<SessionType, string> = {
+  WORK: "timer.work",
+  BREAK: "timer.rest",
+  LONG_BREAK: "timer.longRest",
 };
 
 export function TimerDisplay({
@@ -30,12 +31,13 @@ export function TimerDisplay({
   onPause,
   onReset,
 }: TimerDisplayProps) {
+  const { t } = useTranslation();
   const currentSession = (completedSessions % sessionsBeforeLongBreak) + 1;
 
   return (
     <div className="flex flex-col items-center gap-4">
       <span className="text-sm font-medium tracking-widest text-notion-accent uppercase">
-        {SESSION_LABELS[sessionType]}
+        {t(SESSION_LABEL_KEYS[sessionType])}
       </span>
 
       <span className="text-7xl font-light text-notion-text tabular-nums tracking-tight">

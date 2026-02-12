@@ -1,10 +1,12 @@
 import { Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface EmptySlotProps {
   onAddClick: () => void;
 }
 
 export function EmptySlot({ onAddClick }: EmptySlotProps) {
+  const { t } = useTranslation();
   return (
     <button
       onClick={onAddClick}
@@ -12,7 +14,7 @@ export function EmptySlot({ onAddClick }: EmptySlotProps) {
     >
       <Plus size={16} className="text-notion-text-secondary group-hover:text-notion-accent transition-colors" />
       <span className="text-sm text-notion-text-secondary group-hover:text-notion-accent transition-colors">
-        Add Sound
+        {t('music.addSound')}
       </span>
     </button>
   );

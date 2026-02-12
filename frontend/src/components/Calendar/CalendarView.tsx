@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useMemoContext } from "../../hooks/useMemoContext";
 import { useCalendarContext } from "../../hooks/useCalendarContext";
@@ -27,6 +28,7 @@ export function CalendarView({
   onCreateTask,
   onSelectMemo,
 }: CalendarViewProps) {
+  const { t } = useTranslation();
   const { nodes, getTaskColor, getFolderTagForTask } = useTaskTreeContext();
   const { memos } = useMemoContext();
   const { activeCalendar } = useCalendarContext();
@@ -106,14 +108,14 @@ export function CalendarView({
     const tagSet = new Set<string>();
     for (const [, tasks] of tasksByDate) {
       for (const task of tasks) {
-        tagSet.add(getFolderTagForTask(task.id) || "Inbox");
+        tagSet.add(getFolderTagForTask(task.id) || t('calendar.inbox'));
       }
     }
     if (memosByDate.size > 0) {
-      tagSet.add("Memo");
+      tagSet.add(t('calendar.memo'));
     }
     return Array.from(tagSet).sort();
-  }, [tasksByDate, getFolderTagForTask, memosByDate]);
+  }, [tasksByDate, getFolderTagForTask, memosByDate, t]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -176,22 +178,22 @@ export function CalendarView({
   // Filter tasksByDate by tag
   const filteredTasksByDate = useMemo(() => {
     if (!tagFilter) return tasksByDate;
-    if (tagFilter === "Memo") return new Map<string, typeof nodes>();
+    if (tagFilter === t('calendar.memo')) return new Map<string, typeof nodes>();
     const map = new Map<string, typeof nodes>();
     for (const [date, tasks] of tasksByDate) {
       const matching = tasks.filter(
-        (t) => (getFolderTagForTask(t.id) || "Inbox") === tagFilter,
+        (task) => (getFolderTagForTask(task.id) || t('calendar.inbox')) === tagFilter,
       );
       if (matching.length > 0) map.set(date, matching);
     }
     return map;
-  }, [tasksByDate, tagFilter, getFolderTagForTask]);
+  }, [tasksByDate, tagFilter, getFolderTagForTask, t]);
 
   // Filter memosByDate by tag
   const filteredMemosByDate = useMemo(() => {
-    if (!tagFilter || tagFilter === "Memo") return memosByDate;
+    if (!tagFilter || tagFilter === t('calendar.memo')) return memosByDate;
     return new Map<string, MemoNode>();
-  }, [tagFilter, memosByDate]);
+  }, [tagFilter, memosByDate, t]);
 
   return (
     <div className="h-full flex flex-col overflow-auto">
@@ -217,7 +219,7 @@ export function CalendarView({
                 : "text-notion-text-secondary hover:bg-notion-hover"
             }`}
           >
-            Incomplete
+            {t('calendar.incomplete')}
           </button>
           <button
             onClick={() => setFilter("completed")}
@@ -227,7 +229,7 @@ export function CalendarView({
                 : "text-notion-text-secondary hover:bg-notion-hover"
             }`}
           >
-            Completed
+            {t('calendar.completed')}
           </button>
         </div>
 
@@ -242,7 +244,7 @@ export function CalendarView({
                   : "bg-notion-bg-secondary text-notion-text-secondary hover:bg-notion-hover"
               }`}
             >
-              All
+              {t('calendar.all')}
             </button>
             {availableTags.map((tag) => (
               <button

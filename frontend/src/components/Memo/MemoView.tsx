@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BookOpen, StickyNote } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { STORAGE_KEYS } from "../../constants/storageKeys";
 import { DailyMemoView } from "./DailyMemoView";
 import { NotesView } from "./NotesView";
@@ -13,6 +14,7 @@ function getInitialTab(): MemoTab {
 
 export function MemoView() {
   const [activeTab, setActiveTab] = useState<MemoTab>(getInitialTab);
+  const { t } = useTranslation();
 
   const handleTabChange = (tab: MemoTab) => {
     setActiveTab(tab);
@@ -21,7 +23,6 @@ export function MemoView() {
 
   return (
     <div className="min-h-170 max-h-fit flex flex-col">
-      {/* Tab bar */}
       <div className="flex border-b border-notion-border shrink-0">
         <button
           onClick={() => handleTabChange("daily")}
@@ -32,7 +33,7 @@ export function MemoView() {
           }`}
         >
           <BookOpen size={15} />
-          Daily
+          {t('memo.daily')}
         </button>
         <button
           onClick={() => handleTabChange("notes")}
@@ -43,11 +44,10 @@ export function MemoView() {
           }`}
         >
           <StickyNote size={15} />
-          Notes
+          {t('memo.notes')}
         </button>
       </div>
 
-      {/* Tab content */}
       <div className="flex-1 min-h-0">
         {activeTab === "daily" ? <DailyMemoView /> : <NotesView />}
       </div>

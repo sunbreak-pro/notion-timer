@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { RotateCcw, Trash2, Folder, FileText, StickyNote } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTaskTreeContext } from '../../hooks/useTaskTreeContext';
 import { useNoteContext } from '../../hooks/useNoteContext';
 
 export function TrashBin() {
+  const { t } = useTranslation();
   const { deletedNodes, restoreNode, permanentDelete } = useTaskTreeContext();
   const { deletedNotes, loadDeletedNotes, restoreNote, permanentDeleteNote } = useNoteContext();
 
@@ -20,16 +22,15 @@ export function TrashBin() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-notion-text">Trash</h3>
+      <h3 className="text-lg font-semibold text-notion-text">{t('trash.title')}</h3>
 
       {isEmpty ? (
-        <p className="text-sm text-notion-text-secondary py-4">Trash is empty</p>
+        <p className="text-sm text-notion-text-secondary py-4">{t('trash.empty')}</p>
       ) : (
         <div className="space-y-4">
-          {/* Tasks section */}
           {topLevelDeleted.length > 0 && (
             <div className="space-y-1">
-              <h4 className="text-xs font-medium text-notion-text-secondary uppercase tracking-wide px-1">Tasks</h4>
+              <h4 className="text-xs font-medium text-notion-text-secondary uppercase tracking-wide px-1">{t('trash.tasks')}</h4>
               {topLevelDeleted.map(node => {
                 const Icon = node.type === 'task' ? FileText : Folder;
                 return (
@@ -39,18 +40,18 @@ export function TrashBin() {
                   >
                     <Icon size={16} className="text-notion-text-secondary shrink-0" />
                     <span className="flex-1 text-sm text-notion-text truncate">{node.title}</span>
-                    <span className="text-xs text-notion-text-secondary">{node.type}</span>
+                    <span className="text-xs text-notion-text-secondary">{t(`trash.${node.type}`)}</span>
                     <button
                       onClick={() => restoreNode(node.id)}
                       className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-success transition-opacity"
-                      title="Restore"
+                      title={t('trash.restore')}
                     >
                       <RotateCcw size={14} />
                     </button>
                     <button
                       onClick={() => permanentDelete(node.id)}
                       className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-danger transition-opacity"
-                      title="Delete permanently"
+                      title={t('trash.deletePermanently')}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -60,10 +61,9 @@ export function TrashBin() {
             </div>
           )}
 
-          {/* Notes section */}
           {deletedNotes.length > 0 && (
             <div className="space-y-1">
-              <h4 className="text-xs font-medium text-notion-text-secondary uppercase tracking-wide px-1">Notes</h4>
+              <h4 className="text-xs font-medium text-notion-text-secondary uppercase tracking-wide px-1">{t('trash.notes')}</h4>
               {deletedNotes.map(note => (
                 <div
                   key={note.id}
@@ -71,18 +71,18 @@ export function TrashBin() {
                 >
                   <StickyNote size={16} className="text-notion-text-secondary shrink-0" />
                   <span className="flex-1 text-sm text-notion-text truncate">{note.title}</span>
-                  <span className="text-xs text-notion-text-secondary">note</span>
+                  <span className="text-xs text-notion-text-secondary">{t('trash.note')}</span>
                   <button
                     onClick={() => restoreNote(note.id)}
                     className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-success transition-opacity"
-                    title="Restore"
+                    title={t('trash.restore')}
                   >
                     <RotateCcw size={14} />
                   </button>
                   <button
                     onClick={() => permanentDeleteNote(note.id)}
                     className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-danger transition-opacity"
-                    title="Delete permanently"
+                    title={t('trash.deletePermanently')}
                   >
                     <Trash2 size={14} />
                   </button>

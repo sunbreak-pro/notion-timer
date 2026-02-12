@@ -7,13 +7,14 @@ import {
   Search,
   ArrowUpDown,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useNoteContext } from "../../hooks/useNoteContext";
 import type { NoteSortMode } from "../../types/note";
 
-const SORT_LABELS: Record<NoteSortMode, string> = {
-  updatedAt: "Updated",
-  createdAt: "Created",
-  title: "Title",
+const SORT_LABEL_KEYS: Record<NoteSortMode, string> = {
+  updatedAt: "notes.sortUpdated",
+  createdAt: "notes.sortCreated",
+  title: "notes.sortTitle",
 };
 
 function getContentPreview(content: string, maxLength = 40): string {
@@ -50,6 +51,7 @@ export function NoteList() {
     softDeleteNote,
   } = useNoteContext();
 
+  const { t } = useTranslation();
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const debounceRef = useRef<number | null>(null);
@@ -71,12 +73,12 @@ export function NoteList() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-notion-text">
             <StickyNote size={16} />
-            <span className="text-sm font-medium">Notes</span>
+            <span className="text-sm font-medium">{t('notes.title')}</span>
           </div>
           <button
             onClick={() => createNote()}
             className="p-1 text-notion-text-secondary hover:text-notion-text rounded transition-colors"
-            title="New note"
+            title={t('notes.newNote')}
           >
             <Plus size={16} />
           </button>
@@ -92,7 +94,7 @@ export function NoteList() {
           />
           <input
             type="text"
-            placeholder="Search notes..."
+            placeholder={t('notes.searchNotes')}
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
             className="w-full pl-7 pr-2 py-1.5 text-xs bg-notion-bg-secondary border border-notion-border rounded-md text-notion-text placeholder:text-notion-text-secondary focus:outline-none focus:border-notion-primary"
@@ -108,11 +110,11 @@ export function NoteList() {
             className="flex items-center gap-1 px-2 py-1 text-xs text-notion-text-secondary hover:text-notion-text rounded transition-colors"
           >
             <ArrowUpDown size={12} />
-            {SORT_LABELS[sortMode]}
+            {t(SORT_LABEL_KEYS[sortMode])}
           </button>
           {showSortMenu && (
             <div className="absolute top-full left-0 mt-1 bg-notion-bg border border-notion-border rounded-md shadow-lg z-10 py-1">
-              {(Object.keys(SORT_LABELS) as NoteSortMode[]).map((mode) => (
+              {(Object.keys(SORT_LABEL_KEYS) as NoteSortMode[]).map((mode) => (
                 <button
                   key={mode}
                   onClick={() => {
@@ -125,7 +127,7 @@ export function NoteList() {
                       : "text-notion-text"
                   }`}
                 >
-                  {SORT_LABELS[mode]}
+                  {t(SORT_LABEL_KEYS[mode])}
                 </button>
               ))}
             </div>
@@ -138,8 +140,8 @@ export function NoteList() {
         {sortedFilteredNotes.length === 0 && (
           <p className="text-xs text-notion-text-secondary text-center py-4">
             {searchQuery
-              ? "No matching notes"
-              : "No notes yet"}
+              ? t('notes.noMatching')
+              : t('notes.noNotes')}
           </p>
         )}
         {sortedFilteredNotes.map((note) => (
@@ -160,7 +162,7 @@ export function NoteList() {
                   />
                 )}
                 <span className="text-sm text-notion-text truncate font-medium">
-                  {note.title || "Untitled"}
+                  {note.title || t('notes.untitled')}
                 </span>
               </div>
               {note.content && (
@@ -175,7 +177,7 @@ export function NoteList() {
                 softDeleteNote(note.id);
               }}
               className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-red-500 rounded transition-all"
-              title="Delete"
+              title={t('common.delete')}
             >
               <Trash2 size={12} />
             </button>

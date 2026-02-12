@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Settings, Minus, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { DurationPicker } from "../shared/DurationPicker";
 
 interface PomodoroSettingsProps {
@@ -26,6 +27,7 @@ export function PomodoroSettings({
   disabled,
 }: PomodoroSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <div className="relative">
@@ -38,7 +40,7 @@ export function PomodoroSettings({
         }`}
       >
         <Settings size={14} />
-        ポモドーロ設定
+        {t('pomodoro.title')}
       </button>
 
       {isOpen && (
@@ -47,7 +49,7 @@ export function PomodoroSettings({
         >
           <div>
             <label className="block text-sm font-medium text-notion-text-secondary mb-1">
-              1セッションあたりの作業時間
+              {t('pomodoro.workDuration')}
             </label>
             <DurationPicker
               value={workDurationMinutes}
@@ -61,7 +63,7 @@ export function PomodoroSettings({
 
           <div>
             <label className="block text-sm font-medium text-notion-text-secondary mb-1">
-              セッション間の休憩時間
+              {t('pomodoro.breakDuration')}
             </label>
             <DurationPicker
               value={breakDurationMinutes}
@@ -75,7 +77,7 @@ export function PomodoroSettings({
 
           <div>
             <label className="block text-sm font-medium text-notion-text-secondary mb-1">
-              セット間の休憩時間
+              {t('pomodoro.longBreakDuration')}
             </label>
             <DurationPicker
               value={longBreakDurationMinutes}
@@ -89,7 +91,7 @@ export function PomodoroSettings({
 
           <div>
             <label className="block text-sm font-medium text-notion-text-secondary mb-1">
-              １セットあたりのセッション数
+              {t('pomodoro.sessionsPerSet')}
             </label>
             <div className="flex items-center justify-center gap-3">
               <button
