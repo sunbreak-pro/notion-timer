@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { Settings, Minus, Plus } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Settings, Minus, Plus, Save, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { DurationPicker } from "../shared/DurationPicker";
+import { getDataService } from "../../services";
+import type { PomodoroPreset } from "../../types/timer";
 
 interface PomodoroSettingsProps {
   workDurationMinutes: number;
@@ -13,6 +15,8 @@ interface PomodoroSettingsProps {
   onChangeLongBreakDuration: (min: number) => void;
   onChangeSessionsBeforeLongBreak: (count: number) => void;
   disabled: boolean;
+  autoStartBreaks: boolean;
+  onChangeAutoStartBreaks: (enabled: boolean) => void;
 }
 
 export function PomodoroSettings({
@@ -25,9 +29,53 @@ export function PomodoroSettings({
   onChangeLongBreakDuration,
   onChangeSessionsBeforeLongBreak,
   disabled,
+  autoStartBreaks,
+  onChangeAutoStartBreaks,
 }: PomodoroSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
+  const [presets, setPresets] = useState<PomodoroPreset[]>([]);
+  const [showSaveInput, setShowSaveInput] = useState(false);
+  const [presetName, setPresetName] = useState('');
+
+  const loadPresets = useCallback(() => {
+    getDataService().fetchPomodoroPresets()
+      .then(setPresets)
+      .catch((e) => console.warn('[Pomodoro] fetch presets:', e.message));
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) loadPresets();
+  }, [isOpen, loadPresets]);
+
+  const handleApplyPreset = (preset: PomodoroPreset) => {
+    onChangeWorkDuration(preset.workDuration);
+    onChangeBreakDuration(preset.breakDuration);
+    onChangeLongBreakDuration(preset.longBreakDuration);
+    onChangeSessionsBeforeLongBreak(preset.sessionsBeforeLongBreak);
+  };
+
+  const handleSavePreset = () => {
+    if (!presetName.trim()) return;
+    getDataService().createPomodoroPreset({
+      name: presetName.trim(),
+      workDuration: workDurationMinutes,
+      breakDuration: breakDurationMinutes,
+      longBreakDuration: longBreakDurationMinutes,
+      sessionsBeforeLongBreak,
+    }).then(() => {
+      setShowSaveInput(false);
+      setPresetName('');
+      loadPresets();
+    }).catch((e) => console.warn('[Pomodoro] save preset:', e.message));
+  };
+
+  const handleDeletePreset = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    getDataService().deletePomodoroPreset(id)
+      .then(loadPresets)
+      .catch((err) => console.warn('[Pomodoro] delete preset:', err.message));
+  };
 
   return (
     <div className="relative">
@@ -47,6 +95,32 @@ export function PomodoroSettings({
         <div
           className={`absolute top-full right-0 mt-2 z-50 w-72 space-y-4 p-4 rounded-lg border border-notion-border bg-notion-bg-secondary shadow-lg ${disabled ? "opacity-50 pointer-events-none" : ""}`}
         >
+          {/* Presets */}
+          {presets.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-notion-text-secondary mb-1.5">
+                {t('pomodoro.presets')}
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {presets.map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => handleApplyPreset(preset)}
+                    className="group relative flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-notion-hover text-notion-text hover:bg-notion-accent/10 hover:text-notion-accent transition-colors"
+                  >
+                    <span>{preset.name}</span>
+                    <button
+                      onClick={(e) => handleDeletePreset(preset.id, e)}
+                      className="opacity-0 group-hover:opacity-100 ml-0.5 text-notion-text-secondary hover:text-notion-danger transition-all"
+                    >
+                      <X size={10} />
+                    </button>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-notion-text-secondary mb-1">
               {t('pomodoro.workDuration')}
@@ -117,6 +191,54 @@ export function PomodoroSettings({
               </button>
             </div>
           </div>
+
+          {/* Auto-start breaks toggle */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-notion-text-secondary">
+              {t('pomodoro.autoStartBreaks')}
+            </label>
+            <button
+              onClick={() => onChangeAutoStartBreaks(!autoStartBreaks)}
+              className={`relative w-9 h-5 rounded-full transition-colors ${
+                autoStartBreaks ? 'bg-notion-accent' : 'bg-notion-border'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                  autoStartBreaks ? 'translate-x-4' : ''
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Save as preset */}
+          {showSaveInput ? (
+            <div className="flex items-center gap-1.5">
+              <input
+                type="text"
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSavePreset(); if (e.key === 'Escape') setShowSaveInput(false); }}
+                placeholder={t('pomodoro.presetName')}
+                className="flex-1 text-xs px-2 py-1.5 rounded bg-notion-bg border border-notion-border text-notion-text placeholder-notion-text-secondary"
+                autoFocus
+              />
+              <button onClick={handleSavePreset} className="p-1.5 rounded text-notion-accent hover:bg-notion-accent/10">
+                <Save size={14} />
+              </button>
+              <button onClick={() => setShowSaveInput(false)} className="p-1.5 rounded text-notion-text-secondary hover:bg-notion-hover">
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowSaveInput(true)}
+              className="flex items-center gap-1.5 text-xs text-notion-text-secondary hover:text-notion-accent transition-colors"
+            >
+              <Save size={12} />
+              {t('pomodoro.saveAsPreset')}
+            </button>
+          )}
         </div>
       )}
     </div>

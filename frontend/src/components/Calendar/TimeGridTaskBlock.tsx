@@ -1,5 +1,6 @@
 import type { TaskNode } from '../../types/taskTree';
 import { getTextColorForBg } from '../../constants/folderColors';
+import { formatTimeRangeCompact } from '../../utils/formatSchedule';
 
 interface TimeGridTaskBlockProps {
   task: TaskNode;
@@ -35,6 +36,11 @@ export function TimeGridTaskBlock({ task, top, height, left, width, color, tag, 
         <div className={`font-medium truncate ${isCompact ? 'text-[10px]' : 'text-xs'}`}>
           {task.title}
         </div>
+        {!isCompact && task.scheduledAt && (
+          <div className="text-[10px] truncate opacity-70">
+            {formatTimeRangeCompact(task.scheduledAt, task.scheduledEndAt)}
+          </div>
+        )}
         {!isCompact && tag && (
           <div className="text-[10px] truncate opacity-70">
             {tag}

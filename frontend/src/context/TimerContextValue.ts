@@ -35,6 +35,9 @@ export interface TimerContextValue {
   extendWork: (minutes: number) => void;
   startRest: () => void;
   dismissCompletionModal: () => void;
+  autoStartBreaks: boolean;
+  setAutoStartBreaks: (enabled: boolean) => void;
+  adjustRemainingSeconds: (delta: number) => void;
 }
 
 export const TimerContext = createContext<TimerContextValue | null>(null);

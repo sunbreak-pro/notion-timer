@@ -28,6 +28,7 @@ export function TaskNodeEditor({ initialValue, onSave, onCancel }: TaskNodeEdito
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    e.stopPropagation();
     if (e.key === "Enter") handleSave();
     if (e.key === "Escape") onCancel();
   };

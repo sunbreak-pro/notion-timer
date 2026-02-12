@@ -25,6 +25,8 @@ import { registerCalendarHandlers } from './calendarHandlers';
 import { registerDataIOHandlers } from './dataIOHandlers';
 import { registerDiagnosticsHandlers } from './diagnosticsHandlers';
 import { registerUpdaterHandlers } from './updaterHandlers';
+import { createPomodoroPresetRepository } from '../database/pomodoroPresetRepository';
+import { registerPomodoroPresetHandlers } from './pomodoroPresetHandlers';
 import { wrapHandler } from './ipcMetrics';
 
 export function registerAllHandlers(db: Database.Database): void {
@@ -69,6 +71,7 @@ export function registerAllHandlers(db: Database.Database): void {
     ['DataIO', () => registerDataIOHandlers(db)],
     ['Diagnostics', () => registerDiagnosticsHandlers(db)],
     ['Updater', () => registerUpdaterHandlers()],
+    ['PomodoroPresets', () => registerPomodoroPresetHandlers(createPomodoroPresetRepository(db))],
   ];
 
   for (const [name, register] of registrations) {

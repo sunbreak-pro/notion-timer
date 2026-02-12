@@ -1,72 +1,77 @@
-import { isMac } from '../../utils/platform';
+import { useTranslation, Trans } from 'react-i18next';
 
-const mod = isMac ? '⌘' : 'Ctrl';
-const shift = isMac ? '⇧' : 'Shift';
+interface TasksTabProps {
+  showMac: boolean;
+}
 
-export function TasksTab() {
+export function TasksTab({ showMac }: TasksTabProps) {
+  const { t } = useTranslation();
+  const mod = showMac ? '⌘' : 'Ctrl';
+  const shift = showMac ? '⇧' : 'Shift';
+
   return (
     <div className="space-y-6 text-sm text-notion-text-secondary">
-      <Section title="Creating Tasks & Folders">
+      <Section title={t('tips.tasksTab.creating')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>Click the <Strong>+ icons</Strong> at the top of the sub-sidebar to create a new task or folder.</li>
-          <li>Press <Kbd>n</Kbd> (when not typing) to quickly add a new task to the Inbox.</li>
-          <li>Folders can be nested up to 5 levels deep. Tasks can be placed anywhere.</li>
+          <li><Trans i18nKey="tips.tasksTab.creatingList1" components={{ strong: <Strong /> }} /></li>
+          <li><Trans i18nKey="tips.tasksTab.creatingList2" components={{ kbd: <Kbd value="" /> }} /></li>
+          <li>{t('tips.tasksTab.creatingList3')}</li>
         </ul>
       </Section>
 
-      <Section title="Organizing with Drag & Drop">
+      <Section title={t('tips.tasksTab.organizing')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li><Strong>Reorder</Strong>: Drag a task/folder to change its position among siblings.</li>
-          <li><Strong>Move into folder</Strong>: Drag a task onto a folder to nest it inside.</li>
-          <li>Circular references are prevented automatically.</li>
+          <li><Trans i18nKey="tips.tasksTab.organizingList1" components={{ strong: <Strong /> }} /></li>
+          <li><Trans i18nKey="tips.tasksTab.organizingList2" components={{ strong: <Strong /> }} /></li>
+          <li>{t('tips.tasksTab.organizingList3')}</li>
         </ul>
       </Section>
 
-      <Section title="Task Details">
+      <Section title={t('tips.tasksTab.details')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>Click a task to view its detail panel on the right.</li>
-          <li>Edit the title inline, add a rich-text memo, set a scheduled date, or adjust the work duration.</li>
-          <li>The <Strong>play button</Strong> starts a focused timer session for that task.</li>
-          <li>Press <Kbd>{`${mod} + Enter`}</Kbd> to toggle a task between completed and incomplete.</li>
-          <li>Use <Kbd>Tab</Kbd> / <Kbd>{`${shift} + Tab`}</Kbd> to indent or outdent a task in the tree.</li>
+          <li>{t('tips.tasksTab.detailsList1')}</li>
+          <li>{t('tips.tasksTab.detailsList2')}</li>
+          <li><Trans i18nKey="tips.tasksTab.detailsList3" components={{ strong: <Strong /> }} /></li>
+          <li><Trans i18nKey="tips.tasksTab.detailsList4" values={{ mod, shift }} components={{ kbd: <Kbd value="" /> }} /></li>
+          <li><Trans i18nKey="tips.tasksTab.detailsList5" values={{ mod, shift }} components={{ kbd: <Kbd value="" /> }} /></li>
         </ul>
       </Section>
 
-      <Section title="Folders & Colors">
+      <Section title={t('tips.tasksTab.folders')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>Folders group related tasks. Select a folder to change its color.</li>
-          <li>Folder colors are inherited by child tasks in Calendar and Analytics views.</li>
+          <li>{t('tips.tasksTab.foldersList1')}</li>
+          <li>{t('tips.tasksTab.foldersList2')}</li>
         </ul>
       </Section>
 
-      <Section title="Soft Delete & Trash">
+      <Section title={t('tips.tasksTab.softDelete')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>Deleting a task moves it to the trash (soft delete).</li>
-          <li>Go to <Strong>Settings &rarr; Trash</Strong> to restore or permanently delete items.</li>
+          <li>{t('tips.tasksTab.softDeleteList1')}</li>
+          <li><Trans i18nKey="tips.tasksTab.softDeleteList2" components={{ strong: <Strong /> }} /></li>
         </ul>
       </Section>
 
-      <Section title="Context Menu">
+      <Section title={t('tips.tasksTab.contextMenu')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>Right-click a task or folder in the tree to open the context menu.</li>
-          <li>Available actions: <Strong>Rename</Strong>, <Strong>Add Task</Strong>, <Strong>Add Folder</Strong>, <Strong>Start Timer</Strong>, <Strong>Move to Root</Strong>, <Strong>Delete</Strong>.</li>
-          <li>Folders also have a <Strong>Save as Template</Strong> option to save the entire structure.</li>
+          <li>{t('tips.tasksTab.contextMenuList1')}</li>
+          <li><Trans i18nKey="tips.tasksTab.contextMenuList2" components={{ strong: <Strong /> }} /></li>
+          <li><Trans i18nKey="tips.tasksTab.contextMenuList3" components={{ strong: <Strong /> }} /></li>
         </ul>
       </Section>
 
-      <Section title="Tags">
+      <Section title={t('tips.tasksTab.tags')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>Create and manage tags in <Strong>Settings &rarr; Tag Manager</Strong> (name + color).</li>
-          <li>Assign tags to tasks from the task detail panel.</li>
-          <li>Use the tag filter at the top of the task tree to show only matching tasks.</li>
+          <li><Trans i18nKey="tips.tasksTab.tagsList1" components={{ strong: <Strong /> }} /></li>
+          <li>{t('tips.tasksTab.tagsList2')}</li>
+          <li>{t('tips.tasksTab.tagsList3')}</li>
         </ul>
       </Section>
 
-      <Section title="Templates">
+      <Section title={t('tips.tasksTab.templates')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>Right-click a folder &rarr; <Strong>Save as Template</Strong> to save its full structure.</li>
-          <li>Click the template icon in the Projects header to apply a saved template.</li>
-          <li>Templates duplicate the hierarchy, titles, memos, and work durations.</li>
+          <li><Trans i18nKey="tips.tasksTab.templatesList1" components={{ strong: <Strong /> }} /></li>
+          <li>{t('tips.tasksTab.templatesList2')}</li>
+          <li>{t('tips.tasksTab.templatesList3')}</li>
         </ul>
       </Section>
     </div>
@@ -82,11 +87,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Strong({ children }: { children: React.ReactNode }) {
+function Strong({ children }: { children?: React.ReactNode }) {
   return <span className="font-medium text-notion-text">{children}</span>;
 }
 
-function Kbd({ children }: { children: string }) {
+function Kbd({ children, value: _ }: { children?: React.ReactNode; value: string }) {
   return (
     <kbd className="inline-block px-1.5 py-0.5 text-xs font-mono bg-notion-hover border border-notion-border rounded text-notion-text">
       {children}

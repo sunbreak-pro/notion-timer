@@ -2,12 +2,12 @@ import { ipcMain } from 'electron';
 import type { SoundRepository } from '../database/soundRepository';
 
 export function registerSoundHandlers(repo: SoundRepository): void {
-  ipcMain.handle('db:sound:fetchSettings', (_event, sessionCategory?: string) => {
-    return repo.fetchSettings(sessionCategory);
+  ipcMain.handle('db:sound:fetchSettings', () => {
+    return repo.fetchSettings();
   });
 
-  ipcMain.handle('db:sound:updateSetting', (_event, soundType: string, volume: number, enabled: boolean, sessionCategory?: string) => {
-    return repo.updateSetting(soundType, volume, enabled, sessionCategory);
+  ipcMain.handle('db:sound:updateSetting', (_event, soundType: string, volume: number, enabled: boolean) => {
+    return repo.updateSetting(soundType, volume, enabled);
   });
 
   ipcMain.handle('db:sound:fetchPresets', () => {
@@ -60,12 +60,12 @@ export function registerSoundHandlers(repo: SoundRepository): void {
     repo.updateSoundDisplayMeta(soundId, displayName);
   });
 
-  // Workscreen selections
-  ipcMain.handle('db:sound:fetchWorkscreenSelections', (_event, sessionCategory: string) => {
-    return repo.fetchWorkscreenSelections(sessionCategory);
+  // Workscreen selections (session_category ignored for backward compat)
+  ipcMain.handle('db:sound:fetchWorkscreenSelections', () => {
+    return repo.fetchWorkscreenSelections();
   });
 
-  ipcMain.handle('db:sound:setWorkscreenSelections', (_event, sessionCategory: string, soundIds: string[]) => {
-    repo.setWorkscreenSelections(sessionCategory, soundIds);
+  ipcMain.handle('db:sound:setWorkscreenSelections', (_event, soundIds: string[]) => {
+    repo.setWorkscreenSelections(soundIds);
   });
 }

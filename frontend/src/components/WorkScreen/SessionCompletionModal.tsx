@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Coffee, Clock, CheckCircle2, Play } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,9 +9,11 @@ interface SessionCompletionModalProps {
   onStartWork: () => void;
   onDismiss: () => void;
   onCompleteTask?: () => void;
+  autoStartBreaks?: boolean;
 }
 
 const EXTEND_OPTIONS = [5, 10, 15, 20, 25, 30];
+const AUTO_START_COUNTDOWN = 3;
 
 export function SessionCompletionModal({
   completedSessionType,
@@ -20,8 +22,11 @@ export function SessionCompletionModal({
   onStartWork,
   onDismiss,
   onCompleteTask,
+  autoStartBreaks,
 }: SessionCompletionModalProps) {
   const { t } = useTranslation();
+  const [countdown, setCountdown] = useState(AUTO_START_COUNTDOWN);
+  const countdownRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -30,6 +35,27 @@ export function SessionCompletionModal({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onDismiss]);
+
+  // Auto-start breaks countdown
+  useEffect(() => {
+    if (!autoStartBreaks || completedSessionType !== 'WORK') return;
+
+    setCountdown(AUTO_START_COUNTDOWN);
+    countdownRef.current = window.setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          onStartRest();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, [autoStartBreaks, completedSessionType, onStartRest]);
 
   const isRest = completedSessionType === 'REST';
 
@@ -62,6 +88,9 @@ export function SessionCompletionModal({
             >
               <Coffee size={18} />
               {t('sessionModal.takeBreak')}
+              {autoStartBreaks && countdown > 0 && (
+                <span className="ml-1 text-sm opacity-80">({countdown})</span>
+              )}
             </button>
 
             {onCompleteTask && (

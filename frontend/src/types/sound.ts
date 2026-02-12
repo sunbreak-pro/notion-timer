@@ -1,11 +1,8 @@
-export type SessionCategory = 'WORK' | 'REST';
-
 export interface SoundSettings {
   id: number;
   soundType: string;
   volume: number;
   enabled: boolean;
-  sessionCategory: SessionCategory;
   updatedAt: Date;
 }
 

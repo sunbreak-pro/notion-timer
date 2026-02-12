@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import type { KeyboardEvent } from "react";
-import { Play, Trash2, Clock, Flag } from "lucide-react";
+import { Play, Trash2, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TaskNode } from "../../types/taskTree";
 import { getAncestors } from "../../utils/breadcrumb";
 import { DurationPicker } from "../shared/DurationPicker";
 import { formatDuration } from "../../utils/duration";
-import { DateTimePicker } from "../Calendar/DateTimePicker";
+import { DateTimeRangePicker } from "../Calendar/DateTimeRangePicker";
 import { FolderTag } from "../shared/FolderTag";
 import { ColorPicker } from "../shared/ColorPicker";
 
@@ -18,9 +18,10 @@ interface TaskDetailHeaderProps {
   onDelete: () => void;
   onDurationChange?: (minutes: number) => void;
   onScheduledAtChange?: (scheduledAt: string | undefined) => void;
+  onScheduledEndAtChange?: (scheduledEndAt: string | undefined) => void;
+  onIsAllDayChange?: (isAllDay: boolean) => void;
   onFolderColorChange?: (folderId: string, color: string) => void;
   onTitleChange?: (newTitle: string) => void;
-  onDueDateChange?: (dueDate: string | undefined) => void;
   folderTag?: string;
   taskColor?: string;
 }
@@ -33,9 +34,10 @@ export function TaskDetailHeader({
   onDelete,
   onDurationChange,
   onScheduledAtChange,
+  onScheduledEndAtChange,
+  onIsAllDayChange,
   onFolderColorChange,
   onTitleChange,
-  onDueDateChange,
   folderTag,
   taskColor,
 }: TaskDetailHeaderProps) {
@@ -47,11 +49,18 @@ export function TaskDetailHeader({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitleValue, setEditTitleValue] = useState(task.title);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const [prevTaskId, setPrevTaskId] = useState(task.id);
 
-  useEffect(() => {
-    setEditTitleValue(task.title);
+  if (prevTaskId !== task.id) {
+    setPrevTaskId(task.id);
     setIsEditingTitle(false);
-  }, [task.id, task.title]);
+    setEditTitleValue(task.title);
+  }
+
+  const startEditing = () => {
+    setEditTitleValue(task.title);
+    setIsEditingTitle(true);
+  };
 
   useEffect(() => {
     if (isEditingTitle && titleInputRef.current) {
@@ -71,6 +80,7 @@ export function TaskDetailHeader({
   };
 
   const handleTitleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    e.stopPropagation();
     if (e.key === "Enter") handleTitleSave();
     if (e.key === "Escape") {
       setEditTitleValue(task.title);
@@ -143,7 +153,7 @@ export function TaskDetailHeader({
       ) : (
         <h1
           className="text-2xl font-bold text-notion-text cursor-pointer hover:bg-notion-hover/50 rounded px-1 -mx-1 transition-colors"
-          onClick={() => setIsEditingTitle(true)}
+          onClick={() => startEditing()}
         >
           {task.title}
         </h1>
@@ -186,17 +196,13 @@ export function TaskDetailHeader({
           )}
         </div>
 
-        <DateTimePicker
-          value={task.scheduledAt}
-          onChange={(val) => onScheduledAtChange?.(val)}
-        />
-
-        <DateTimePicker
-          value={task.dueDate}
-          onChange={(val) => onDueDateChange?.(val)}
-          icon={<Flag size={14} />}
-          label={t('taskDetail.due')}
-          activeColor
+        <DateTimeRangePicker
+          startValue={task.scheduledAt}
+          endValue={task.scheduledEndAt}
+          isAllDay={task.isAllDay}
+          onStartChange={(val) => onScheduledAtChange?.(val)}
+          onEndChange={(val) => onScheduledEndAtChange?.(val)}
+          onAllDayChange={(val) => onIsAllDayChange?.(val)}
         />
 
         <button

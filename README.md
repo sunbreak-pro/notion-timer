@@ -8,12 +8,12 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **プロジェクトナビゲーション**: サブサイドバーでInbox+フォルダ別にタスクを絞り込み表示
 - **グローバルタイマー**: 画面遷移してもタイマーが継続するContextベースのポモドーロタイマー
 - **タスク期限管理**: Flagアイコンでdue date設定、DateTimePickerで日時選択
-- **集中タイマー**: WORK/BREAK/LONG_BREAK対応、ポモドーロ設定UI（Work/Break/Long Break/Sessions数を個別設定）、ドットインジケーター表示、プログレスバー、WORK完了時モーダル（延長5〜30分/休憩選択/タスク完了）
+- **集中タイマー**: WORK/BREAK/LONG_BREAK対応、ポモドーロ設定UI（Work/Break/Long Break/Sessions数を個別設定）、ドットインジケーター表示、プログレスバー、WORK完了時モーダル（延長5〜30分/休憩選択/タスク完了）、プリセット機能（保存・一括適用・削除）、休憩自動開始オプション（3秒カウントダウン）、一時停止中±5m時間調整、今日のセッションサマリー表示
 - **Work画面**: LeftSidebarの「Work」セクションで常時アクセス可能、ヘッダーにセッション完了・タスク完了・ポモドーロ設定ボタンを横並び配置、SoundMixerはsessionTypeに応じて自動切替
 - **サイドバータイマー表示**: タイマー実行中はWork項目下にタスク名・残り時間・編集ボタンを表示
 - **TaskTreeタイマー表示**: 実行中のタスク行に残り時間テキスト+ミニプログレスバーを表示
-- **Music管理画面**: Work/Restタブ切替式の6スロットUI、空スロットクリックでサウンドピッカーモーダル起動、各フェーズ最大6音、スロット毎にボリューム・トグル・シーク・削除操作、タグフィルタ付きピッカー、カスタムサウンド追加、タイマー非依存の独立再生ボタン、タグ管理パネル
-- **ノイズミキサー**: 6種の環境音（Rain, Thunder, Wind, Ocean, Birds, Fire）、Web Audio APIによるリアルタイム再生・ミキシング、Work/Rest別サウンド設定、タブ切替でサウンド再生も切替、シークコントロール（再生位置スライダー）、WorkScreenではフェーズ別選択サウンドのみコンパクトリスト表示
+- **Music管理画面**: 全サウンドのフラットリスト表示、検索・タグフィルタ、各サウンドにボリューム・トグル・シーク操作、「タイマーに追加」ボタンでWorkScreenへの追加/解除、カスタムサウンド追加、タイマー非依存の独立再生ボタン、タグ管理パネル
+- **ノイズミキサー**: 6種の環境音（Rain, Thunder, Wind, Ocean, Birds, Fire）、Web Audio APIによるリアルタイム再生・ミキシング、統一サウンド設定（Work/Rest共通）、シークコントロール（再生位置スライダー）、WorkScreenでは選択サウンド最大6個をコンパクトリスト表示+ピッカーモーダルで追加
 - **AIコーチング**: Gemini API連携、タスク分解/励まし/レビューの3モード
 - **外観設定**: ダークモード/ライトモード切替、フォントサイズ10段階スライダー（12px〜25px）
 - **タスク完了演出**: チェックボックスでタスク完了時に紙吹雪アニメーション
@@ -26,7 +26,7 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **コマンドパレット**: ⌘Kで起動、16コマンド（Navigation/Task/Timer/View）をリアルタイム検索・実行
 - **カレンダー**: 月/週表示切替、タスクを日付別に表示、フィルタリング（incomplete/completed）、複数カレンダー対応（フォルダ別ビュー）、カレンダーサイドバーで切替
 - **タスクツリーフォルダフィルタ**: PROJECTSセクションにドロップダウンフィルター、フォルダ単位で表示絞り込み
-- **アナリティクス**: 基本統計（総タスク数、完了率、フォルダ数）
+- **アナリティクス**: 基本統計（総タスク数、完了率、フォルダ数）、作業時間グラフ（日/週/月別BarChart + タスク別横棒グラフ、Recharts）、総作業時間・セッション数・日平均サマリー
 - **データ管理**: SQLite永続化（better-sqlite3）、JSON Export/Import、バックアップ付きインポート
 - **自由メモ（Notes）**: 日付に縛られないフリーフォームノート、ピン留め、全文検索、ソート切替（更新日/作成日/タイトル）、ソフトデリート対応
 - **サウンドタグ**: Music画面でサウンドにカラータグ付与・フィルタリング、タグ管理パネル（名前編集・色変更・削除）
@@ -36,7 +36,7 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **パフォーマンス監視**: 全IPC応答時間を自動計測、Settings画面でチャネル別メトリクス表示
 
 ### 技術スタック
-- **Frontend**: React 19 (TypeScript) + Vite + Tailwind CSS v4 + @dnd-kit + TipTap + react-i18next
+- **Frontend**: React 19 (TypeScript) + Vite + Tailwind CSS v4 + @dnd-kit + TipTap + react-i18next + Recharts
 - **Desktop**: Electron 35 + better-sqlite3 + electron-builder
 
 ---
@@ -63,6 +63,56 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-13 - Work/Restサウンド分離廃止・WorkScreenモーダルピッカー追加
+
+#### 概要
+MusicScreenとWorkScreenの「Work/Rest別サウンド設定」を廃止し、1セットの統一サウンド設定に変更。WorkScreenにサウンドピッカーモーダルを追加し、直接サウンドを追加可能に。
+
+#### 変更点
+- **DB Migration V13**: `sound_settings`と`sound_workscreen_selections`テーブルから`session_category`カラムを削除、WORK行のみ保持
+- **Repository/IPC**: `soundRepository.ts`と`soundHandlers.ts`から`sessionCategory`引数を全削除
+- **Types**: `SessionCategory`型削除、`SoundSettings`から`sessionCategory`フィールド削除
+- **Services**: `DataService`/`ElectronDataService`のメソッドシグネチャから`sessionCategory`引数削除
+- **Hooks**: `useLocalSoundMixer`を単一ミキサーに変更、`useWorkscreenSelections`を`string[]`型に簡素化
+- **Context**: `AudioContext`から`workMixer`/`restMixer`/`toggleWorkSound`/`toggleRestSound`/`setWorkVolume`/`setRestVolume`/`setMixerOverride`を削除、単一`mixer`/`toggleSound`/`setVolume`に統一
+- **MusicScreen**: Work/Rest/Allタブを廃止、全サウンドのフラットリスト表示に変更、各サウンドに「タイマーに追加/解除」ボタン
+- **WorkScreen**: `SoundPickerModal`統合、SoundMixerに「+ Add Sound」ボタン追加
+- **i18n**: `addToWorkscreen`/`removeFromWorkscreen`キー追加
+
+### 2026-02-12 - Music名前反映バグ修正・カレンダー終日/終了日時改善・ポモドーロUX強化
+
+#### 概要
+5つの機能改善/バグ修正。Music画面で変更したサウンド名がWorkScreenに反映されないバグ修正、カレンダーの終日イベント・終了日時の操作性改善、日付+時間表示の統一フォーマット化、ポモドーロタイマーのUX向上（プリセット/自動休憩/時間調整/サマリー）。
+
+#### 変更点
+- **バグ修正（Music名前）**: `SoundMixer.tsx`に`getDisplayName`プロップ追加、`useSoundTags`の表示名をWorkScreenのSoundMixerに伝播
+- **終日=1日**: 終日ON時に`scheduledEndAt`を自動クリア、DateTimeRangePickerでも連動
+- **終了日時トグル**: DateTimeRangePickerに「End time」チェックボックス追加、OFF時はstart dateのみの1クリック選択、ON時はstart→end の2クリック選択、カレンダーからのタスク作成はデフォルトで開始時間のみ
+- **日付+時間統一表示**: `formatSchedule.ts`ユーティリティ新規作成、DateTimeRangePicker・TimeGridTaskBlockの表示を統一（同日: "Feb 12 14:30 - 18:00"、別日: "Feb 12 14:30 - Feb 15 18:00"）
+- **ポモドーロプリセット**: `pomodoro_presets`テーブル追加（migrateV12）、IPC 4チャンネル追加、PomodoroSettings UIにプリセットチップ（クリックで一括適用/ホバーで削除）・保存ボタン追加、デフォルト3プリセット（Standard/Deep Work/Quick Sprint）
+- **休憩自動開始**: `timer_settings`に`auto_start_breaks`カラム追加、PomodoroSettingsにトグル追加、SessionCompletionModalで3秒カウントダウン後に自動休憩開始
+- **一時停止中の時間調整**: TimerDisplayに±5mボタン表示（一時停止中のみ）、TimerContextに`adjustRemainingSeconds`メソッド追加
+- **今日のセッションサマリー**: WorkScreenのタイマー下に完了セッション数+合計作業時間を表示
+
+#### 新規ファイル
+- `frontend/src/utils/formatSchedule.ts` — 日時範囲フォーマットユーティリティ
+- `frontend/src/components/WorkScreen/TodaySessionSummary.tsx` — 今日のサマリーコンポーネント
+- `electron/database/pomodoroPresetRepository.ts` — プリセットDB操作
+- `electron/ipc/pomodoroPresetHandlers.ts` — プリセットIPCハンドラ
+
+### 2026-02-12 - 6機能追加: Analytics強化・Notes日時・キーボードバグ修正・Music個別再生・i18n完全対応・Tips OS切替
+
+#### 概要
+6つの機能追加・バグ修正を一括実施。Analyticsに作業時間グラフ（Recharts）追加、Notes/Memoに日時表示追加、タスク名編集時のキーボードショートカット横取りバグ修正、Music画面に個別試聴ボタン追加、Tips全7タブのi18n完全対応、TipsショートカットにmacOS/Windows切替トグル追加。
+
+#### 変更点
+- **バグ修正（キーボード）**: `useAppKeyboardShortcuts`/`useTaskTreeKeyboard`/`CalendarView`の`isInputFocused()`を`document.activeElement`から`e.target`ベースに変更、`closest('[contenteditable="true"]')`で祖先要素も検出、入力コンポーネントに`e.stopPropagation()`追加
+- **i18n完全対応**: Tips全7タブ（Shortcuts/Tasks/Timer/Calendar/Memo/Analytics/Editor）、EmptyState、MusicSlotItem/MusicSoundItemの保存・削除確認ダイアログを`useTranslation()`+`Trans`コンポーネントで多言語化
+- **Notes日時表示**: `formatRelativeDate()`ユーティリティ新規作成（相対日時: "5分前"/"昨日"等）、NoteList/NotesView/MemoDateList/DailyMemoViewに作成日時・更新日時表示追加
+- **Tips OS切替**: `Tips.tsx`に`showMac`状態管理追加、ShortcutsTabにmacOS/Windowsトグルボタン配置、各タブに`showMac` prop伝播で`⌘`/`Ctrl`記号切替
+- **Music個別Play**: `usePreviewAudio`フック新規作成（独立HTMLAudioElement管理）、グローバルPlay/Stop廃止、MusicSlotItem/MusicSoundItemに個別Play/Stopボタン追加、`soundSources`をAudioContext経由で公開
+- **Analytics作業時間グラフ**: `recharts`依存追加、`analyticsAggregation.ts`（日/週/月/タスク別集計）新規作成、`WorkTimeChart`（期間別BarChart）、`TaskWorkTimeChart`（タスク別横棒グラフ）、`PeriodSelector`（日/週/月切替）コンポーネント追加、AnalyticsViewにtimer_sessionsデータ取得+グラフ描画+サマリーカード（総作業時間/セッション数/日平均）追加
 
 ### 2026-02-12 - UI/UX改善: Font Size・Sidebar・i18n・Settingsタブ化
 

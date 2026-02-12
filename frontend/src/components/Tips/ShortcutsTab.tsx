@@ -1,79 +1,79 @@
-import { isMac } from '../../utils/platform';
+import { useTranslation } from 'react-i18next';
+import { Monitor, Apple } from 'lucide-react';
 
 interface ShortcutEntry {
   keys: string;
-  description: string;
+  descriptionKey: string;
 }
 
 interface ShortcutGroup {
-  category: string;
+  categoryKey: string;
   shortcuts: ShortcutEntry[];
 }
 
-const mod = isMac ? '⌘' : 'Ctrl';
-const shift = isMac ? '⇧' : 'Shift';
-
-const SHORTCUT_GROUPS: ShortcutGroup[] = [
-  {
-    category: 'Global',
-    shortcuts: [
-      { keys: `${mod} + K`, description: 'Open command palette' },
-      { keys: `${mod} + ,`, description: 'Open Settings' },
-      { keys: `${mod} + ${shift} + T`, description: 'Toggle timer modal' },
-      { keys: 'Space', description: 'Play / Pause timer (when not typing)' },
-      { keys: 'n', description: 'Create new task (when not typing)' },
-      { keys: 'r', description: 'Reset timer (when not typing)' },
-      { keys: 'Escape', description: 'Close modal / dialog' },
-    ],
-  },
-  {
-    category: 'Navigation',
-    shortcuts: [
-      { keys: `${mod} + 1`, description: 'Go to Tasks' },
-      { keys: `${mod} + 2`, description: 'Go to Session' },
-      { keys: `${mod} + 3`, description: 'Go to Calendar' },
-      { keys: `${mod} + 4`, description: 'Go to Analytics' },
-      { keys: `${mod} + 5`, description: 'Go to Settings' },
-    ],
-  },
-  {
-    category: 'View',
-    shortcuts: [
-      { keys: `${mod} + .`, description: 'Toggle left sidebar' },
-      { keys: `${mod} + ${shift} + .`, description: 'Toggle right sidebar' },
-    ],
-  },
-  {
-    category: 'Task Tree',
-    shortcuts: [
-      { keys: '↑ / ↓', description: 'Move between tasks' },
-      { keys: '→', description: 'Expand folder' },
-      { keys: '←', description: 'Collapse folder' },
-      { keys: `${mod} + Enter`, description: 'Toggle task completion' },
-      { keys: 'Tab', description: 'Indent (move into previous folder)' },
-      { keys: `${shift} + Tab`, description: 'Outdent (move to parent level)' },
-      { keys: 'Delete / Backspace', description: 'Delete selected task' },
-      { keys: 'Drag & Drop', description: 'Reorder or move into folders' },
-    ],
-  },
-  {
-    category: 'Timer',
-    shortcuts: [
-      { keys: 'Space', description: 'Toggle play / pause' },
-      { keys: 'r', description: 'Reset timer' },
-      { keys: 'Escape', description: 'Close timer modal' },
-    ],
-  },
-  {
-    category: 'Calendar',
-    shortcuts: [
-      { keys: 'j', description: 'Next month / week' },
-      { keys: 'k', description: 'Previous month / week' },
-      { keys: 't', description: 'Jump to today' },
-      { keys: 'm', description: 'Toggle month / week view' },
-    ],
-  },
-];
+function getShortcutGroups(mod: string, shift: string): ShortcutGroup[] {
+  return [
+    {
+      categoryKey: 'tips.shortcutsTab.global',
+      shortcuts: [
+        { keys: `${mod} + K`, descriptionKey: 'tips.shortcutsTab.openCommandPalette' },
+        { keys: `${mod} + ,`, descriptionKey: 'tips.shortcutsTab.openSettings' },
+        { keys: `${mod} + ${shift} + T`, descriptionKey: 'tips.shortcutsTab.toggleTimerModal' },
+        { keys: 'Space', descriptionKey: 'tips.shortcutsTab.playPauseTimer' },
+        { keys: 'n', descriptionKey: 'tips.shortcutsTab.createNewTask' },
+        { keys: 'r', descriptionKey: 'tips.shortcutsTab.resetTimer' },
+        { keys: 'Escape', descriptionKey: 'tips.shortcutsTab.closeModal' },
+      ],
+    },
+    {
+      categoryKey: 'tips.shortcutsTab.navigation',
+      shortcuts: [
+        { keys: `${mod} + 1`, descriptionKey: 'tips.shortcutsTab.goToTasks' },
+        { keys: `${mod} + 2`, descriptionKey: 'tips.shortcutsTab.goToSession' },
+        { keys: `${mod} + 3`, descriptionKey: 'tips.shortcutsTab.goToCalendar' },
+        { keys: `${mod} + 4`, descriptionKey: 'tips.shortcutsTab.goToAnalytics' },
+        { keys: `${mod} + 5`, descriptionKey: 'tips.shortcutsTab.goToSettings' },
+      ],
+    },
+    {
+      categoryKey: 'tips.shortcutsTab.view',
+      shortcuts: [
+        { keys: `${mod} + .`, descriptionKey: 'tips.shortcutsTab.toggleLeftSidebar' },
+        { keys: `${mod} + ${shift} + .`, descriptionKey: 'tips.shortcutsTab.toggleRightSidebar' },
+      ],
+    },
+    {
+      categoryKey: 'tips.shortcutsTab.taskTree',
+      shortcuts: [
+        { keys: '↑ / ↓', descriptionKey: 'tips.shortcutsTab.moveBetweenTasks' },
+        { keys: '→', descriptionKey: 'tips.shortcutsTab.expandFolder' },
+        { keys: '←', descriptionKey: 'tips.shortcutsTab.collapseFolder' },
+        { keys: `${mod} + Enter`, descriptionKey: 'tips.shortcutsTab.toggleTaskCompletion' },
+        { keys: 'Tab', descriptionKey: 'tips.shortcutsTab.indent' },
+        { keys: `${shift} + Tab`, descriptionKey: 'tips.shortcutsTab.outdent' },
+        { keys: 'Delete / Backspace', descriptionKey: 'tips.shortcutsTab.deleteSelected' },
+        { keys: 'Drag & Drop', descriptionKey: 'tips.shortcutsTab.dragDrop' },
+      ],
+    },
+    {
+      categoryKey: 'tips.shortcutsTab.timer',
+      shortcuts: [
+        { keys: 'Space', descriptionKey: 'tips.shortcutsTab.togglePlayPause' },
+        { keys: 'r', descriptionKey: 'tips.shortcutsTab.resetTimer' },
+        { keys: 'Escape', descriptionKey: 'tips.shortcutsTab.closeModal' },
+      ],
+    },
+    {
+      categoryKey: 'tips.shortcutsTab.calendar',
+      shortcuts: [
+        { keys: 'j', descriptionKey: 'tips.shortcutsTab.nextMonthWeek' },
+        { keys: 'k', descriptionKey: 'tips.shortcutsTab.prevMonthWeek' },
+        { keys: 't', descriptionKey: 'tips.shortcutsTab.jumpToToday' },
+        { keys: 'm', descriptionKey: 'tips.shortcutsTab.toggleMonthWeek' },
+      ],
+    },
+  ];
+}
 
 function Kbd({ children }: { children: string }) {
   return (
@@ -83,12 +83,48 @@ function Kbd({ children }: { children: string }) {
   );
 }
 
-export function ShortcutsTab() {
+interface ShortcutsTabProps {
+  showMac: boolean;
+  onToggleOS: (showMac: boolean) => void;
+}
+
+export function ShortcutsTab({ showMac, onToggleOS }: ShortcutsTabProps) {
+  const { t } = useTranslation();
+  const mod = showMac ? '⌘' : 'Ctrl';
+  const shift = showMac ? '⇧' : 'Shift';
+  const groups = getShortcutGroups(mod, shift);
+
   return (
     <div className="space-y-6">
-      {SHORTCUT_GROUPS.map((group) => (
-        <div key={group.category}>
-          <h3 className="text-lg font-semibold text-notion-text mb-3">{group.category}</h3>
+      {/* OS Toggle */}
+      <div className="flex items-center gap-1 bg-notion-bg-secondary rounded-lg p-1 w-fit border border-notion-border">
+        <button
+          onClick={() => onToggleOS(true)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            showMac
+              ? 'bg-notion-bg text-notion-text shadow-sm'
+              : 'text-notion-text-secondary hover:text-notion-text'
+          }`}
+        >
+          <Apple size={14} />
+          {t('tips.showMac')}
+        </button>
+        <button
+          onClick={() => onToggleOS(false)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            !showMac
+              ? 'bg-notion-bg text-notion-text shadow-sm'
+              : 'text-notion-text-secondary hover:text-notion-text'
+          }`}
+        >
+          <Monitor size={14} />
+          {t('tips.showWin')}
+        </button>
+      </div>
+
+      {groups.map((group) => (
+        <div key={group.categoryKey}>
+          <h3 className="text-lg font-semibold text-notion-text mb-3">{t(group.categoryKey)}</h3>
           <table className="w-full text-sm">
             <tbody>
               {group.shortcuts.map((s, i) => (
@@ -96,7 +132,7 @@ export function ShortcutsTab() {
                   <td className="py-2 pr-4 w-48">
                     <Kbd>{s.keys}</Kbd>
                   </td>
-                  <td className="py-2 text-notion-text-secondary">{s.description}</td>
+                  <td className="py-2 text-notion-text-secondary">{t(s.descriptionKey)}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,4 +1,4 @@
-import { useReducer, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useReducer, useRef, useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { TimerContext } from './TimerContextValue';
 import { STORAGE_KEYS } from '../constants/storageKeys';
@@ -19,6 +19,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(timerReducer, undefined, () => createInitialState());
   const intervalRef = useRef<number | null>(null);
   const currentSessionIdRef = useRef<number | null>(null);
+  const [autoStartBreaks, setAutoStartBreaksState] = useState(false);
 
   // Load settings from DataService on mount
   useEffect(() => {
@@ -35,6 +36,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
             sessionsBeforeLongBreak: settings.sessionsBeforeLongBreak ?? 4,
           },
         });
+        setAutoStartBreaksState(!!settings.autoStartBreaks);
       })
       .catch((e) => console.warn('[Timer] fetch settings:', e.message));
     return () => { cancelled = true; };
@@ -201,6 +203,17 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'DISMISS_COMPLETION_MODAL' });
   }, []);
 
+  const setAutoStartBreaks = useCallback((enabled: boolean) => {
+    setAutoStartBreaksState(enabled);
+    getDataService().updateTimerSettings({ autoStartBreaks: enabled })
+      .catch((e) => console.warn('[Timer] update autoStartBreaks:', e.message));
+  }, []);
+
+  const adjustRemainingSeconds = useCallback((delta: number) => {
+    const newSeconds = Math.max(0, state.remainingSeconds + delta);
+    dispatch({ type: 'SET_REMAINING', seconds: newSeconds });
+  }, [state.remainingSeconds]);
+
   const value = useMemo(() => ({
     sessionType: state.sessionType,
     remainingSeconds: state.remainingSeconds,
@@ -230,6 +243,9 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     extendWork,
     startRest,
     dismissCompletionModal,
+    autoStartBreaks,
+    setAutoStartBreaks,
+    adjustRemainingSeconds,
   }), [
     state.sessionType, state.remainingSeconds, state.isRunning, state.completedSessions,
     progress, totalDuration, state.config.sessionsBeforeLongBreak,
@@ -238,7 +254,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     start, pause, reset, formatTime, startForTask, openForTask, clearTask,
     updateActiveTaskTitle, setWorkDurationMinutes, setBreakDurationMinutes,
     setLongBreakDurationMinutes, setSessionsBeforeLongBreak, extendWork, startRest,
-    dismissCompletionModal,
+    dismissCompletionModal, autoStartBreaks, setAutoStartBreaks, adjustRemainingSeconds,
   ]);
 
   return (

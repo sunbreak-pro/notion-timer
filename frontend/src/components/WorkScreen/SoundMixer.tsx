@@ -1,66 +1,57 @@
 import { useMemo } from "react";
-import { Music } from "lucide-react";
+import { Music, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { SOUND_TYPES } from "../../constants/sounds";
 import type { SoundMixerState } from "../../hooks/useLocalSoundMixer";
 import type { CustomSoundMeta } from "../../types/customSound";
-import type { SessionType } from "../../types/timer";
-import type { WorkscreenSelections } from "../../hooks/useWorkscreenSelections";
 import { SoundListItem } from "./SoundListItem";
 
 interface SoundMixerProps {
-  workMixer: SoundMixerState;
-  restMixer: SoundMixerState;
-  onToggleWorkSound: (id: string) => void;
-  onToggleRestSound: (id: string) => void;
-  onSetWorkVolume: (id: string, volume: number) => void;
-  onSetRestVolume: (id: string, volume: number) => void;
+  mixer: SoundMixerState;
+  onToggleSound: (id: string) => void;
+  onSetVolume: (id: string, volume: number) => void;
   customSounds?: CustomSoundMeta[];
-  activeSessionType: SessionType;
   channelPositions?: Record<string, { currentTime: number; duration: number }>;
   onSeekSound?: (id: string, time: number) => void;
-  workscreenSelections: WorkscreenSelections;
+  workscreenSelections: string[];
+  getDisplayName?: (soundId: string) => string | undefined;
+  onOpenPicker: () => void;
 }
 
 export function SoundMixer({
-  workMixer,
-  restMixer,
-  onToggleWorkSound,
-  onToggleRestSound,
-  onSetWorkVolume,
-  onSetRestVolume,
+  mixer,
+  onToggleSound,
+  onSetVolume,
   customSounds = [],
-  activeSessionType,
   channelPositions,
   onSeekSound,
   workscreenSelections,
+  getDisplayName,
+  onOpenPicker,
 }: SoundMixerProps) {
-  const isWork = activeSessionType === "WORK";
-  const mixer = isWork ? workMixer : restMixer;
-  const onToggle = isWork ? onToggleWorkSound : onToggleRestSound;
-  const onVolumeChange = isWork ? onSetWorkVolume : onSetRestVolume;
-  const selectedIds = isWork ? workscreenSelections.work : workscreenSelections.rest;
+  const { t } = useTranslation();
 
   // Build lookup maps for sound info
   const soundMap = useMemo(() => {
     const map = new Map<string, { label: string; icon: typeof Music }>();
     for (const s of SOUND_TYPES) {
-      map.set(s.id, { label: s.label, icon: s.icon });
+      map.set(s.id, { label: getDisplayName?.(s.id) || s.label, icon: s.icon });
     }
     for (const s of customSounds) {
-      map.set(s.id, { label: s.label, icon: Music });
+      map.set(s.id, { label: getDisplayName?.(s.id) || s.label, icon: Music });
     }
     return map;
-  }, [customSounds]);
+  }, [customSounds, getDisplayName]);
 
   const filteredSounds = useMemo(() => {
-    return selectedIds
+    return workscreenSelections
       .map(id => {
         const info = soundMap.get(id);
         if (!info) return null;
         return { id, ...info };
       })
       .filter((s): s is NonNullable<typeof s> => s !== null);
-  }, [selectedIds, soundMap]);
+  }, [workscreenSelections, soundMap]);
 
   return (
     <div>
@@ -75,8 +66,8 @@ export function SoundMixer({
               icon={sound.icon}
               enabled={state.enabled}
               volume={state.volume}
-              onToggle={() => onToggle(sound.id)}
-              onVolumeChange={(v) => onVolumeChange(sound.id, v)}
+              onToggle={() => onToggleSound(sound.id)}
+              onVolumeChange={(v) => onSetVolume(sound.id, v)}
               currentTime={pos?.currentTime}
               duration={pos?.duration}
               onSeek={onSeekSound ? (t) => onSeekSound(sound.id, t) : undefined}
@@ -86,9 +77,18 @@ export function SoundMixer({
 
         {filteredSounds.length === 0 && (
           <div className="text-center py-6 text-notion-text-secondary text-sm">
-            No sounds selected. Add sounds from the Music screen.
+            {t('music.noSoundsWork')}
           </div>
         )}
+
+        {/* Add Sound button */}
+        <button
+          onClick={onOpenPicker}
+          className="flex items-center justify-center gap-1.5 py-2 text-sm text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover rounded-lg transition-colors"
+        >
+          <Plus size={14} />
+          {t('music.addSound')}
+        </button>
       </div>
     </div>
   );

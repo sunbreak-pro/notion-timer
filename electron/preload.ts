@@ -17,6 +17,10 @@ const ALLOWED_CHANNELS = new Set([
   'db:timer:endSession',
   'db:timer:fetchSessions',
   'db:timer:fetchSessionsByTaskId',
+  'db:timer:fetchPomodoroPresets',
+  'db:timer:createPomodoroPreset',
+  'db:timer:updatePomodoroPreset',
+  'db:timer:deletePomodoroPreset',
   // Sound
   'db:sound:fetchSettings',
   'db:sound:updateSetting',

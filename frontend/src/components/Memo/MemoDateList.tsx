@@ -1,5 +1,6 @@
 import { BookOpen, Plus, Trash2 } from "lucide-react";
 import type { MemoNode } from "../../types/memo";
+import { formatTime } from "../../utils/formatRelativeDate";
 
 interface MemoDateListProps {
   memos: MemoNode[];
@@ -80,7 +81,12 @@ export function MemoDateList({
                 }`}
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-notion-text-secondary/30 shrink-0" />
-                {formatDisplayDate(memo.date)}
+                <span className="flex-1">{formatDisplayDate(memo.date)}</span>
+                {memo.updatedAt && (
+                  <span className="text-[10px] text-notion-text-secondary/50 shrink-0">
+                    {formatTime(memo.updatedAt)}
+                  </span>
+                )}
               </button>
               <button
                 onClick={(e) => {

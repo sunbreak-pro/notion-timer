@@ -6,7 +6,6 @@ interface SoundSettingsRow {
   sound_type: string;
   volume: number;
   enabled: number;
-  session_category: string;
   updated_at: string;
 }
 
@@ -23,7 +22,6 @@ function settingsRowToObj(row: SoundSettingsRow): SoundSettings {
     soundType: row.sound_type,
     volume: row.volume,
     enabled: !!row.enabled,
-    sessionCategory: row.session_category as 'WORK' | 'REST',
     updatedAt: row.updated_at,
   };
 }
@@ -44,17 +42,16 @@ export function createSoundRepository(db: Database.Database) {
     return !!row;
   }
 
-  // Core statements (V1-V4 tables) — always safe
+  // Core statements — session_category removed (V13)
   const stmts = {
     fetchSettings: db.prepare(`SELECT * FROM sound_settings ORDER BY sound_type ASC`),
-    fetchSettingsByCategory: db.prepare(`SELECT * FROM sound_settings WHERE session_category = ? ORDER BY sound_type ASC`),
     upsertSetting: db.prepare(`
-      INSERT INTO sound_settings (sound_type, volume, enabled, session_category, updated_at)
-      VALUES (@soundType, @volume, @enabled, @sessionCategory, datetime('now'))
-      ON CONFLICT(sound_type, session_category) DO UPDATE SET
+      INSERT INTO sound_settings (sound_type, volume, enabled, updated_at)
+      VALUES (@soundType, @volume, @enabled, datetime('now'))
+      ON CONFLICT(sound_type) DO UPDATE SET
         volume = @volume, enabled = @enabled, updated_at = datetime('now')
     `),
-    fetchSettingByTypeAndCategory: db.prepare(`SELECT * FROM sound_settings WHERE sound_type = ? AND session_category = ?`),
+    fetchSettingByType: db.prepare(`SELECT * FROM sound_settings WHERE sound_type = ?`),
     fetchPresets: db.prepare(`SELECT * FROM sound_presets ORDER BY created_at DESC`),
     createPreset: db.prepare(`
       INSERT INTO sound_presets (name, settings_json, created_at)
@@ -90,25 +87,22 @@ export function createSoundRepository(db: Database.Database) {
     `),
   } : null;
 
-  // V8 workscreen selection statements
+  // V8→V13 workscreen selection statements (session_category removed)
   const hasSelectionTable = tableExists('sound_workscreen_selections');
   const selStmts = hasSelectionTable ? {
-    fetchByCategory: db.prepare(`SELECT sound_id, display_order FROM sound_workscreen_selections WHERE session_category = ? ORDER BY display_order ASC`),
-    deleteByCategory: db.prepare(`DELETE FROM sound_workscreen_selections WHERE session_category = ?`),
-    insert: db.prepare(`INSERT INTO sound_workscreen_selections (sound_id, session_category, display_order) VALUES (?, ?, ?)`),
+    fetchAll: db.prepare(`SELECT sound_id, display_order FROM sound_workscreen_selections ORDER BY display_order ASC`),
+    deleteAll: db.prepare(`DELETE FROM sound_workscreen_selections`),
+    insert: db.prepare(`INSERT INTO sound_workscreen_selections (sound_id, display_order) VALUES (?, ?)`),
   } : null;
 
   return {
-    fetchSettings(sessionCategory?: string): SoundSettings[] {
-      if (sessionCategory) {
-        return (stmts.fetchSettingsByCategory.all(sessionCategory) as SoundSettingsRow[]).map(settingsRowToObj);
-      }
+    fetchSettings(): SoundSettings[] {
       return (stmts.fetchSettings.all() as SoundSettingsRow[]).map(settingsRowToObj);
     },
 
-    updateSetting(soundType: string, volume: number, enabled: boolean, sessionCategory: string = 'WORK'): SoundSettings {
-      stmts.upsertSetting.run({ soundType, volume, enabled: enabled ? 1 : 0, sessionCategory });
-      const row = stmts.fetchSettingByTypeAndCategory.get(soundType, sessionCategory) as SoundSettingsRow;
+    updateSetting(soundType: string, volume: number, enabled: boolean): SoundSettings {
+      stmts.upsertSetting.run({ soundType, volume, enabled: enabled ? 1 : 0 });
+      const row = stmts.fetchSettingByType.get(soundType) as SoundSettingsRow;
       return settingsRowToObj(row);
     },
 
@@ -182,18 +176,18 @@ export function createSoundRepository(db: Database.Database) {
       tagStmts.upsertDisplayMeta.run({ soundId, displayName });
     },
 
-    // Workscreen selections (V8)
-    fetchWorkscreenSelections(sessionCategory: string): Array<{ soundId: string; displayOrder: number }> {
+    // Workscreen selections (V13 — no session_category)
+    fetchWorkscreenSelections(): Array<{ soundId: string; displayOrder: number }> {
       if (!selStmts) return [];
-      return (selStmts.fetchByCategory.all(sessionCategory) as Array<{ sound_id: string; display_order: number }>)
+      return (selStmts.fetchAll.all() as Array<{ sound_id: string; display_order: number }>)
         .map(row => ({ soundId: row.sound_id, displayOrder: row.display_order }));
     },
 
-    setWorkscreenSelections: db.transaction((sessionCategory: string, soundIds: string[]) => {
+    setWorkscreenSelections: db.transaction((soundIds: string[]) => {
       if (!selStmts) return;
-      selStmts.deleteByCategory.run(sessionCategory);
+      selStmts.deleteAll.run();
       for (let i = 0; i < soundIds.length; i++) {
-        selStmts.insert.run(soundIds[i], sessionCategory, i);
+        selStmts.insert.run(soundIds[i], i);
       }
     }),
   };

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, type ReactNode } from 'react';
+import { useState, useCallback, useMemo, type ReactNode } from 'react';
 import { SOUND_TYPES } from '../constants/sounds';
 import { useTimerContext } from '../hooks/useTimerContext';
 import { useLocalSoundMixer } from '../hooks/useLocalSoundMixer';
@@ -13,19 +13,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const timer = useTimerContext();
   const { customSounds, blobUrls, addSound, removeSound } = useCustomSounds();
   const { selections: workscreenSelections, toggleSelection: toggleWorkscreenSelection, isSelected: isWorkscreenSelected } = useWorkscreenSelections();
-  const [mixerOverride, setMixerOverrideRaw] = useState<'WORK' | 'REST' | null>(null);
   const [manualPlay, setManualPlay] = useState(false);
-
-  // Clear override when sessionType changes (auto-transition overrides manual)
-  const prevSessionTypeRef = useRef(timer.sessionType);
-  if (prevSessionTypeRef.current !== timer.sessionType) {
-    prevSessionTypeRef.current = timer.sessionType;
-    if (mixerOverride !== null) setMixerOverrideRaw(null);
-  }
-
-  const setMixerOverride = useCallback((type: 'WORK' | 'REST' | null) => {
-    setMixerOverrideRaw(type);
-  }, []);
 
   const toggleManualPlay = useCallback(() => {
     setManualPlay(prev => !prev);
@@ -36,14 +24,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     [customSounds]
   );
 
-  const workMixerHook = useLocalSoundMixer(customSoundIds, 'WORK');
-  const restMixerHook = useLocalSoundMixer(customSoundIds, 'REST');
-
-  // Determine effective mixer type: override takes priority
-  const effectiveMixerType = mixerOverride ?? (timer.sessionType === 'WORK' ? 'WORK' : 'REST');
-  const activeMixer = effectiveMixerType === 'WORK'
-    ? workMixerHook.mixer
-    : restMixerHook.mixer;
+  const mixerHook = useLocalSoundMixer(customSoundIds);
 
   const soundSources = useMemo(() => {
     const sources: Record<string, string> = {};
@@ -58,22 +39,15 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   const shouldPlay = timer.isRunning || manualPlay;
 
-  const { resetAllPlayback, seekSound, channelPositions } = useAudioEngine(activeMixer, soundSources, shouldPlay);
+  const { resetAllPlayback, seekSound, channelPositions } = useAudioEngine(mixerHook.mixer, soundSources, shouldPlay);
 
   const value: AudioContextValue = useMemo(() => ({
-    mixer: activeMixer,
-    toggleSound: effectiveMixerType === 'WORK' ? workMixerHook.toggleSound : restMixerHook.toggleSound,
-    setVolume: effectiveMixerType === 'WORK' ? workMixerHook.setVolume : restMixerHook.setVolume,
-    workMixer: workMixerHook.mixer,
-    restMixer: restMixerHook.mixer,
-    toggleWorkSound: workMixerHook.toggleSound,
-    toggleRestSound: restMixerHook.toggleSound,
-    setWorkVolume: workMixerHook.setVolume,
-    setRestVolume: restMixerHook.setVolume,
+    mixer: mixerHook.mixer,
+    toggleSound: mixerHook.toggleSound,
+    setVolume: mixerHook.setVolume,
     customSounds,
     addSound,
     removeSound,
-    setMixerOverride,
     resetAllPlayback,
     seekSound,
     channelPositions,
@@ -82,45 +56,36 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     isWorkscreenSelected,
     manualPlay,
     toggleManualPlay,
+    soundSources,
   }), [
-    activeMixer, effectiveMixerType,
-    workMixerHook.mixer, workMixerHook.toggleSound, workMixerHook.setVolume,
-    restMixerHook.mixer, restMixerHook.toggleSound, restMixerHook.setVolume,
+    mixerHook.mixer, mixerHook.toggleSound, mixerHook.setVolume,
     customSounds, addSound, removeSound,
-    setMixerOverride, resetAllPlayback, seekSound, channelPositions,
+    resetAllPlayback, seekSound, channelPositions,
     workscreenSelections, toggleWorkscreenSelection, isWorkscreenSelected,
-    manualPlay, toggleManualPlay,
+    manualPlay, toggleManualPlay, soundSources,
   ]);
 
   const controlValue: AudioControlContextValue = useMemo(() => ({
-    toggleSound: effectiveMixerType === 'WORK' ? workMixerHook.toggleSound : restMixerHook.toggleSound,
-    setVolume: effectiveMixerType === 'WORK' ? workMixerHook.setVolume : restMixerHook.setVolume,
-    toggleWorkSound: workMixerHook.toggleSound,
-    toggleRestSound: restMixerHook.toggleSound,
-    setWorkVolume: workMixerHook.setVolume,
-    setRestVolume: restMixerHook.setVolume,
+    toggleSound: mixerHook.toggleSound,
+    setVolume: mixerHook.setVolume,
     addSound,
     removeSound,
-    setMixerOverride,
     resetAllPlayback,
     seekSound,
     customSounds,
     toggleWorkscreenSelection,
   }), [
-    effectiveMixerType, workMixerHook.toggleSound, workMixerHook.setVolume,
-    restMixerHook.toggleSound, restMixerHook.setVolume,
-    addSound, removeSound, setMixerOverride, resetAllPlayback, seekSound, customSounds,
+    mixerHook.toggleSound, mixerHook.setVolume,
+    addSound, removeSound, resetAllPlayback, seekSound, customSounds,
     toggleWorkscreenSelection,
   ]);
 
   const stateValue: AudioStateContextValue = useMemo(() => ({
-    mixer: activeMixer,
-    workMixer: workMixerHook.mixer,
-    restMixer: restMixerHook.mixer,
+    mixer: mixerHook.mixer,
     channelPositions,
     workscreenSelections,
     isWorkscreenSelected,
-  }), [activeMixer, workMixerHook.mixer, restMixerHook.mixer, channelPositions, workscreenSelections, isWorkscreenSelected]);
+  }), [mixerHook.mixer, channelPositions, workscreenSelections, isWorkscreenSelected]);
 
   return (
     <AudioContext.Provider value={value}>

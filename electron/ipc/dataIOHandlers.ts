@@ -107,11 +107,16 @@ export function registerDataIOHandlers(db: Database.Database): void {
         // Import tasks
         if (Array.isArray(data.tasks)) {
           const insertTask = db.prepare(`
-            INSERT INTO tasks (id, type, title, parent_id, "order", status, is_expanded, is_deleted, deleted_at, created_at, completed_at, scheduled_at, content, work_duration_minutes, color, due_date)
-            VALUES (@id, @type, @title, @parent_id, @"order", @status, @is_expanded, @is_deleted, @deleted_at, @created_at, @completed_at, @scheduled_at, @content, @work_duration_minutes, @color, @due_date)
+            INSERT INTO tasks (id, type, title, parent_id, "order", status, is_expanded, is_deleted, deleted_at, created_at, completed_at, scheduled_at, scheduled_end_at, is_all_day, content, work_duration_minutes, color, due_date)
+            VALUES (@id, @type, @title, @parent_id, @"order", @status, @is_expanded, @is_deleted, @deleted_at, @created_at, @completed_at, @scheduled_at, @scheduled_end_at, @is_all_day, @content, @work_duration_minutes, @color, @due_date)
           `);
           for (const t of data.tasks) {
-            insertTask.run({ ...t, due_date: t.due_date ?? null });
+            insertTask.run({
+              ...t,
+              scheduled_end_at: t.scheduled_end_at ?? null,
+              is_all_day: t.is_all_day ?? 0,
+              due_date: t.due_date ?? null,
+            });
           }
         }
 

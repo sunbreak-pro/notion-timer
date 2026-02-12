@@ -1,49 +1,54 @@
-import { isMac } from '../../utils/platform';
+import { useTranslation, Trans } from 'react-i18next';
 
-const mod = isMac ? '⌘' : 'Ctrl';
-const shift = isMac ? '⇧' : 'Shift';
+interface TimerTabProps {
+  showMac: boolean;
+}
 
-export function TimerTab() {
+export function TimerTab({ showMac }: TimerTabProps) {
+  const { t } = useTranslation();
+  const mod = showMac ? '⌘' : 'Ctrl';
+  const shift = showMac ? '⇧' : 'Shift';
+
   return (
     <div className="space-y-6 text-sm text-notion-text-secondary">
-      <Section title="Pomodoro Sessions">
+      <Section title={t('tips.timerTab.pomodoro')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>The timer follows a <Strong>WORK &rarr; BREAK &rarr; LONG BREAK</Strong> cycle.</li>
-          <li>Default: 25 min work, 5 min break, 15 min long break after 4 sessions.</li>
-          <li>Customize durations in <Strong>Settings</Strong>.</li>
+          <li><Trans i18nKey="tips.timerTab.pomodoroList1" components={{ strong: <Strong /> }} /></li>
+          <li>{t('tips.timerTab.pomodoroList2')}</li>
+          <li><Trans i18nKey="tips.timerTab.pomodoroList3" components={{ strong: <Strong /> }} /></li>
         </ul>
       </Section>
 
-      <Section title="Starting a Session">
+      <Section title={t('tips.timerTab.starting')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>Click the <Strong>play button</Strong> on any task to start a focused session.</li>
-          <li>Or go to the <Strong>Session</Strong> screen for a free (untied) timer.</li>
-          <li>Press <Kbd>Space</Kbd> to toggle play/pause when not typing.</li>
-          <li>Press <Kbd>r</Kbd> to reset the timer when not typing.</li>
+          <li><Trans i18nKey="tips.timerTab.startingList1" components={{ strong: <Strong /> }} /></li>
+          <li><Trans i18nKey="tips.timerTab.startingList2" components={{ strong: <Strong /> }} /></li>
+          <li><Trans i18nKey="tips.timerTab.startingList3" components={{ kbd: <Kbd /> }} /></li>
+          <li><Trans i18nKey="tips.timerTab.startingList4" components={{ kbd: <Kbd /> }} /></li>
         </ul>
       </Section>
 
-      <Section title="Timer Modal & Background">
+      <Section title={t('tips.timerTab.modal')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>The timer runs as a <Strong>modal overlay</Strong> on top of any screen.</li>
-          <li>Close the modal with <Kbd>Escape</Kbd> &mdash; the timer keeps running in the background.</li>
-          <li>Press <Kbd>{`${mod} + ${shift} + T`}</Kbd> to toggle the timer modal from any screen.</li>
-          <li>A mini timer widget appears in the left sidebar while active.</li>
+          <li><Trans i18nKey="tips.timerTab.modalList1" components={{ strong: <Strong /> }} /></li>
+          <li><Trans i18nKey="tips.timerTab.modalList2" components={{ kbd: <Kbd /> }} /></li>
+          <li><Trans i18nKey="tips.timerTab.modalList3" values={{ mod, shift }} components={{ kbd: <Kbd /> }} /></li>
+          <li>{t('tips.timerTab.modalList4')}</li>
         </ul>
       </Section>
 
-      <Section title="Sound Mixer">
+      <Section title={t('tips.timerTab.soundMixer')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>The Session screen includes an ambient <Strong>Sound Mixer</Strong>.</li>
-          <li>Mix multiple background sounds (rain, cafe, etc.) with individual volume controls.</li>
-          <li>Sound settings persist across sessions via localStorage.</li>
+          <li><Trans i18nKey="tips.timerTab.soundMixerList1" components={{ strong: <Strong /> }} /></li>
+          <li>{t('tips.timerTab.soundMixerList2')}</li>
+          <li>{t('tips.timerTab.soundMixerList3')}</li>
         </ul>
       </Section>
 
-      <Section title="Notifications">
+      <Section title={t('tips.timerTab.notifications')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>Enable browser notifications in Settings to get alerted when a session ends.</li>
-          <li>Notification permission is requested once on toggle.</li>
+          <li>{t('tips.timerTab.notificationsList1')}</li>
+          <li>{t('tips.timerTab.notificationsList2')}</li>
         </ul>
       </Section>
     </div>
@@ -59,11 +64,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Strong({ children }: { children: React.ReactNode }) {
+function Strong({ children }: { children?: React.ReactNode }) {
   return <span className="font-medium text-notion-text">{children}</span>;
 }
 
-function Kbd({ children }: { children: string }) {
+function Kbd({ children }: { children?: React.ReactNode }) {
   return (
     <kbd className="inline-block px-1.5 py-0.5 text-xs font-mono bg-notion-hover border border-notion-border rounded text-notion-text">
       {children}

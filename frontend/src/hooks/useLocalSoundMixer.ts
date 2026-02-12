@@ -18,7 +18,7 @@ function getDefaultMixerState(): SoundMixerState {
   return initial;
 }
 
-export function useLocalSoundMixer(customSoundIds: string[] = [], sessionCategory: string = 'WORK') {
+export function useLocalSoundMixer(customSoundIds: string[] = []) {
   const [mixer, setMixer] = useState<SoundMixerState>(getDefaultMixerState);
 
   // Add custom sound entries to mixer when they don't exist yet
@@ -37,10 +37,10 @@ export function useLocalSoundMixer(customSoundIds: string[] = [], sessionCategor
     });
   }, [customSoundIds]);
 
-  // Load from DataService on mount and when sessionCategory changes
+  // Load from DataService on mount
   useEffect(() => {
     let cancelled = false;
-    getDataService().fetchSoundSettings(sessionCategory)
+    getDataService().fetchSoundSettings()
       .then((settings) => {
         if (cancelled) return;
         setMixer(() => {
@@ -56,26 +56,26 @@ export function useLocalSoundMixer(customSoundIds: string[] = [], sessionCategor
       })
       .catch((e) => logServiceError('Sound', 'fetchSettings', e));
     return () => { cancelled = true; };
-  }, [sessionCategory, customSoundIds]);
+  }, [customSoundIds]);
 
   const toggleSound = useCallback((id: string) => {
     setMixer(prev => {
       const current = prev[id];
       const newEnabled = !current.enabled;
-      getDataService().updateSoundSetting(id, current.volume, newEnabled, sessionCategory)
+      getDataService().updateSoundSetting(id, current.volume, newEnabled)
         .catch((e) => logServiceError('Sound', 'sync', e));
       return { ...prev, [id]: { ...current, enabled: newEnabled } };
     });
-  }, [sessionCategory]);
+  }, []);
 
   const setVolume = useCallback((id: string, volume: number) => {
     setMixer(prev => {
       const current = prev[id];
-      getDataService().updateSoundSetting(id, volume, current.enabled, sessionCategory)
+      getDataService().updateSoundSetting(id, volume, current.enabled)
         .catch((e) => logServiceError('Sound', 'sync', e));
       return { ...prev, [id]: { ...current, volume } };
     });
-  }, [sessionCategory]);
+  }, []);
 
   return { mixer, toggleSound, setVolume };
 }

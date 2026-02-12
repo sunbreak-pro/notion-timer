@@ -1,21 +1,42 @@
-import { useState, useRef, useEffect } from 'react';
-import { Calendar as CalendarIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatDateKey } from '../../hooks/useCalendar';
+import { useState, useRef, useEffect } from "react";
+import {
+  Calendar as CalendarIcon,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { formatDateKey } from "../../hooks/useCalendar";
 
 interface DateTimePickerProps {
   value?: string;
-  onChange: (value: string | undefined) => void;
+  onChange: (value: string | null) => void;
   icon?: React.ReactNode;
   label?: string;
   activeColor?: boolean;
 }
 
 const MONTH_NAMES = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
-export function DateTimePicker({ value, onChange, icon, label, activeColor }: DateTimePickerProps) {
+export function DateTimePicker({
+  value,
+  onChange,
+  icon,
+  label,
+  activeColor,
+}: DateTimePickerProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -32,9 +53,9 @@ export function DateTimePicker({ value, onChange, icon, label, activeColor }: Da
       }
     };
     if (open) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
@@ -58,10 +79,15 @@ export function DateTimePicker({ value, onChange, icon, label, activeColor }: Da
   };
 
   const displayText = value
-    ? new Date(value).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    ? new Date(value).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       })
-    : label ? `Set ${label.toLowerCase()}` : 'Set date';
+    : label
+      ? `Set ${label.toLowerCase()}`
+      : "Set date";
 
   const hasValue = !!value && activeColor;
 
@@ -71,8 +97,8 @@ export function DateTimePicker({ value, onChange, icon, label, activeColor }: Da
         onClick={() => setOpen(!open)}
         className={`flex items-center gap-1.5 text-sm px-2 py-1 rounded-md transition-colors ${
           hasValue
-            ? 'text-notion-accent bg-notion-accent/10'
-            : 'text-notion-text-secondary hover:bg-notion-hover'
+            ? "text-notion-accent bg-notion-accent/10"
+            : "text-notion-text-secondary hover:bg-notion-hover"
         }`}
       >
         {icon ?? <CalendarIcon size={14} />}
@@ -85,8 +111,10 @@ export function DateTimePicker({ value, onChange, icon, label, activeColor }: Da
           <div className="flex items-center justify-between mb-2">
             <button
               onClick={() => {
-                if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
-                else setViewMonth(m => m - 1);
+                if (viewMonth === 0) {
+                  setViewMonth(11);
+                  setViewYear((y) => y - 1);
+                } else setViewMonth((m) => m - 1);
               }}
               className="p-1 rounded hover:bg-notion-hover text-notion-text-secondary"
             >
@@ -97,8 +125,10 @@ export function DateTimePicker({ value, onChange, icon, label, activeColor }: Da
             </span>
             <button
               onClick={() => {
-                if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
-                else setViewMonth(m => m + 1);
+                if (viewMonth === 11) {
+                  setViewMonth(0);
+                  setViewYear((y) => y + 1);
+                } else setViewMonth((m) => m + 1);
               }}
               className="p-1 rounded hover:bg-notion-hover text-notion-text-secondary"
             >
@@ -108,8 +138,13 @@ export function DateTimePicker({ value, onChange, icon, label, activeColor }: Da
 
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-1">
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-              <div key={i} className="text-center text-xs text-notion-text-secondary py-1">{d}</div>
+            {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+              <div
+                key={i}
+                className="text-center text-xs text-notion-text-secondary py-1"
+              >
+                {d}
+              </div>
             ))}
           </div>
 
@@ -120,7 +155,7 @@ export function DateTimePicker({ value, onChange, icon, label, activeColor }: Da
             ))}
             {Array.from({ length: daysInMonth }, (_, i) => {
               const day = i + 1;
-              const key = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              const key = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
               const isToday = key === today;
               const isSelected = key === selectedKey;
               return (
@@ -129,10 +164,10 @@ export function DateTimePicker({ value, onChange, icon, label, activeColor }: Da
                   onClick={() => handleSelectDate(day)}
                   className={`text-xs py-1 rounded transition-colors ${
                     isSelected
-                      ? 'bg-notion-accent text-white'
+                      ? "bg-notion-accent text-white"
                       : isToday
-                      ? 'bg-notion-accent/20 text-notion-accent font-bold'
-                      : 'text-notion-text hover:bg-notion-hover'
+                        ? "bg-notion-accent/20 text-notion-accent font-bold"
+                        : "text-notion-text hover:bg-notion-hover"
                   }`}
                 >
                   {day}
@@ -145,21 +180,25 @@ export function DateTimePicker({ value, onChange, icon, label, activeColor }: Da
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-notion-border">
             <select
               value={hour}
-              onChange={e => handleTimeChange(Number(e.target.value), minute)}
+              onChange={(e) => handleTimeChange(Number(e.target.value), minute)}
               className="flex-1 text-sm bg-notion-bg-secondary border border-notion-border rounded px-2 py-1 text-notion-text"
             >
               {Array.from({ length: 24 }, (_, i) => (
-                <option key={i} value={i}>{String(i).padStart(2, '0')}</option>
+                <option key={i} value={i}>
+                  {String(i).padStart(2, "0")}
+                </option>
               ))}
             </select>
             <span className="text-notion-text-secondary">:</span>
             <select
               value={minute}
-              onChange={e => handleTimeChange(hour, Number(e.target.value))}
+              onChange={(e) => handleTimeChange(hour, Number(e.target.value))}
               className="flex-1 text-sm bg-notion-bg-secondary border border-notion-border rounded px-2 py-1 text-notion-text"
             >
-              {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(m => (
-                <option key={m} value={m}>{String(m).padStart(2, '0')}</option>
+              {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                <option key={m} value={m}>
+                  {String(m).padStart(2, "0")}
+                </option>
               ))}
             </select>
           </div>
@@ -167,7 +206,10 @@ export function DateTimePicker({ value, onChange, icon, label, activeColor }: Da
           {/* Clear button */}
           {value && (
             <button
-              onClick={() => { onChange(undefined); setOpen(false); }}
+              onClick={() => {
+                onChange(null);
+                setOpen(false);
+              }}
               className="flex items-center gap-1 mt-2 text-xs text-notion-text-secondary hover:text-notion-danger transition-colors"
             >
               <X size={12} />

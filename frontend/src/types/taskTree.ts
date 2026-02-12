@@ -18,8 +18,9 @@ export interface TaskNode {
   createdAt: string;
   completedAt?: string;
   scheduledAt?: string;
+  scheduledEndAt?: string;
+  isAllDay?: boolean;
   content?: string;
   workDurationMinutes?: number;
   color?: string;
-  dueDate?: string;
 }

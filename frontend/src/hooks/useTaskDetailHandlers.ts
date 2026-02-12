@@ -56,7 +56,11 @@ export function useTaskDetailHandlers({
 
   const handleScheduledAtChange = useCallback((scheduledAt: string | undefined) => {
     if (!selectedTaskId) return;
-    updateNode(selectedTaskId, { scheduledAt });
+    if (scheduledAt === undefined) {
+      updateNode(selectedTaskId, { scheduledAt: undefined, scheduledEndAt: undefined, isAllDay: undefined });
+    } else {
+      updateNode(selectedTaskId, { scheduledAt });
+    }
   }, [selectedTaskId, updateNode]);
 
   const handleTitleChange = useCallback((newTitle: string) => {
@@ -64,9 +68,18 @@ export function useTaskDetailHandlers({
     updateNode(selectedTaskId, { title: newTitle });
   }, [selectedTaskId, updateNode]);
 
-  const handleDueDateChange = useCallback((dueDate: string | undefined) => {
+  const handleScheduledEndAtChange = useCallback((scheduledEndAt: string | undefined) => {
     if (!selectedTaskId) return;
-    updateNode(selectedTaskId, { dueDate });
+    updateNode(selectedTaskId, { scheduledEndAt });
+  }, [selectedTaskId, updateNode]);
+
+  const handleIsAllDayChange = useCallback((isAllDay: boolean) => {
+    if (!selectedTaskId) return;
+    if (isAllDay) {
+      updateNode(selectedTaskId, { isAllDay: true, scheduledEndAt: undefined });
+    } else {
+      updateNode(selectedTaskId, { isAllDay: undefined });
+    }
   }, [selectedTaskId, updateNode]);
 
   const handleFolderColorChange = useCallback((folderId: string, color: string) => {
@@ -90,9 +103,10 @@ export function useTaskDetailHandlers({
   }, [setSelectedTaskId, setActiveSection]);
 
   const handleCalendarCreateTask = useCallback((date: Date) => {
-    const scheduledDate = new Date(date);
-    scheduledDate.setHours(12, 0, 0, 0);
-    const newNode = addNode('task', null, 'Untitled', { scheduledAt: scheduledDate.toISOString() });
+    const startDate = new Date(date);
+    const newNode = addNode('task', null, 'Untitled', {
+      scheduledAt: startDate.toISOString(),
+    });
     if (!newNode) return;
     timer.openForTask(newNode.id, newNode.title, newNode.workDurationMinutes);
     setActiveSection('work');
@@ -119,7 +133,8 @@ export function useTaskDetailHandlers({
     handleDurationChange,
     handleScheduledAtChange,
     handleTitleChange,
-    handleDueDateChange,
+    handleScheduledEndAtChange,
+    handleIsAllDayChange,
     handleFolderColorChange,
     handleCompleteTask,
     handleCalendarSelectTask,

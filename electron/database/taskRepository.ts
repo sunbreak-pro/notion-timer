@@ -14,6 +14,8 @@ interface TaskRow {
   created_at: string;
   completed_at: string | null;
   scheduled_at: string | null;
+  scheduled_end_at: string | null;
+  is_all_day: number | null;
   content: string | null;
   work_duration_minutes: number | null;
   color: string | null;
@@ -34,10 +36,11 @@ function rowToNode(row: TaskRow): TaskNode {
     createdAt: row.created_at,
     completedAt: row.completed_at ?? undefined,
     scheduledAt: row.scheduled_at ?? undefined,
+    scheduledEndAt: row.scheduled_end_at ?? undefined,
+    isAllDay: row.is_all_day ? true : undefined,
     content: row.content ?? undefined,
     workDurationMinutes: row.work_duration_minutes ?? undefined,
     color: row.color ?? undefined,
-    dueDate: row.due_date ?? undefined,
   };
 }
 
@@ -47,13 +50,14 @@ export function createTaskRepository(db: Database.Database) {
     fetchDeleted: db.prepare(`SELECT * FROM tasks WHERE is_deleted = 1 ORDER BY deleted_at DESC`),
     fetchById: db.prepare(`SELECT * FROM tasks WHERE id = ?`),
     insert: db.prepare(`
-      INSERT INTO tasks (id, type, title, parent_id, "order", status, is_expanded, is_deleted, deleted_at, created_at, completed_at, scheduled_at, content, work_duration_minutes, color, due_date)
-      VALUES (@id, @type, @title, @parentId, @order, @status, @isExpanded, @isDeleted, @deletedAt, @createdAt, @completedAt, @scheduledAt, @content, @workDurationMinutes, @color, @dueDate)
+      INSERT INTO tasks (id, type, title, parent_id, "order", status, is_expanded, is_deleted, deleted_at, created_at, completed_at, scheduled_at, scheduled_end_at, is_all_day, content, work_duration_minutes, color, due_date)
+      VALUES (@id, @type, @title, @parentId, @order, @status, @isExpanded, @isDeleted, @deletedAt, @createdAt, @completedAt, @scheduledAt, @scheduledEndAt, @isAllDay, @content, @workDurationMinutes, @color, @dueDate)
     `),
     update: db.prepare(`
       UPDATE tasks SET type=@type, title=@title, parent_id=@parentId, "order"=@order, status=@status,
         is_expanded=@isExpanded, is_deleted=@isDeleted, deleted_at=@deletedAt, created_at=@createdAt,
-        completed_at=@completedAt, scheduled_at=@scheduledAt, content=@content,
+        completed_at=@completedAt, scheduled_at=@scheduledAt, scheduled_end_at=@scheduledEndAt,
+        is_all_day=@isAllDay, content=@content,
         work_duration_minutes=@workDurationMinutes, color=@color, due_date=@dueDate
       WHERE id=@id
     `),
@@ -77,10 +81,12 @@ export function createTaskRepository(db: Database.Database) {
       createdAt: node.createdAt,
       completedAt: node.completedAt ?? null,
       scheduledAt: node.scheduledAt ?? null,
+      scheduledEndAt: node.scheduledEndAt ?? null,
+      isAllDay: node.isAllDay ? 1 : 0,
       content: node.content ?? null,
       workDurationMinutes: node.workDurationMinutes ?? null,
       color: node.color ?? null,
-      dueDate: node.dueDate ?? null,
+      dueDate: null,
     };
   }
 
@@ -118,8 +124,8 @@ export function createTaskRepository(db: Database.Database) {
         }
       }
       const upsert = db.prepare(`
-        INSERT OR REPLACE INTO tasks (id, type, title, parent_id, "order", status, is_expanded, is_deleted, deleted_at, created_at, completed_at, scheduled_at, content, work_duration_minutes, color, due_date)
-        VALUES (@id, @type, @title, @parentId, @order, @status, @isExpanded, @isDeleted, @deletedAt, @createdAt, @completedAt, @scheduledAt, @content, @workDurationMinutes, @color, @dueDate)
+        INSERT OR REPLACE INTO tasks (id, type, title, parent_id, "order", status, is_expanded, is_deleted, deleted_at, created_at, completed_at, scheduled_at, scheduled_end_at, is_all_day, content, work_duration_minutes, color, due_date)
+        VALUES (@id, @type, @title, @parentId, @order, @status, @isExpanded, @isDeleted, @deletedAt, @createdAt, @completedAt, @scheduledAt, @scheduledEndAt, @isAllDay, @content, @workDurationMinutes, @color, @dueDate)
       `);
       for (const node of nodes) {
         upsert.run(nodeToParams(node));

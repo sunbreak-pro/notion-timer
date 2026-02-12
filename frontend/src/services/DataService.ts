@@ -1,5 +1,5 @@
 import type { TaskNode } from '../types/taskTree';
-import type { TimerSettings, TimerSession, SessionType } from '../types/timer';
+import type { TimerSettings, TimerSession, SessionType, PomodoroPreset } from '../types/timer';
 import type { SoundSettings, SoundPreset, SoundTag, SoundDisplayMeta } from '../types/sound';
 import type { MemoNode } from '../types/memo';
 import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../types/ai';
@@ -24,15 +24,21 @@ export interface DataService {
 
   // Timer
   fetchTimerSettings(): Promise<TimerSettings>;
-  updateTimerSettings(settings: Partial<Pick<TimerSettings, 'workDuration' | 'breakDuration' | 'longBreakDuration' | 'sessionsBeforeLongBreak'>>): Promise<TimerSettings>;
+  updateTimerSettings(settings: Partial<Pick<TimerSettings, 'workDuration' | 'breakDuration' | 'longBreakDuration' | 'sessionsBeforeLongBreak' | 'autoStartBreaks'>>): Promise<TimerSettings>;
   startTimerSession(sessionType: SessionType, taskId?: string): Promise<TimerSession>;
   endTimerSession(id: number, duration: number, completed: boolean): Promise<TimerSession>;
   fetchTimerSessions(): Promise<TimerSession[]>;
   fetchSessionsByTaskId(taskId: string): Promise<TimerSession[]>;
 
+  // Pomodoro Presets
+  fetchPomodoroPresets(): Promise<PomodoroPreset[]>;
+  createPomodoroPreset(preset: Omit<PomodoroPreset, 'id' | 'createdAt'>): Promise<PomodoroPreset>;
+  updatePomodoroPreset(id: number, updates: Partial<Omit<PomodoroPreset, 'id' | 'createdAt'>>): Promise<PomodoroPreset>;
+  deletePomodoroPreset(id: number): Promise<void>;
+
   // Sound
-  fetchSoundSettings(sessionCategory?: string): Promise<SoundSettings[]>;
-  updateSoundSetting(soundType: string, volume: number, enabled: boolean, sessionCategory?: string): Promise<SoundSettings>;
+  fetchSoundSettings(): Promise<SoundSettings[]>;
+  updateSoundSetting(soundType: string, volume: number, enabled: boolean): Promise<SoundSettings>;
   fetchSoundPresets(): Promise<SoundPreset[]>;
   createSoundPreset(name: string, settingsJson: string): Promise<SoundPreset>;
   deleteSoundPreset(id: number): Promise<void>;
@@ -47,8 +53,8 @@ export interface DataService {
   fetchAllSoundTagAssignments(): Promise<Array<{ sound_id: string; tag_id: number }>>;
   fetchAllSoundDisplayMeta(): Promise<SoundDisplayMeta[]>;
   updateSoundDisplayMeta(soundId: string, displayName: string): Promise<void>;
-  fetchWorkscreenSelections(sessionCategory: string): Promise<Array<{ soundId: string; displayOrder: number }>>;
-  setWorkscreenSelections(sessionCategory: string, soundIds: string[]): Promise<void>;
+  fetchWorkscreenSelections(): Promise<Array<{ soundId: string; displayOrder: number }>>;
+  setWorkscreenSelections(soundIds: string[]): Promise<void>;
 
   // Memo
   fetchAllMemos(): Promise<MemoNode[]>;

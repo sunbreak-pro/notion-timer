@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNoteContext } from "../../hooks/useNoteContext";
+import { formatRelativeDate } from "../../utils/formatRelativeDate";
 import type { NoteSortMode } from "../../types/note";
 
 const SORT_LABEL_KEYS: Record<NoteSortMode, string> = {
@@ -165,6 +166,11 @@ export function NoteList() {
                   {note.title || t('notes.untitled')}
                 </span>
               </div>
+              {note.updatedAt && (
+                <p className="text-[10px] text-notion-text-secondary/60 mt-0.5">
+                  {formatRelativeDate(note.updatedAt)}
+                </p>
+              )}
               {note.content && (
                 <p className="text-xs text-notion-text-secondary truncate mt-0.5">
                   {getContentPreview(note.content)}

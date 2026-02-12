@@ -15,14 +15,25 @@ export function useCalendar(
       : nodes.filter(n => n.type === 'task' && n.status !== 'DONE');
 
     for (const task of filtered) {
-      const dateStr = task.scheduledAt ?? task.createdAt;
-      if (!dateStr) continue;
-      const key = dateStr.substring(0, 10);
-      const existing = map.get(key);
-      if (existing) {
-        existing.push(task);
+      if (!task.scheduledAt) continue;
+      const startKey = task.scheduledAt.substring(0, 10);
+      const endKey = task.scheduledEndAt ? task.scheduledEndAt.substring(0, 10) : startKey;
+
+      if (startKey === endKey) {
+        const existing = map.get(startKey);
+        if (existing) existing.push(task);
+        else map.set(startKey, [task]);
       } else {
-        map.set(key, [task]);
+        // Multi-day task: add to each date in range
+        const cur = new Date(startKey + 'T00:00:00');
+        const end = new Date(endKey + 'T00:00:00');
+        while (cur <= end) {
+          const key = formatDateKey(cur);
+          const existing = map.get(key);
+          if (existing) existing.push(task);
+          else map.set(key, [task]);
+          cur.setDate(cur.getDate() + 1);
+        }
       }
     }
     return map;

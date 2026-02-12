@@ -5,6 +5,8 @@ import { getColorByIndex } from '../constants/folderColors';
 
 interface AddNodeOptions {
   scheduledAt?: string;
+  scheduledEndAt?: string;
+  isAllDay?: boolean;
 }
 
 export function useTaskTreeCRUD(
@@ -33,7 +35,9 @@ export function useTaskTreeCRUD(
       status: 'TODO',
       isExpanded: type !== 'task' ? true : undefined,
       createdAt: new Date().toISOString(),
-      scheduledAt: type === 'task' ? (options?.scheduledAt ?? new Date().toISOString()) : undefined,
+      scheduledAt: type === 'task' ? options?.scheduledAt : undefined,
+      scheduledEndAt: type === 'task' ? options?.scheduledEndAt : undefined,
+      isAllDay: type === 'task' ? options?.isAllDay : undefined,
       color: folderColor,
     };
     persist([...nodes, newNode]);

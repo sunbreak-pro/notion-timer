@@ -38,8 +38,8 @@ export function createMockDataService(): DataService & { [K in keyof DataService
 
     // Sound
     fetchSoundSettings: vi.fn().mockResolvedValue([]),
-    updateSoundSetting: vi.fn().mockImplementation((soundType, volume, enabled, sessionCategory) => Promise.resolve({
-      id: 1, soundType, volume, enabled, sessionCategory: sessionCategory ?? 'WORK', updatedAt: new Date(),
+    updateSoundSetting: vi.fn().mockImplementation((soundType, volume, enabled) => Promise.resolve({
+      id: 1, soundType, volume, enabled, updatedAt: new Date(),
     })),
     fetchSoundPresets: vi.fn().mockResolvedValue([]),
     createSoundPreset: vi.fn().mockImplementation((name, settingsJson) => Promise.resolve({

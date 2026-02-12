@@ -17,7 +17,7 @@ interface DayCellProps {
   onSelectMemo?: (date: string) => void;
 }
 
-const MAX_VISIBLE_TASKS = 3;
+const MAX_VISIBLE_TASKS = 2;
 
 export function DayCell({
   date,

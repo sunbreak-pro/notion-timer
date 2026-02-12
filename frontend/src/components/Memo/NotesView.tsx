@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback } from "react";
 import { Pin, PinOff, StickyNote } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNoteContext } from "../../hooks/useNoteContext";
+import { formatDateTime } from "../../utils/formatRelativeDate";
 import { NoteList } from "./NoteList";
 
 const MemoEditor = lazy(() =>
@@ -61,6 +62,16 @@ export function NotesView() {
                   <Pin size={16} />
                 )}
               </button>
+            </div>
+
+            {/* Date info */}
+            <div className="flex items-center gap-3 text-[11px] text-notion-text-secondary/60 mb-3">
+              {selectedNote.createdAt && (
+                <span>{t('dateTime.created')}: {formatDateTime(selectedNote.createdAt)}</span>
+              )}
+              {selectedNote.updatedAt && selectedNote.updatedAt !== selectedNote.createdAt && (
+                <span>{t('dateTime.updated')}: {formatDateTime(selectedNote.updatedAt)}</span>
+              )}
             </div>
 
             {/* Editor */}

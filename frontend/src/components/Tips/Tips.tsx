@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isMac } from '../../utils/platform';
 import { ShortcutsTab } from './ShortcutsTab';
 import { TasksTab } from './TasksTab';
 import { TimerTab } from './TimerTab';
@@ -24,22 +25,23 @@ const TAB_LABEL_KEYS: Record<TabId, string> = {
 
 export function Tips() {
   const [activeTab, setActiveTab] = useState<TabId>('shortcuts');
+  const [showMac, setShowMac] = useState(isMac);
   const { t } = useTranslation();
 
   const renderTab = () => {
     switch (activeTab) {
       case 'shortcuts':
-        return <ShortcutsTab />;
+        return <ShortcutsTab showMac={showMac} onToggleOS={setShowMac} />;
       case 'tasks':
-        return <TasksTab />;
+        return <TasksTab showMac={showMac} />;
       case 'timer':
-        return <TimerTab />;
+        return <TimerTab showMac={showMac} />;
       case 'calendar':
         return <CalendarTab />;
       case 'memo':
         return <MemoTab />;
       case 'analytics':
-        return <AnalyticsTab />;
+        return <AnalyticsTab showMac={showMac} />;
       case 'editor':
         return <EditorTab />;
     }

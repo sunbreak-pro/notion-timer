@@ -97,7 +97,8 @@ function App() {
             onScheduledAtChange={handlers.handleScheduledAtChange}
             onFolderColorChange={handlers.handleFolderColorChange}
             onTitleChange={handlers.handleTitleChange}
-            onDueDateChange={handlers.handleDueDateChange}
+            onScheduledEndAtChange={handlers.handleScheduledEndAtChange}
+            onIsAllDayChange={handlers.handleIsAllDayChange}
             onNavigateToSettings={() => setActiveSection("settings")}
             folderTag={
               selectedTask ? getFolderTagForTask(selectedTask.id) : undefined
@@ -159,6 +160,7 @@ function App() {
           onStartWork={() => { timer.dismissCompletionModal(); timer.start(); }}
           onDismiss={timer.dismissCompletionModal}
           onCompleteTask={timer.activeTask ? handlers.handleCompleteTask : undefined}
+          autoStartBreaks={timer.autoStartBreaks}
         />
       )}
 

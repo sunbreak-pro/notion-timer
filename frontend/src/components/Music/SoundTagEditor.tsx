@@ -16,11 +16,13 @@ const DEFAULT_COLORS = [
 interface SoundTagEditorProps {
   soundId: string;
   soundTagState: ReturnType<typeof useSoundTags>;
+  hidePills?: boolean;
 }
 
 export function SoundTagEditor({
   soundId,
   soundTagState,
+  hidePills,
 }: SoundTagEditorProps) {
   const { soundTags, getTagsForSound, setTagsForSound, createTag } =
     soundTagState;
@@ -62,8 +64,8 @@ export function SoundTagEditor({
   };
 
   return (
-    <div className="flex items-center gap-1 flex-wrap mt-0.5" ref={dropdownRef}>
-      {currentTags.map((tag) => (
+    <div className={`flex items-center gap-1 flex-wrap ${hidePills ? '' : 'mt-0.5'}`} ref={dropdownRef}>
+      {!hidePills && currentTags.map((tag) => (
         <span
           key={tag.id}
           className="inline-flex items-center gap-0.5 px-1.5 py-0 text-[10px] rounded-full text-white"

@@ -119,10 +119,11 @@ export function CalendarView({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const tag = document.activeElement?.tagName;
+      const el = e.target as Element | null;
+      const tag = el?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
-      if (document.activeElement?.getAttribute("contenteditable") === "true")
-        return;
+      if (el?.getAttribute("contenteditable") === "true") return;
+      if (el?.closest?.('[contenteditable="true"]')) return;
 
       if (e.key === "j") {
         e.preventDefault();

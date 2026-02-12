@@ -33,6 +33,15 @@ export function runMigrations(db: Database.Database): void {
   if (currentVersion < 10) {
     migrateV10(db);
   }
+  if (currentVersion < 11) {
+    migrateV11(db);
+  }
+  if (currentVersion < 12) {
+    migrateV12(db);
+  }
+  if (currentVersion < 13) {
+    migrateV13(db);
+  }
 }
 
 function migrateV1(db: Database.Database): void {
@@ -375,6 +384,39 @@ function migrateV10(db: Database.Database): void {
   `);
 }
 
+function migrateV11(db: Database.Database): void {
+  db.exec(`
+    ALTER TABLE tasks ADD COLUMN scheduled_end_at TEXT;
+    ALTER TABLE tasks ADD COLUMN is_all_day INTEGER DEFAULT 0;
+    PRAGMA user_version = 11;
+  `);
+}
+
+function migrateV12(db: Database.Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pomodoro_presets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      work_duration INTEGER NOT NULL DEFAULT 25,
+      break_duration INTEGER NOT NULL DEFAULT 5,
+      long_break_duration INTEGER NOT NULL DEFAULT 15,
+      sessions_before_long_break INTEGER NOT NULL DEFAULT 4,
+      created_at TEXT NOT NULL
+    );
+
+    INSERT INTO pomodoro_presets (name, work_duration, break_duration, long_break_duration, sessions_before_long_break, created_at)
+    VALUES
+      ('Standard', 25, 5, 15, 4, datetime('now')),
+      ('Deep Work', 50, 10, 30, 3, datetime('now')),
+      ('Quick Sprint', 15, 3, 10, 4, datetime('now'));
+
+    -- Add auto_start_breaks column to timer_settings
+    ALTER TABLE timer_settings ADD COLUMN auto_start_breaks INTEGER DEFAULT 0;
+
+    PRAGMA user_version = 12;
+  `);
+}
+
 function migrateV3(db: Database.Database): void {
   db.exec(`
     -- Notes (free-form memos)
@@ -403,5 +445,34 @@ function migrateV3(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_note_tags_tag ON note_tags(tag_id);
 
     PRAGMA user_version = 3;
+  `);
+}
+
+function migrateV13(db: Database.Database): void {
+  db.exec(`
+    -- sound_settings: remove session_category, keep WORK rows only
+    CREATE TABLE sound_settings_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sound_type TEXT NOT NULL UNIQUE,
+      volume INTEGER NOT NULL DEFAULT 50,
+      enabled INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL
+    );
+    INSERT OR IGNORE INTO sound_settings_new (sound_type, volume, enabled, updated_at)
+      SELECT sound_type, volume, enabled, updated_at FROM sound_settings WHERE session_category = 'WORK';
+    DROP TABLE sound_settings;
+    ALTER TABLE sound_settings_new RENAME TO sound_settings;
+
+    -- sound_workscreen_selections: remove session_category, keep WORK rows only
+    CREATE TABLE sound_workscreen_selections_new (
+      sound_id TEXT PRIMARY KEY,
+      display_order INTEGER NOT NULL DEFAULT 0
+    );
+    INSERT OR IGNORE INTO sound_workscreen_selections_new (sound_id, display_order)
+      SELECT sound_id, display_order FROM sound_workscreen_selections WHERE session_category = 'WORK';
+    DROP TABLE sound_workscreen_selections;
+    ALTER TABLE sound_workscreen_selections_new RENAME TO sound_workscreen_selections;
+
+    PRAGMA user_version = 13;
   `);
 }

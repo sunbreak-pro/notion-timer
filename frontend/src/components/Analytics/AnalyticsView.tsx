@@ -1,11 +1,24 @@
-import { useMemo } from "react";
-import { BarChart3, CheckCircle2, Circle, FolderOpen } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { BarChart3, CheckCircle2, Circle, FolderOpen, Clock, Hash, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
+import { getDataService } from "../../services";
+import type { TimerSession } from "../../types/timer";
+import { computeSummary } from "../../utils/analyticsAggregation";
+import { WorkTimeChart } from "./WorkTimeChart";
+import { TaskWorkTimeChart } from "./TaskWorkTimeChart";
+import { PeriodSelector, type Period } from "./PeriodSelector";
 
 export function AnalyticsView() {
   const { t } = useTranslation();
   const { nodes } = useTaskTreeContext();
+  const [sessions, setSessions] = useState<TimerSession[]>([]);
+  const [period, setPeriod] = useState<Period>('day');
+
+  useEffect(() => {
+    getDataService().fetchTimerSessions().then(setSessions);
+  }, []);
+
   const stats = useMemo(() => {
     const tasks = nodes.filter((n) => n.type === "task");
     const folders = nodes.filter((n) => n.type === "folder");
@@ -19,7 +32,7 @@ export function AnalyticsView() {
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const todayTasks = tasks.filter(
-      (t) => (t.scheduledAt ?? t.createdAt)?.substring(0, 10) === todayStr,
+      (t) => t.scheduledAt?.substring(0, 10) === todayStr,
     );
     const todayCompleted = todayTasks.filter((t) => t.status === "DONE");
     const todayCompletionRate =
@@ -38,6 +51,22 @@ export function AnalyticsView() {
       todayCompletionRate,
     };
   }, [nodes]);
+
+  const taskNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const n of nodes) {
+      map.set(n.id, n.title || n.id);
+    }
+    return map;
+  }, [nodes]);
+
+  const summary = useMemo(() => computeSummary(sessions), [sessions]);
+
+  const formatHours = (minutes: number) => {
+    const h = Math.floor(minutes / 60);
+    const m = Math.round(minutes % 60);
+    return t('analytics.hours', { hours: h, minutes: m });
+  };
 
   return (
     <div className="h-full flex flex-col overflow-auto">
@@ -91,7 +120,7 @@ export function AnalyticsView() {
           </div>
         </div>
 
-        <div className="bg-notion-bg-secondary rounded-lg p-4">
+        <div className="bg-notion-bg-secondary rounded-lg p-4 mb-8">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-notion-text">
               {t('analytics.totalRate')}
@@ -108,9 +137,47 @@ export function AnalyticsView() {
           </div>
         </div>
 
-        <p className="text-sm text-notion-text-secondary mt-8 text-center">
-          {t('analytics.comingSoon')}
-        </p>
+        {/* Work time summary */}
+        {sessions.length > 0 ? (
+          <>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <StatCard
+                icon={<Clock size={20} />}
+                label={t('analytics.totalWorkTime')}
+                valueStr={formatHours(summary.totalMinutes)}
+                color="text-blue-500"
+              />
+              <StatCard
+                icon={<Hash size={20} />}
+                label={t('analytics.sessions')}
+                value={summary.totalSessions}
+                color="text-purple-500"
+              />
+              <StatCard
+                icon={<TrendingUp size={20} />}
+                label={t('analytics.avgPerDay')}
+                valueStr={formatHours(summary.avgMinutesPerDay)}
+                color="text-orange-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-notion-text">
+                {t('analytics.workTime')}
+              </h3>
+              <PeriodSelector value={period} onChange={setPeriod} />
+            </div>
+
+            <div className="space-y-4">
+              <WorkTimeChart sessions={sessions} period={period} />
+              <TaskWorkTimeChart sessions={sessions} taskNameMap={taskNameMap} />
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-notion-text-secondary mt-4 text-center">
+            {t('analytics.noSessions')}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -120,18 +187,20 @@ function StatCard({
   icon,
   label,
   value,
+  valueStr,
   color,
 }: {
   icon: React.ReactNode;
   label: string;
-  value: number;
+  value?: number;
+  valueStr?: string;
   color: string;
 }) {
   return (
     <div className="bg-notion-bg-secondary rounded-lg p-4 flex items-center gap-3">
       <div className={color}>{icon}</div>
       <div>
-        <p className="text-2xl font-bold text-notion-text">{value}</p>
+        <p className="text-2xl font-bold text-notion-text">{valueStr ?? value}</p>
         <p className="text-xs text-notion-text-secondary">{label}</p>
       </div>
     </div>

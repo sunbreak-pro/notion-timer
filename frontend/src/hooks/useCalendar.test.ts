@@ -30,8 +30,8 @@ describe('useCalendar', () => {
 
     it('filters incomplete tasks', () => {
       const tasks = [
-        makeTask({ id: 'task-1', status: 'TODO' }),
-        makeTask({ id: 'task-2', status: 'DONE' }),
+        makeTask({ id: 'task-1', status: 'TODO', scheduledAt: '2026-01-15T10:00:00.000Z' }),
+        makeTask({ id: 'task-2', status: 'DONE', scheduledAt: '2026-01-15T10:00:00.000Z' }),
       ];
       const { result } = renderHook(() => useCalendar(tasks, 2026, 0, 'incomplete'));
       const allTasks = Array.from(result.current.tasksByDate.values()).flat();
@@ -41,8 +41,8 @@ describe('useCalendar', () => {
 
     it('filters completed tasks', () => {
       const tasks = [
-        makeTask({ id: 'task-1', status: 'TODO' }),
-        makeTask({ id: 'task-2', status: 'DONE' }),
+        makeTask({ id: 'task-1', status: 'TODO', scheduledAt: '2026-01-15T10:00:00.000Z' }),
+        makeTask({ id: 'task-2', status: 'DONE', scheduledAt: '2026-01-15T10:00:00.000Z' }),
       ];
       const { result } = renderHook(() => useCalendar(tasks, 2026, 0, 'completed'));
       const allTasks = Array.from(result.current.tasksByDate.values()).flat();
@@ -50,7 +50,13 @@ describe('useCalendar', () => {
       expect(allTasks[0].id).toBe('task-2');
     });
 
-    it('uses scheduledAt over createdAt when available', () => {
+    it('excludes tasks without scheduledAt', () => {
+      const task = makeTask({ createdAt: '2026-01-15T00:00:00.000Z' });
+      const { result } = renderHook(() => useCalendar([task], 2026, 0, 'incomplete'));
+      expect(result.current.tasksByDate.size).toBe(0);
+    });
+
+    it('shows task only on scheduledAt date (no createdAt fallback)', () => {
       const task = makeTask({ scheduledAt: '2026-02-10T00:00:00.000Z', createdAt: '2026-01-01T00:00:00.000Z' });
       const { result } = renderHook(() => useCalendar([task], 2026, 1, 'incomplete'));
       expect(result.current.tasksByDate.has('2026-02-10')).toBe(true);
@@ -61,6 +67,31 @@ describe('useCalendar', () => {
       const folder = makeTask({ id: 'folder-1', type: 'folder' });
       const { result } = renderHook(() => useCalendar([folder], 2026, 0, 'incomplete'));
       expect(result.current.tasksByDate.size).toBe(0);
+    });
+
+    it('shows multi-day task on all dates in range', () => {
+      const task = makeTask({
+        id: 'task-multi',
+        scheduledAt: '2026-01-15T10:00:00.000Z',
+        scheduledEndAt: '2026-01-17T16:00:00.000Z',
+      });
+      const { result } = renderHook(() => useCalendar([task], 2026, 0, 'incomplete'));
+      expect(result.current.tasksByDate.has('2026-01-15')).toBe(true);
+      expect(result.current.tasksByDate.has('2026-01-16')).toBe(true);
+      expect(result.current.tasksByDate.has('2026-01-17')).toBe(true);
+      expect(result.current.tasksByDate.has('2026-01-18')).toBe(false);
+    });
+
+    it('handles isAllDay tasks', () => {
+      const task = makeTask({
+        id: 'task-allday',
+        scheduledAt: '2026-01-20T00:00:00.000Z',
+        isAllDay: true,
+      });
+      const { result } = renderHook(() => useCalendar([task], 2026, 0, 'incomplete'));
+      expect(result.current.tasksByDate.has('2026-01-20')).toBe(true);
+      const tasks = result.current.tasksByDate.get('2026-01-20')!;
+      expect(tasks[0].isAllDay).toBe(true);
     });
   });
 

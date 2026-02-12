@@ -1,6 +1,6 @@
 import type { DataService } from './DataService';
 import type { TaskNode } from '../types/taskTree';
-import type { TimerSettings, TimerSession, SessionType } from '../types/timer';
+import type { TimerSettings, TimerSession, SessionType, PomodoroPreset } from '../types/timer';
 import type { SoundSettings, SoundPreset, SoundTag, SoundDisplayMeta } from '../types/sound';
 import type { MemoNode } from '../types/memo';
 import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../types/ai';
@@ -49,7 +49,7 @@ export class ElectronDataService implements DataService {
   fetchTimerSettings(): Promise<TimerSettings> {
     return invoke('db:timer:fetchSettings');
   }
-  updateTimerSettings(settings: Partial<Pick<TimerSettings, 'workDuration' | 'breakDuration' | 'longBreakDuration' | 'sessionsBeforeLongBreak'>>): Promise<TimerSettings> {
+  updateTimerSettings(settings: Partial<Pick<TimerSettings, 'workDuration' | 'breakDuration' | 'longBreakDuration' | 'sessionsBeforeLongBreak' | 'autoStartBreaks'>>): Promise<TimerSettings> {
     return invoke('db:timer:updateSettings', settings);
   }
   startTimerSession(sessionType: SessionType, taskId?: string): Promise<TimerSession> {
@@ -65,12 +65,26 @@ export class ElectronDataService implements DataService {
     return invoke('db:timer:fetchSessionsByTaskId', taskId);
   }
 
-  // Sound
-  fetchSoundSettings(sessionCategory?: string): Promise<SoundSettings[]> {
-    return invoke('db:sound:fetchSettings', sessionCategory);
+  // Pomodoro Presets
+  fetchPomodoroPresets(): Promise<PomodoroPreset[]> {
+    return invoke('db:timer:fetchPomodoroPresets');
   }
-  updateSoundSetting(soundType: string, volume: number, enabled: boolean, sessionCategory?: string): Promise<SoundSettings> {
-    return invoke('db:sound:updateSetting', soundType, volume, enabled, sessionCategory);
+  createPomodoroPreset(preset: Omit<PomodoroPreset, 'id' | 'createdAt'>): Promise<PomodoroPreset> {
+    return invoke('db:timer:createPomodoroPreset', preset);
+  }
+  updatePomodoroPreset(id: number, updates: Partial<Omit<PomodoroPreset, 'id' | 'createdAt'>>): Promise<PomodoroPreset> {
+    return invoke('db:timer:updatePomodoroPreset', id, updates);
+  }
+  deletePomodoroPreset(id: number): Promise<void> {
+    return invoke('db:timer:deletePomodoroPreset', id);
+  }
+
+  // Sound
+  fetchSoundSettings(): Promise<SoundSettings[]> {
+    return invoke('db:sound:fetchSettings');
+  }
+  updateSoundSetting(soundType: string, volume: number, enabled: boolean): Promise<SoundSettings> {
+    return invoke('db:sound:updateSetting', soundType, volume, enabled);
   }
   fetchSoundPresets(): Promise<SoundPreset[]> {
     return invoke('db:sound:fetchPresets');
@@ -110,11 +124,11 @@ export class ElectronDataService implements DataService {
   updateSoundDisplayMeta(soundId: string, displayName: string): Promise<void> {
     return invoke('db:sound:updateSoundDisplayMeta', soundId, displayName);
   }
-  fetchWorkscreenSelections(sessionCategory: string): Promise<Array<{ soundId: string; displayOrder: number }>> {
-    return invoke('db:sound:fetchWorkscreenSelections', sessionCategory);
+  fetchWorkscreenSelections(): Promise<Array<{ soundId: string; displayOrder: number }>> {
+    return invoke('db:sound:fetchWorkscreenSelections');
   }
-  setWorkscreenSelections(sessionCategory: string, soundIds: string[]): Promise<void> {
-    return invoke('db:sound:setWorkscreenSelections', sessionCategory, soundIds);
+  setWorkscreenSelections(soundIds: string[]): Promise<void> {
+    return invoke('db:sound:setWorkscreenSelections', soundIds);
   }
 
   // Memo

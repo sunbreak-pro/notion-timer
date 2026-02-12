@@ -73,8 +73,8 @@ describe('ElectronDataService', () => {
   // Sound
   it('fetchSoundSettings calls correct channel', async () => {
     mockInvoke.mockResolvedValue([]);
-    await service.fetchSoundSettings('WORK');
-    expect(mockInvoke).toHaveBeenCalledWith('db:sound:fetchSettings', 'WORK');
+    await service.fetchSoundSettings();
+    expect(mockInvoke).toHaveBeenCalledWith('db:sound:fetchSettings');
   });
 
   // Notes

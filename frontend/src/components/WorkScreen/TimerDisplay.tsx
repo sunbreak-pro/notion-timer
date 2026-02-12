@@ -1,4 +1,4 @@
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { Play, Pause, RotateCcw, Minus, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { SessionType } from "../../types/timer";
 
@@ -12,6 +12,7 @@ interface TimerDisplayProps {
   onStart: () => void;
   onPause: () => void;
   onReset: () => void;
+  onAdjustTime?: (delta: number) => void;
 }
 
 const SESSION_LABEL_KEYS: Record<SessionType, string> = {
@@ -30,9 +31,11 @@ export function TimerDisplay({
   onStart,
   onPause,
   onReset,
+  onAdjustTime,
 }: TimerDisplayProps) {
   const { t } = useTranslation();
   const currentSession = (completedSessions % sessionsBeforeLongBreak) + 1;
+  const showAdjust = !isRunning && onAdjustTime && remainingSeconds > 0;
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -40,9 +43,30 @@ export function TimerDisplay({
         {t(SESSION_LABEL_KEYS[sessionType])}
       </span>
 
-      <span className="text-7xl font-light text-notion-text tabular-nums tracking-tight">
-        {formatTime(remainingSeconds)}
-      </span>
+      <div className="flex items-center gap-3">
+        {showAdjust && (
+          <button
+            onClick={() => onAdjustTime(-5 * 60)}
+            disabled={remainingSeconds <= 5 * 60}
+            className="px-2 py-1 text-xs rounded-md text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover transition-colors disabled:opacity-30"
+          >
+            <span className="flex items-center gap-0.5"><Minus size={12} />5m</span>
+          </button>
+        )}
+
+        <span className="text-7xl font-light text-notion-text tabular-nums tracking-tight">
+          {formatTime(remainingSeconds)}
+        </span>
+
+        {showAdjust && (
+          <button
+            onClick={() => onAdjustTime(5 * 60)}
+            className="px-2 py-1 text-xs rounded-md text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover transition-colors"
+          >
+            <span className="flex items-center gap-0.5"><Plus size={12} />5m</span>
+          </button>
+        )}
+      </div>
 
       <div className="flex items-center gap-4">
         {isRunning ? (

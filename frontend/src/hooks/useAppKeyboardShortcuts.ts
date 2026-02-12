@@ -24,10 +24,13 @@ export function useAppKeyboardShortcuts({
   setIsCommandPaletteOpen,
   handleDeleteSelectedTask,
 }: UseAppKeyboardShortcutsParams) {
-  const isInputFocused = useCallback(() => {
-    const tag = document.activeElement?.tagName;
+  const isInputFocused = useCallback((e: KeyboardEvent) => {
+    const el = e.target as Element | null;
+    if (!el) return false;
+    const tag = el.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
-    if (document.activeElement?.getAttribute('contenteditable') === 'true') return true;
+    if (el.getAttribute('contenteditable') === 'true') return true;
+    if (el.closest?.('[contenteditable="true"]')) return true;
     return false;
   }, []);
 
@@ -73,7 +76,7 @@ export function useAppKeyboardShortcuts({
         return;
       }
 
-      if (isInputFocused()) return;
+      if (isInputFocused(e)) return;
 
       if (e.key === ' ') {
         e.preventDefault();

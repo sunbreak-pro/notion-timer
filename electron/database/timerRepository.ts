@@ -7,6 +7,7 @@ interface TimerSettingsRow {
   break_duration: number;
   long_break_duration: number;
   sessions_before_long_break: number;
+  auto_start_breaks: number;
   updated_at: string;
 }
 
@@ -27,6 +28,7 @@ function settingsRowToObj(row: TimerSettingsRow): TimerSettings {
     breakDuration: row.break_duration,
     longBreakDuration: row.long_break_duration,
     sessionsBeforeLongBreak: row.sessions_before_long_break,
+    autoStartBreaks: !!row.auto_start_breaks,
     updatedAt: row.updated_at,
   };
 }
@@ -52,6 +54,7 @@ export function createTimerRepository(db: Database.Database) {
         break_duration = COALESCE(@breakDuration, break_duration),
         long_break_duration = COALESCE(@longBreakDuration, long_break_duration),
         sessions_before_long_break = COALESCE(@sessionsBeforeLongBreak, sessions_before_long_break),
+        auto_start_breaks = COALESCE(@autoStartBreaks, auto_start_breaks),
         updated_at = datetime('now')
       WHERE id = 1
     `),
@@ -73,12 +76,13 @@ export function createTimerRepository(db: Database.Database) {
       return settingsRowToObj(stmts.fetchSettings.get() as TimerSettingsRow);
     },
 
-    updateSettings(settings: Partial<Pick<TimerSettings, 'workDuration' | 'breakDuration' | 'longBreakDuration' | 'sessionsBeforeLongBreak'>>): TimerSettings {
+    updateSettings(settings: Partial<Pick<TimerSettings, 'workDuration' | 'breakDuration' | 'longBreakDuration' | 'sessionsBeforeLongBreak' | 'autoStartBreaks'>>): TimerSettings {
       stmts.updateSettings.run({
         workDuration: settings.workDuration ?? null,
         breakDuration: settings.breakDuration ?? null,
         longBreakDuration: settings.longBreakDuration ?? null,
         sessionsBeforeLongBreak: settings.sessionsBeforeLongBreak ?? null,
+        autoStartBreaks: settings.autoStartBreaks != null ? (settings.autoStartBreaks ? 1 : 0) : null,
       });
       return settingsRowToObj(stmts.fetchSettings.get() as TimerSettingsRow);
     },

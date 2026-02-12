@@ -17,10 +17,11 @@ export interface TaskNode {
   createdAt: string;
   completedAt?: string;
   scheduledAt?: string;
+  scheduledEndAt?: string;
+  isAllDay?: boolean;
   content?: string;
   workDurationMinutes?: number;
   color?: string;
-  dueDate?: string;
 }
 
 export type SessionType = 'WORK' | 'BREAK' | 'LONG_BREAK';
@@ -31,6 +32,7 @@ export interface TimerSettings {
   breakDuration: number;
   longBreakDuration: number;
   sessionsBeforeLongBreak: number;
+  autoStartBreaks: boolean;
   updatedAt: string;
 }
 
@@ -49,7 +51,6 @@ export interface SoundSettings {
   soundType: string;
   volume: number;
   enabled: boolean;
-  sessionCategory: 'WORK' | 'REST';
   updatedAt: string;
 }
 
@@ -132,6 +133,16 @@ export interface CalendarNode {
   order: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PomodoroPreset {
+  id: number;
+  name: string;
+  workDuration: number;
+  breakDuration: number;
+  longBreakDuration: number;
+  sessionsBeforeLongBreak: number;
+  createdAt: string;
 }
 
 export interface MigrationPayload {

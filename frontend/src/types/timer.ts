@@ -6,6 +6,7 @@ export interface TimerSettings {
   breakDuration: number;
   longBreakDuration: number;
   sessionsBeforeLongBreak: number;
+  autoStartBreaks: boolean;
   updatedAt: Date;
 }
 
@@ -17,6 +18,16 @@ export interface TimerSession {
   completedAt: Date | null;
   duration: number | null;
   completed: boolean;
+}
+
+export interface PomodoroPreset {
+  id: number;
+  name: string;
+  workDuration: number;
+  breakDuration: number;
+  longBreakDuration: number;
+  sessionsBeforeLongBreak: number;
+  createdAt: string;
 }
 
 export interface TimerState {

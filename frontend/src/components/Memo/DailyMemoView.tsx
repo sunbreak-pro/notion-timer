@@ -1,5 +1,7 @@
 import { lazy, Suspense, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useMemoContext } from "../../hooks/useMemoContext";
+import { formatDateTime } from "../../utils/formatRelativeDate";
 import { MemoDateList } from "./MemoDateList";
 
 const MemoEditor = lazy(() =>
@@ -33,6 +35,7 @@ export function DailyMemoView() {
     upsertMemo,
     deleteMemo,
   } = useMemoContext();
+  const { t } = useTranslation();
   const todayKey = getTodayKey();
 
   const handleUpdate = useCallback(
@@ -72,13 +75,19 @@ export function DailyMemoView() {
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-8 py-6">
-          <h2 className="text-lg font-semibold text-notion-text mb-4">
+          <h2 className="text-lg font-semibold text-notion-text mb-1">
             {formatDateHeading(selectedDate)}
           </h2>
+          {selectedMemo?.updatedAt && (
+            <p className="text-[11px] text-notion-text-secondary/60 mb-4">
+              {t('dateTime.updated')}: {formatDateTime(selectedMemo.updatedAt)}
+            </p>
+          )}
+          {!selectedMemo?.updatedAt && <div className="mb-4" />}
           <Suspense
             fallback={
               <div className="text-notion-text-secondary text-sm">
-                Loading editor...
+                {t('dateTime.loadingEditor')}
               </div>
             }
           >

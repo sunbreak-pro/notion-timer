@@ -4,38 +4,28 @@ import { logServiceError } from '../utils/logError';
 
 const MAX_PER_PHASE = 6;
 
-export interface WorkscreenSelections {
-  work: string[];
-  rest: string[];
-}
-
 export function useWorkscreenSelections() {
-  const [selections, setSelections] = useState<WorkscreenSelections>({ work: [], rest: [] });
+  const [selections, setSelections] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
   const savingRef = useRef(false);
 
   useEffect(() => {
-    const ds = getDataService();
-    Promise.all([
-      ds.fetchWorkscreenSelections('WORK'),
-      ds.fetchWorkscreenSelections('REST'),
-    ]).then(([workRows, restRows]) => {
-      setSelections({
-        work: workRows.map(r => r.soundId),
-        rest: restRows.map(r => r.soundId),
+    getDataService().fetchWorkscreenSelections()
+      .then((rows) => {
+        setSelections(rows.map(r => r.soundId));
+        setLoaded(true);
+      })
+      .catch(err => {
+        logServiceError('WorkscreenSelections', 'load', err);
+        setLoaded(true);
       });
-      setLoaded(true);
-    }).catch(err => {
-      logServiceError('WorkscreenSelections', 'load', err);
-      setLoaded(true);
-    });
   }, []);
 
-  const persist = useCallback(async (category: 'WORK' | 'REST', ids: string[]) => {
+  const persist = useCallback(async (ids: string[]) => {
     if (savingRef.current) return;
     savingRef.current = true;
     try {
-      await getDataService().setWorkscreenSelections(category, ids);
+      await getDataService().setWorkscreenSelections(ids);
     } catch (err) {
       logServiceError('WorkscreenSelections', 'save', err);
     } finally {
@@ -43,25 +33,22 @@ export function useWorkscreenSelections() {
     }
   }, []);
 
-  const toggleSelection = useCallback((soundId: string, category: 'WORK' | 'REST') => {
+  const toggleSelection = useCallback((soundId: string) => {
     setSelections(prev => {
-      const key = category === 'WORK' ? 'work' : 'rest';
-      const list = prev[key];
       let next: string[];
-      if (list.includes(soundId)) {
-        next = list.filter(id => id !== soundId);
+      if (prev.includes(soundId)) {
+        next = prev.filter(id => id !== soundId);
       } else {
-        if (list.length >= MAX_PER_PHASE) return prev;
-        next = [...list, soundId];
+        if (prev.length >= MAX_PER_PHASE) return prev;
+        next = [...prev, soundId];
       }
-      persist(category, next);
-      return { ...prev, [key]: next };
+      persist(next);
+      return next;
     });
   }, [persist]);
 
-  const isSelected = useCallback((soundId: string, category: 'WORK' | 'REST'): boolean => {
-    const key = category === 'WORK' ? 'work' : 'rest';
-    return selections[key].includes(soundId);
+  const isSelected = useCallback((soundId: string): boolean => {
+    return selections.includes(soundId);
   }, [selections]);
 
   return { selections, loaded, toggleSelection, isSelected };

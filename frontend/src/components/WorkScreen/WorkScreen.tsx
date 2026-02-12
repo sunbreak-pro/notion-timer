@@ -1,13 +1,17 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, SkipForward } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useTimerContext } from "../../hooks/useTimerContext";
 import { useAudioContext } from "../../hooks/useAudioContext";
+import { useSoundTags } from "../../hooks/useSoundTags";
+import { getDataService } from "../../services";
 import { TimerDisplay } from "./TimerDisplay";
 import { TimerProgressBar } from "./TimerProgressBar";
 import { PomodoroSettings } from "./PomodoroSettings";
 import { SoundMixer } from "./SoundMixer";
 import { TaskSelector } from "./TaskSelector";
+import { TodaySessionSummary } from "./TodaySessionSummary";
+import { SoundPickerModal } from "../Music/SoundPickerModal";
 
 interface WorkScreenProps {
   onCompleteTask?: () => void;
@@ -19,23 +23,41 @@ export function WorkScreen({
   const { t } = useTranslation();
   const timer = useTimerContext();
   const audio = useAudioContext();
-  const {
-    workMixer,
-    restMixer,
-    toggleWorkSound,
-    toggleRestSound,
-    setWorkVolume,
-    setRestVolume,
-    customSounds,
-    workscreenSelections,
-  } = audio;
+  const soundTagState = useSoundTags();
+  const { getDisplayName } = soundTagState;
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const title = timer.activeTask?.title ?? t('work.freeSession');
+
+  const [todaySummary, setTodaySummary] = useState({ sessions: 0, totalMinutes: 0 });
+  useEffect(() => {
+    getDataService().fetchTimerSessions().then((sessions) => {
+      const todayStr = new Date().toISOString().substring(0, 10);
+      const todaySessions = sessions.filter(
+        (s) => s.sessionType === 'WORK' && s.completed && s.startedAt && String(s.startedAt).substring(0, 10) === todayStr
+      );
+      const totalMinutes = todaySessions.reduce((acc, s) => acc + (s.duration ?? 0), 0);
+      setTodaySummary({ sessions: todaySessions.length, totalMinutes: Math.round(totalMinutes / 60) });
+    }).catch(() => {});
+  }, [timer.completedSessions]);
 
   const handleCompleteSession = useCallback(() => {
     if (timer.isRunning) timer.pause();
     timer.startRest();
   }, [timer]);
+
+  const handleAddCustomSound = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'audio/mp3,audio/wav,audio/ogg,audio/mpeg,.mp3,.wav,.ogg';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (file) {
+        await audio.addSound(file);
+      }
+    };
+    input.click();
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -71,6 +93,8 @@ export function WorkScreen({
             onChangeLongBreakDuration={timer.setLongBreakDurationMinutes}
             onChangeSessionsBeforeLongBreak={timer.setSessionsBeforeLongBreak}
             disabled={timer.isRunning}
+            autoStartBreaks={timer.autoStartBreaks}
+            onChangeAutoStartBreaks={timer.setAutoStartBreaks}
           />
         </div>
       </div>
@@ -87,31 +111,46 @@ export function WorkScreen({
           onStart={timer.start}
           onPause={timer.pause}
           onReset={timer.reset}
+          onAdjustTime={timer.adjustRemainingSeconds}
         />
 
         <div className="w-full max-w-xl">
           <TimerProgressBar progress={timer.progress} />
         </div>
+
+        <TodaySessionSummary sessions={todaySummary.sessions} totalMinutes={todaySummary.totalMinutes} />
       </div>
 
       {/* Sound mixer footer */}
       <div className="px-6 pb-6">
         <div className="max-w-xl mx-auto">
           <SoundMixer
-            workMixer={workMixer}
-            restMixer={restMixer}
-            onToggleWorkSound={toggleWorkSound}
-            onToggleRestSound={toggleRestSound}
-            onSetWorkVolume={setWorkVolume}
-            onSetRestVolume={setRestVolume}
-            customSounds={customSounds}
-            activeSessionType={timer.sessionType}
+            mixer={audio.mixer}
+            onToggleSound={audio.toggleSound}
+            onSetVolume={audio.setVolume}
+            customSounds={audio.customSounds}
             channelPositions={audio.channelPositions}
             onSeekSound={audio.seekSound}
-            workscreenSelections={workscreenSelections}
+            workscreenSelections={audio.workscreenSelections}
+            getDisplayName={getDisplayName}
+            onOpenPicker={() => setPickerOpen(true)}
           />
         </div>
       </div>
+
+      {/* Sound Picker Modal */}
+      <SoundPickerModal
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelectSound={(soundId) => {
+          audio.toggleWorkscreenSelection(soundId);
+          setPickerOpen(false);
+        }}
+        excludeSoundIds={audio.workscreenSelections}
+        customSounds={audio.customSounds}
+        onAddCustomSound={handleAddCustomSound}
+        soundTagState={soundTagState}
+      />
     </div>
   );
 }

@@ -1,31 +1,36 @@
-import { isMac } from '../../utils/platform';
+import { useTranslation, Trans } from 'react-i18next';
 
-const mod = isMac ? '⌘' : 'Ctrl';
+interface AnalyticsTabProps {
+  showMac: boolean;
+}
 
-export function AnalyticsTab() {
+export function AnalyticsTab({ showMac }: AnalyticsTabProps) {
+  const { t } = useTranslation();
+  const mod = showMac ? '⌘' : 'Ctrl';
+
   return (
     <div className="space-y-6 text-sm text-notion-text-secondary">
-      <Section title="Overview Metrics">
+      <Section title={t('tips.analyticsTab.overview')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>The Analytics dashboard shows key statistics about your tasks.</li>
-          <li>Metrics include: <Strong>total tasks</Strong>, <Strong>completed</Strong>, <Strong>in progress</Strong>, and <Strong>folder count</Strong>.</li>
-          <li>Data updates in real time as you create, complete, or delete tasks.</li>
+          <li>{t('tips.analyticsTab.overviewList1')}</li>
+          <li><Trans i18nKey="tips.analyticsTab.overviewList2" components={{ strong: <Strong /> }} /></li>
+          <li>{t('tips.analyticsTab.overviewList3')}</li>
         </ul>
       </Section>
 
-      <Section title="Completion Rates">
+      <Section title={t('tips.analyticsTab.completion')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>View your <Strong>overall completion rate</Strong> as a percentage with a progress bar.</li>
-          <li>A separate <Strong>today&apos;s completion rate</Strong> tracks daily progress.</li>
-          <li>Use these metrics to monitor your productivity trends.</li>
+          <li><Trans i18nKey="tips.analyticsTab.completionList1" components={{ strong: <Strong /> }} /></li>
+          <li><Trans i18nKey="tips.analyticsTab.completionList2" components={{ strong: <Strong /> }} /></li>
+          <li>{t('tips.analyticsTab.completionList3')}</li>
         </ul>
       </Section>
 
-      <Section title="Accessing Analytics">
+      <Section title={t('tips.analyticsTab.accessing')}>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li>Press <Kbd>{`${mod} + 4`}</Kbd> to jump to Analytics from any screen.</li>
-          <li>Or click <Strong>Analytics</Strong> in the left sidebar.</li>
-          <li>Also available via the command palette (<Kbd>{`${mod} + K`}</Kbd> &rarr; &quot;Analytics&quot;).</li>
+          <li><Trans i18nKey="tips.analyticsTab.accessingList1" values={{ mod }} components={{ kbd: <Kbd /> }} /></li>
+          <li><Trans i18nKey="tips.analyticsTab.accessingList2" components={{ strong: <Strong /> }} /></li>
+          <li><Trans i18nKey="tips.analyticsTab.accessingList3" values={{ mod }} components={{ kbd: <Kbd /> }} /></li>
         </ul>
       </Section>
     </div>
@@ -41,11 +46,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Strong({ children }: { children: React.ReactNode }) {
+function Strong({ children }: { children?: React.ReactNode }) {
   return <span className="font-medium text-notion-text">{children}</span>;
 }
 
-function Kbd({ children }: { children: string }) {
+function Kbd({ children }: { children?: React.ReactNode }) {
   return (
     <kbd className="inline-block px-1.5 py-0.5 text-xs font-mono bg-notion-hover border border-notion-border rounded text-notion-text">
       {children}
