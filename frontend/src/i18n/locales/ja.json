@@ -200,7 +200,9 @@
     "searchSounds": "サウンドを検索...",
     "noSoundsAvailable": "利用可能なサウンドはありません",
     "addCustomSound": "カスタムサウンドを追加",
-    "custom": "カスタム"
+    "custom": "カスタム",
+    "allSounds": "すべてのサウンド",
+    "noSoundsAll": "検索に一致するサウンドがありません。"
   },
   "notes": {
     "title": "ノート",
@@ -244,7 +246,9 @@
     "takeBreak": "休憩する",
     "completeTask": "タスクを完了する",
     "extend": "延長する",
-    "minutes": "{{min}}分"
+    "minutes": "{{min}}分",
+    "restComplete": "REST完了！",
+    "getStarted": "作業を開始する"
   },
   "calendarHeader": {
     "today": "今日",

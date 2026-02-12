@@ -151,10 +151,12 @@ function App() {
         {renderContent()}
       </Layout>
 
-      {timer.showCompletionModal && (
+      {timer.showCompletionModal && timer.completedSessionType && (
         <SessionCompletionModal
+          completedSessionType={timer.completedSessionType}
           onExtend={timer.extendWork}
           onStartRest={timer.startRest}
+          onStartWork={() => { timer.dismissCompletionModal(); timer.start(); }}
           onDismiss={timer.dismissCompletionModal}
           onCompleteTask={timer.activeTask ? handlers.handleCompleteTask : undefined}
         />

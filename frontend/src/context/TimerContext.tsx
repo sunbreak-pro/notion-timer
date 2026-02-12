@@ -71,6 +71,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       playEffectSound('/sounds/session_complete_sound.mp3');
     } else {
       sendNotification('休憩終了！作業を再開しましょう');
+      playEffectSound('/sounds/session_complete_sound.mp3');
     }
   }, [clearTimer, endCurrentSession, state.sessionType, state.config]);
 
@@ -213,6 +214,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     longBreakDurationMinutes,
     activeTask: state.activeTask,
     showCompletionModal: state.showCompletionModal,
+    completedSessionType: state.completedSessionType,
     start,
     pause,
     reset,
@@ -232,7 +234,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     state.sessionType, state.remainingSeconds, state.isRunning, state.completedSessions,
     progress, totalDuration, state.config.sessionsBeforeLongBreak,
     workDurationMinutes, breakDurationMinutes, longBreakDurationMinutes,
-    state.activeTask, state.showCompletionModal,
+    state.activeTask, state.showCompletionModal, state.completedSessionType,
     start, pause, reset, formatTime, startForTask, openForTask, clearTask,
     updateActiveTaskTitle, setWorkDurationMinutes, setBreakDurationMinutes,
     setLongBreakDurationMinutes, setSessionsBeforeLongBreak, extendWork, startRest,

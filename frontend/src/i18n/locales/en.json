@@ -200,7 +200,9 @@
     "searchSounds": "Search sounds...",
     "noSoundsAvailable": "No sounds available",
     "addCustomSound": "Add Custom Sound",
-    "custom": "Custom"
+    "custom": "Custom",
+    "allSounds": "All Sounds",
+    "noSoundsAll": "No sounds match your search."
   },
   "notes": {
     "title": "Notes",
@@ -244,7 +246,9 @@
     "takeBreak": "Take a break",
     "completeTask": "Complete task",
     "extend": "Extend",
-    "minutes": "{{min}}m"
+    "minutes": "{{min}}m",
+    "restComplete": "REST Complete!",
+    "getStarted": "Get started now"
   },
   "calendarHeader": {
     "today": "Today",

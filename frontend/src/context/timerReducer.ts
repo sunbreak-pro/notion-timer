@@ -15,6 +15,7 @@ export interface TimerState {
   completedSessions: number;
   activeTask: ActiveTask | null;
   showCompletionModal: boolean;
+  completedSessionType: 'WORK' | 'REST' | null;
   config: TimerConfig;
 }
 
@@ -58,6 +59,7 @@ export function createInitialState(config?: Partial<TimerConfig>): TimerState {
     completedSessions: 0,
     activeTask: null,
     showCompletionModal: false,
+    completedSessionType: null,
     config: cfg,
   };
 }
@@ -92,9 +94,10 @@ export function timerReducer(state: TimerState, action: TimerAction): TimerState
           ...state,
           isRunning: false,
           showCompletionModal: true,
+          completedSessionType: 'WORK',
         };
       }
-      // Rest completed → auto-transition to WORK
+      // Rest completed → show completion modal
       const newCompleted = state.completedSessions + 1;
       return {
         ...state,
@@ -102,6 +105,8 @@ export function timerReducer(state: TimerState, action: TimerAction): TimerState
         sessionType: 'WORK',
         remainingSeconds: state.config.workDuration,
         completedSessions: newCompleted,
+        showCompletionModal: true,
+        completedSessionType: 'REST',
       };
     }
 
@@ -112,6 +117,7 @@ export function timerReducer(state: TimerState, action: TimerAction): TimerState
       return {
         ...state,
         showCompletionModal: false,
+        completedSessionType: null,
         isRunning: true,
         completedSessions: newCompleted,
         sessionType: nextType,
@@ -128,7 +134,7 @@ export function timerReducer(state: TimerState, action: TimerAction): TimerState
       };
 
     case 'DISMISS_COMPLETION_MODAL':
-      return { ...state, showCompletionModal: false };
+      return { ...state, showCompletionModal: false, completedSessionType: null };
 
     case 'SET_ACTIVE_TASK':
       return { ...state, activeTask: action.task };

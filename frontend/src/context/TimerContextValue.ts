@@ -19,6 +19,7 @@ export interface TimerContextValue {
   longBreakDurationMinutes: number;
   activeTask: ActiveTask | null;
   showCompletionModal: boolean;
+  completedSessionType: 'WORK' | 'REST' | null;
   start: () => void;
   pause: () => void;
   reset: () => void;
