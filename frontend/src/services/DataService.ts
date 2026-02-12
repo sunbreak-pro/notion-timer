@@ -5,7 +5,7 @@ import type { MemoNode } from '../types/memo';
 import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../types/ai';
 import type { CustomSoundMeta } from '../types/customSound';
 import type { NoteNode } from '../types/note';
-import type { Tag } from '../types/tag';
+
 import type { TaskTemplate } from '../types/template';
 import type { LogEntry, IpcChannelMetrics, SystemInfo } from '../types/diagnostics';
 
@@ -75,23 +75,6 @@ export interface DataService {
   fetchAIAdvice(request: AIAdviceRequest): Promise<AIAdviceResponse>;
   fetchAISettings(): Promise<AISettingsResponse>;
   updateAISettings(settings: { apiKey?: string; model?: string }): Promise<AISettingsResponse>;
-
-  // Task Tags
-  fetchAllTaskTags(): Promise<Tag[]>;
-  createTaskTag(name: string, color: string): Promise<Tag>;
-  updateTaskTag(id: number, updates: { name?: string; color?: string }): Promise<Tag>;
-  deleteTaskTag(id: number): Promise<void>;
-  fetchTagsForTask(taskId: string): Promise<Tag[]>;
-  setTagsForTask(taskId: string, tagIds: number[]): Promise<void>;
-
-  // Note Tags
-  fetchAllNoteTags(): Promise<Tag[]>;
-  createNoteTag(name: string, color: string): Promise<Tag>;
-  updateNoteTag(id: number, updates: { name?: string; color?: string }): Promise<Tag>;
-  deleteNoteTag(id: number): Promise<void>;
-  fetchTagsForNote(noteId: string): Promise<Tag[]>;
-  setTagsForNote(noteId: string, tagIds: number[]): Promise<void>;
-  fetchAllNoteTagAssignments(): Promise<Array<{ note_id: string; tag_id: number }>>;
 
 
   // Templates

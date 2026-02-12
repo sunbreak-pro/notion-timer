@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { NoteNode, NoteSortMode } from '../types/note';
-import type { Tag } from '../types/tag';
 import { getDataService } from '../services';
+import { logServiceError } from '../utils/logError';
 
 export function useNotes() {
   const [notes, setNotes] = useState<NoteNode[]>([]);
@@ -9,37 +9,15 @@ export function useNotes() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortMode, setSortMode] = useState<NoteSortMode>('updatedAt');
-  const [filterTagIds, setFilterTagIds] = useState<number[]>([]);
-  const [noteTagsMap, setNoteTagsMap] = useState<Map<string, Tag[]>>(new Map());
 
-  // Load notes and note tag assignments on mount
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [loaded, allNoteTagAssignments, allNoteTags] = await Promise.all([
-          getDataService().fetchAllNotes(),
-          getDataService().fetchAllNoteTagAssignments(),
-          getDataService().fetchAllNoteTags(),
-        ]);
-        if (cancelled) return;
-        setNotes(loaded);
-
-        // Build note tags map
-        const tagMap = new Map<number, Tag>();
-        for (const t of allNoteTags) tagMap.set(t.id, t);
-        const ntMap = new Map<string, Tag[]>();
-        for (const { note_id, tag_id } of allNoteTagAssignments) {
-          const tag = tagMap.get(tag_id);
-          if (tag) {
-            const existing = ntMap.get(note_id) || [];
-            existing.push(tag);
-            ntMap.set(note_id, existing);
-          }
-        }
-        setNoteTagsMap(ntMap);
+        const loaded = await getDataService().fetchAllNotes();
+        if (!cancelled) setNotes(loaded);
       } catch (e) {
-        console.warn('[Notes] fetch:', e instanceof Error ? e.message : e);
+        logServiceError('Notes', 'fetch', e);
       }
     })();
     return () => { cancelled = true; };
@@ -56,14 +34,6 @@ export function useNotes() {
       );
     }
 
-    // Tag filter
-    if (filterTagIds.length > 0) {
-      result = result.filter(n => {
-        const tags = noteTagsMap.get(n.id) || [];
-        return filterTagIds.some(tid => tags.some(t => t.id === tid));
-      });
-    }
-
     // Sort: pinned first, then by sort mode
     return [...result].sort((a, b) => {
       if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
@@ -78,7 +48,7 @@ export function useNotes() {
           return 0;
       }
     });
-  }, [notes, searchQuery, sortMode, filterTagIds, noteTagsMap]);
+  }, [notes, searchQuery, sortMode]);
 
   const createNote = useCallback((title?: string) => {
     const id = `note-${crypto.randomUUID()}`;
@@ -94,20 +64,20 @@ export function useNotes() {
     };
     setNotes(prev => [newNote, ...prev]);
     setSelectedNoteId(id);
-    getDataService().createNote(id, newNote.title).catch(e => console.warn('[Notes] create:', e.message));
+    getDataService().createNote(id, newNote.title).catch(e => logServiceError('Notes', 'create', e));
     return id;
   }, []);
 
   const updateNote = useCallback((id: string, updates: Partial<Pick<NoteNode, 'title' | 'content' | 'isPinned'>>) => {
     const now = new Date().toISOString();
     setNotes(prev => prev.map(n => n.id === id ? { ...n, ...updates, updatedAt: now } : n));
-    getDataService().updateNote(id, updates).catch(e => console.warn('[Notes] update:', e.message));
+    getDataService().updateNote(id, updates).catch(e => logServiceError('Notes', 'update', e));
   }, []);
 
   const softDeleteNote = useCallback((id: string) => {
     setNotes(prev => prev.filter(n => n.id !== id));
     if (selectedNoteId === id) setSelectedNoteId(null);
-    getDataService().softDeleteNote(id).catch(e => console.warn('[Notes] delete:', e.message));
+    getDataService().softDeleteNote(id).catch(e => logServiceError('Notes', 'delete', e));
   }, [selectedNoteId]);
 
   const togglePin = useCallback((id: string) => {
@@ -115,7 +85,7 @@ export function useNotes() {
       const note = prev.find(n => n.id === id);
       if (!note) return prev;
       const newPinned = !note.isPinned;
-      getDataService().updateNote(id, { isPinned: newPinned }).catch(e => console.warn('[Notes] pin:', e.message));
+      getDataService().updateNote(id, { isPinned: newPinned }).catch(e => logServiceError('Notes', 'pin', e));
       return prev.map(n => n.id === id ? { ...n, isPinned: newPinned, updatedAt: new Date().toISOString() } : n);
     });
   }, []);
@@ -125,7 +95,7 @@ export function useNotes() {
       const deleted = await getDataService().fetchDeletedNotes();
       setDeletedNotes(deleted);
     } catch (e) {
-      console.warn('[Notes] fetchDeleted:', e instanceof Error ? e.message : e);
+      logServiceError('Notes', 'fetchDeleted', e);
     }
   }, []);
 
@@ -135,33 +105,19 @@ export function useNotes() {
       setDeletedNotes(prev => prev.filter(n => n.id !== id));
       setNotes(prev => [{ ...note, isDeleted: false, deletedAt: undefined }, ...prev]);
     }
-    getDataService().restoreNote(id).catch(e => console.warn('[Notes] restore:', e.message));
+    getDataService().restoreNote(id).catch(e => logServiceError('Notes', 'restore', e));
   }, [deletedNotes]);
 
   const permanentDeleteNote = useCallback((id: string) => {
     setDeletedNotes(prev => prev.filter(n => n.id !== id));
-    getDataService().permanentDeleteNote(id).catch(e => console.warn('[Notes] permanentDelete:', e.message));
-  }, []);
-
-  const getTagsForNote = useCallback((noteId: string): Tag[] => {
-    return noteTagsMap.get(noteId) || [];
-  }, [noteTagsMap]);
-
-  const setTagsForNote = useCallback((noteId: string, tagIds: number[], allTags: Tag[]) => {
-    const tags = tagIds.map(id => allTags.find(t => t.id === id)).filter((t): t is Tag => !!t);
-    setNoteTagsMap(prev => {
-      const next = new Map(prev);
-      next.set(noteId, tags);
-      return next;
-    });
-    getDataService().setTagsForNote(noteId, tagIds).catch(e => console.warn('[Notes] setTags:', e.message));
+    getDataService().permanentDeleteNote(id).catch(e => logServiceError('Notes', 'permanentDelete', e));
   }, []);
 
   const selectedNote = useMemo(() => {
     return notes.find(n => n.id === selectedNoteId) ?? null;
   }, [notes, selectedNoteId]);
 
-  return {
+  return useMemo(() => ({
     notes,
     deletedNotes,
     selectedNoteId,
@@ -171,8 +127,6 @@ export function useNotes() {
     setSearchQuery,
     sortMode,
     setSortMode,
-    filterTagIds,
-    setFilterTagIds,
     sortedFilteredNotes,
     createNote,
     updateNote,
@@ -181,7 +135,10 @@ export function useNotes() {
     loadDeletedNotes,
     restoreNote,
     permanentDeleteNote,
-    getTagsForNote,
-    setTagsForNote,
-  };
+  }), [
+    notes, deletedNotes, selectedNoteId, selectedNote,
+    searchQuery, sortMode, sortedFilteredNotes,
+    createNote, updateNote, softDeleteNote, togglePin,
+    loadDeletedNotes, restoreNote, permanentDeleteNote,
+  ]);
 }

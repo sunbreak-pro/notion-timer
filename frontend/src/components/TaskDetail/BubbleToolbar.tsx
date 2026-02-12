@@ -12,6 +12,7 @@ import {
   Check,
 } from 'lucide-react';
 import { isMac } from '../../utils/platform';
+import { isValidUrl } from '../../utils/urlValidation';
 
 const TEXT_COLORS = [
   { label: 'Default', value: null },
@@ -33,6 +34,7 @@ interface BubbleToolbarProps {
 export function BubbleToolbar({ editor }: BubbleToolbarProps) {
   const [linkMode, setLinkMode] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const [linkError, setLinkError] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
 
   const shouldShow = useCallback(
@@ -53,11 +55,19 @@ export function BubbleToolbar({ editor }: BubbleToolbarProps) {
   };
 
   const handleLinkApply = () => {
-    if (linkUrl.trim()) {
-      editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.trim() }).run();
+    const validated = isValidUrl(linkUrl);
+    if (validated) {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: validated }).run();
+      setLinkMode(false);
+      setLinkUrl('');
+      setLinkError('');
+    } else if (linkUrl.trim()) {
+      setLinkError('有効なURLを入力してください（http/https）');
+    } else {
+      setLinkMode(false);
+      setLinkUrl('');
+      setLinkError('');
     }
-    setLinkMode(false);
-    setLinkUrl('');
   };
 
   const handleLinkRemove = () => {
@@ -69,6 +79,7 @@ export function BubbleToolbar({ editor }: BubbleToolbarProps) {
   const handleLinkCancel = () => {
     setLinkMode(false);
     setLinkUrl('');
+    setLinkError('');
   };
 
   const handleLinkKeyDown = (e: React.KeyboardEvent) => {
@@ -95,6 +106,7 @@ export function BubbleToolbar({ editor }: BubbleToolbarProps) {
   const handleHide = () => {
     setLinkMode(false);
     setLinkUrl('');
+    setLinkError('');
     setShowColorPicker(false);
   };
 
@@ -107,12 +119,13 @@ export function BubbleToolbar({ editor }: BubbleToolbarProps) {
       >
         <div className="bubble-toolbar" onMouseLeave={handleHide}>
           <input
-            className="bubble-toolbar-link-input"
+            className={`bubble-toolbar-link-input${linkError ? ' border-red-500' : ''}`}
             type="url"
             placeholder="Paste URL..."
             value={linkUrl}
-            onChange={(e) => setLinkUrl(e.target.value)}
+            onChange={(e) => { setLinkUrl(e.target.value); setLinkError(''); }}
             onKeyDown={handleLinkKeyDown}
+            title={linkError || undefined}
             autoFocus
           />
           <button

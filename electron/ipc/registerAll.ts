@@ -6,7 +6,7 @@ import { createTimerRepository } from '../database/timerRepository';
 import { createSoundRepository } from '../database/soundRepository';
 import { createMemoRepository } from '../database/memoRepository';
 import { createAIRepository } from '../database/aiRepository';
-import { createTagRepository } from '../database/tagRepository';
+
 import { createTemplateRepository } from '../database/templateRepository';
 import { registerTaskHandlers } from './taskHandlers';
 import { registerTimerHandlers } from './timerHandlers';
@@ -18,7 +18,7 @@ import { createNoteRepository } from '../database/noteRepository';
 import { createCustomSoundRepository } from '../database/customSoundRepository';
 import { registerCustomSoundHandlers } from './customSoundHandlers';
 import { registerNoteHandlers } from './noteHandlers';
-import { registerTagHandlers } from './tagHandlers';
+
 import { registerTemplateHandlers } from './templateHandlers';
 import { registerDataIOHandlers } from './dataIOHandlers';
 import { registerDiagnosticsHandlers } from './diagnosticsHandlers';
@@ -50,7 +50,7 @@ export function registerAllHandlers(db: Database.Database): void {
     return soundRepo;
   }
 
-  // sound (V7) and taskTags/noteTags (V6) repos are created inside closures
+  // sound (V7) repo is created inside closure
   // so that db.prepare() failures are caught per-module, not globally
   const registrations: [string, () => void][] = [
     ['Tasks', () => registerTaskHandlers(tasks)],
@@ -60,11 +60,7 @@ export function registerAllHandlers(db: Database.Database): void {
     ['Notes', () => registerNoteHandlers(notes)],
     ['AI', () => registerAIHandlers(ai)],
     ['CustomSound', () => registerCustomSoundHandlers(createCustomSoundRepository())],
-    ['Tags', () => {
-      const taskTags = createTagRepository(db, 'task');
-      const noteTags = createTagRepository(db, 'note');
-      registerTagHandlers(taskTags, noteTags);
-    }],
+
     ['Templates', () => registerTemplateHandlers(templates)],
     ['App', () => registerAppHandlers({ tasks, timer, sound: getSoundRepo(), memo })],
     ['DataIO', () => registerDataIOHandlers(db)],

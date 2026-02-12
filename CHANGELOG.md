@@ -4,6 +4,77 @@
 
 ---
 
+## Music画面リデザイン + WorkScreen同期バグ修正 (2026-02-12)
+
+- **バグ修正**: MusicScreenとAudioProviderが別々のuseWorkscreenSelectionsインスタンスを持ち、MusicScreenでのWork/Rest選択がWorkScreenに反映されない問題を解消
+- **状態一元化**: AudioProviderのuseWorkscreenSelectionsを唯一のソースとし、toggleWorkscreenSelection/isWorkscreenSelectedをAudioContextValue/AudioControlContextValue/AudioStateContextValue経由で公開
+- **MusicScreen全面改修**: フラットなサウンドリスト → Work/Restタブ切替 + 6スロットUIにリデザイン
+- **新規コンポーネント**: EmptySlot.tsx（dashed border空スロット）、MusicSlotItem.tsx（ボリューム/トグル/シーク/削除コントロール付きスロット）、SoundPickerModal.tsx（検索・タグフィルタ・カスタムサウンド追加対応のサウンド選択モーダル）
+- **タブ切替ロジック**: activeTabに応じてworkMixer/restMixer、toggleWorkSound/toggleRestSound、setWorkVolume/setRestVolumeを自動切替
+- **MusicSoundItem props変更**: wsSelections prop → toggleWorkscreenSelection/isWorkscreenSelected個別props
+
+---
+
+## Task/Noteタグ削除 + Musicタグ管理UI追加 (2026-02-12)
+
+- **DBマイグレーションV9**: task_tags, task_tag_definitions, note_tags, note_tag_definitions テーブル削除
+- **Backend削除**: tagRepository.ts, tagHandlers.ts 削除、registerAll.ts/preload.ts/types.ts/dataIOHandlers.ts からtask/noteタグ関連コード除去
+- **Frontend削除**: TagContext, useTagContext, useTags, TagEditor, TagBadge, TagFilter, TagManager, NoteTagBar 削除。TaskTree/TaskTreeNode/TaskDetailHeader/CalendarTaskItem/NoteList/NotesView/Settings/DataService/ElectronDataService からタグ参照除去
+- **Sound Tag管理UI追加**: SoundTagManager.tsx新規作成（インライン名前編集・色変更・削除確認・新規作成）、MusicScreenにSettings2トグルボタン追加
+
+---
+
+## 6件UIUX改善・バグ修正 (2026-02-12)
+
+- **Notes永続化修正**: MemoEditorのデバウンス未フラッシュバグ修正（latestContentRef追加、unmount/beforeunloadでフラッシュ）
+- **W/Rラベル改善**: W→Work、R→Restに変更（MusicSoundItem、MusicScreenヘッダー）
+- **サウンド表示名セーブボタン**: 編集時にチェックマークボタン追加、保存成功時「Saved!」フィードバック、defaultLabelガード削除
+- **WORKセッション完了音**: playEffectSound.ts新規作成、TimerContextでWORK完了時に再生、NotificationSettingsに音量スライダー+プレビュー追加
+- **Music独立再生ボタン**: AudioContextにmanualPlay state追加、MusicScreenにPlay/Stopトグルボタン追加
+- **タスク完了紙吹雪**: canvas-confetti導入、TODO→DONE遷移時に紙吹雪アニメーション表示
+
+---
+
+## フロントエンドコード品質改善 (2026-02-11)
+
+### Phase 1: テスト基盤構築
+- MockDataService作成（全60メソッドのvi.fn()モック）
+- dataServiceFactory.tsにテストオーバーライド機能追加（setDataServiceForTest/resetDataService）
+- renderWithProviders.tsxに全7プロバイダを含むテストヘルパー追加
+- ベースラインテスト103件作成: timerReducer(28), TimerContext(9), useTags(10), useCalendar(11), ElectronDataService(16), urlValidation(11), validation(10), duration(3), existing(5)
+
+### Phase 2: セキュリティ修正
+- URL検証ユーティリティ追加（urlValidation.ts）: javascript:/data:/file:等を拒否
+- BubbleToolbar: リンクURL検証+エラー表示追加
+- SlashCommandMenu: window.promptをインラインURL入力に置換
+- 入力長制限追加: タグ名50文字、タスクタイトル/ノートタイトル255文字
+
+### Phase 3: Context/Stateリファクタリング
+- TimerContext: useState+14useCallback+4ref同期パターン → useReducer移行（timerReducer.ts新規作成）
+- useMemos/useNotes/useTags: return値をuseMemoでラップ（Context値安定化）
+- AudioContext分割: AudioControlContext（アクション）+AudioStateContext（状態）に分離、後方互換維持
+- entityTagsVersionハック削除: useRef<Map>→useState<Map>に変更、5箇所のvoidハック除去
+
+### Phase 4: コンポーネント分割
+- App.tsx: 527→172行（useAppCommands, useAppKeyboardShortcuts, useElectronMenuActions, useTaskDetailHandlers抽出）
+- TaskTree.tsx: 495→255行（useTaskTreeDnd, useTaskTreeKeyboard抽出）
+
+### Phase 5: パフォーマンス＆パターン統一
+- useDebounceフック作成、TaskSelectorの検索に150msデバウンス適用
+- logServiceErrorユーティリティ作成、全フックのcatchブロックを統一パターンに置換（8ファイル）
+
+### 新規ファイル
+- `frontend/src/test/mockDataService.ts`
+- `frontend/src/utils/urlValidation.ts`, `validation.ts`, `logError.ts`
+- `frontend/src/context/timerReducer.ts`
+- `frontend/src/context/AudioControlContextValue.ts`, `AudioStateContextValue.ts`
+- `frontend/src/hooks/useAudioControl.ts`, `useAudioState.ts`, `useDebounce.ts`
+- `frontend/src/hooks/useAppCommands.ts`, `useAppKeyboardShortcuts.ts`, `useElectronMenuActions.ts`, `useTaskDetailHandlers.ts`
+- `frontend/src/hooks/useTaskTreeDnd.ts`, `useTaskTreeKeyboard.ts`
+- テストファイル7件
+
+---
+
 ## 5件バグ修正 + WorkScreen UIリデザイン + フェーズ別サウンド選択 (2026-02-11)
 
 - サウンドタグIPC登録失敗を修正: soundRepositoryのV7テーブル参照をtableExists()ガードで保護、テーブル未作成でも他のSoundハンドラが正常動作

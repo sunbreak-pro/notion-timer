@@ -12,10 +12,12 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **タイマーモーダル**: タスクのPlayボタンでモーダル表示、閉じてもバックグラウンドでタイマー継続
 - **サイドバータイマー表示**: タイマー実行中はサイドバーにタスク名・残り時間・編集ボタンを表示
 - **TaskTreeタイマー表示**: 実行中のタスク行に残り時間テキスト+ミニプログレスバーを表示
-- **Music管理画面**: サウンド一覧表示・検索・タグフィルタリング、サウンド表示名のインラインカスタマイズ、サウンドタグの作成・割当、WorkScreenフェーズ別サウンド選択（W/Rトグル、各フェーズ最大6音）
+- **Music管理画面**: Work/Restタブ切替式の6スロットUI、空スロットクリックでサウンドピッカーモーダル起動、各フェーズ最大6音、スロット毎にボリューム・トグル・シーク・削除操作、タグフィルタ付きピッカー、カスタムサウンド追加、タイマー非依存の独立再生ボタン、タグ管理パネル
 - **ノイズミキサー**: 6種の環境音（Rain, Thunder, Wind, Ocean, Birds, Fire）、Web Audio APIによるリアルタイム再生・ミキシング、Work/Rest別サウンド設定、タブ切替でサウンド再生も切替、シークコントロール（再生位置スライダー）、WorkScreenではフェーズ別選択サウンドのみコンパクトリスト表示
 - **AIコーチング**: Gemini API連携、タスク分解/励まし/レビューの3モード
 - **外観設定**: ダークモード/ライトモード切替、フォントサイズ設定（S/M/L）
+- **タスク完了演出**: チェックボックスでタスク完了時に紙吹雪アニメーション
+- **セッション完了音**: WORKセッション完了時にエフェクト音再生（Settings画面で音量調整可能）
 - **デスクトップ通知**: タイマーセッション完了時にブラウザ通知
 - **キーボードショートカット**: Space（タイマー）、n（新規タスク）、Escape（モーダル閉じ）、Delete（タスク削除）、Cmd/Ctrl+.（左サイドバー開閉）、Cmd/Ctrl+Shift+.（右サイドバー開閉）、Cmd/Ctrl+,（Settings遷移）、Cmd/Ctrl+1〜5（セクション切替）、↑/↓（タスク移動）、Tab/Shift+Tab（インデント）、r（タイマーリセット）、Cmd/Ctrl+Shift+T（モーダル）、j/k/t/m（カレンダー操作）
 - **Settings画面**: 外観設定、通知設定、ゴミ箱（削除タスクの復元・完全削除）
@@ -25,8 +27,8 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **カレンダー**: 月/週表示切替、タスクを日付別に表示、フィルタリング（incomplete/completed）
 - **アナリティクス**: 基本統計（総タスク数、完了率、フォルダ数）
 - **データ管理**: SQLite永続化（better-sqlite3）、JSON Export/Import、バックアップ付きインポート
-- **自由メモ（Notes）**: 日付に縛られないフリーフォームノート、ピン留め、全文検索、ソート切替（更新日/作成日/タイトル）、タグ付け・タグフィルタリング、ソフトデリート対応
-- **タグ**: タスクタグ・ノートタグ・サウンドタグを独立管理、カラータグ付与、フィルタリング
+- **自由メモ（Notes）**: 日付に縛られないフリーフォームノート、ピン留め、全文検索、ソート切替（更新日/作成日/タイトル）、ソフトデリート対応
+- **サウンドタグ**: Music画面でサウンドにカラータグ付与・フィルタリング、タグ管理パネル（名前編集・色変更・削除）
 - **テンプレート**: タスクツリー構造をテンプレート保存・展開
 - **自動アップデート**: electron-updater + GitHub Releases、ユーザー確認型ダウンロード・インストール
 - **構造化ログ**: electron-logによるファイル出力、Settings画面でログ閲覧・フィルタ・エクスポート
@@ -60,6 +62,55 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-12 - Music画面リデザイン + WorkScreen同期バグ修正
+
+#### 概要
+Music画面をWork/Restタブ + 6スロットUIにリデザイン。MusicScreenでのサウンド選択がWorkScreenに反映されないバグを修正（useWorkscreenSelectionsの別インスタンス問題）。
+
+#### 変更点
+- **バグ修正**: AudioProviderとMusicScreenが別々のuseWorkscreenSelectionsインスタンスを持っていた問題を解消。AudioProviderを唯一のソースとし、toggleWorkscreenSelection/isWorkscreenSelectedをContext経由で公開
+- **AudioContext拡張**: AudioContextValue/AudioControlContextValue/AudioStateContextValueにworkscreenSelection操作を追加
+- **新UIコンポーネント**: EmptySlot（空スロット）、MusicSlotItem（スロット別サウンドコントロール）、SoundPickerModal（検索・タグフィルタ付きサウンド選択モーダル）
+- **MusicScreen全面改修**: フラットリスト→Work/Restタブ+6スロットレイアウトに変更。タブに応じたmixer/toggle/volume関数の切替、ピッカーモーダルによるサウンド追加/削除フロー
+
+### 2026-02-12 - Task/Noteタグ削除 + Musicタグ管理UI追加
+
+#### 概要
+使用されていないTask Tags・Note Tagsシステムを完全削除。DBマイグレーションV9で4テーブルDROP、バックエンド/フロントエンド全レイヤーからtask/noteタグ関連コードを除去。Sound Tags（Music画面）とFolder Name Tags（仮想タグ）のみ残存。Music画面にSoundTagManagerパネルを追加し、タグの名前編集・色変更・削除がMusic画面内で完結するようになった。
+
+#### 変更点
+- **DB**: migrateV9追加、task_tags/task_tag_definitions/note_tags/note_tag_definitions削除
+- **Backend**: tagRepository.ts, tagHandlers.ts削除、preload.tsから13チャンネル除去
+- **Frontend**: TagContext/useTags/TagEditor/TagBadge/TagFilter/TagManager/NoteTagBar等10+ファイル削除
+- **UI**: TaskTree/TaskDetail/Calendar/NoteList/Settingsからタグ関連UI除去
+- **新機能**: SoundTagManager.tsx（インライン編集・色パレット・削除確認・新規作成）
+- **MusicScreen**: Settings2アイコンでタグ管理パネルのトグル表示
+
+### 2026-02-12 - 6件UIUX改善・バグ修正
+
+#### 概要
+6つの改善: Notes永続化バグ修正（デバウンス未フラッシュ）、W/Rラベル改善（Work/Rest表記）、サウンド表示名セーブボタン追加、WORKセッション完了音、Music独立再生ボタン、タスク完了紙吹雪アニメーション。
+
+#### 変更点
+- **バグ修正**: MemoEditorのデバウンス未フラッシュ修正（アプリ終了/ノート切替時のデータ消失防止）
+- **ラベル改善**: W/R → Work/Rest表記に変更（MusicSoundItem、MusicScreenヘッダー）
+- **セーブボタン**: サウンド表示名編集時にチェックマークボタン+「Saved!」フィードバック追加
+- **完了音**: WORKセッション完了時にエフェクト音再生、Settings画面に音量スライダー+プレビュー追加
+- **独立再生**: タイマー未開始でもMusic画面のPlayボタンで環境音再生可能に
+- **紙吹雪**: タスク完了時にcanvas-confettiによる紙吹雪アニメーション表示
+
+### 2026-02-11 - フロントエンドコード品質改善
+
+#### 概要
+5フェーズの品質改善: テスト基盤構築（103テスト）、セキュリティ修正（URL検証、入力長制限）、Context/Stateリファクタリング（TimerContext useReducer化、AudioContext分割）、コンポーネント分割（App.tsx 527→172行、TaskTree.tsx 495→255行）、パフォーマンス改善（デバウンス、エラーハンドリング統一）。
+
+#### 変更点
+- **テスト**: MockDataService、renderWithProviders、103件のベースラインテスト作成
+- **セキュリティ**: URL検証（javascript:/data:拒否）、BubbleToolbar/SlashCommandMenu修正、入力長制限
+- **リファクタリング**: TimerContext useReducer化、AudioContext分割、entityTagsVersionハック削除、useMemo値安定化
+- **分割**: App.tsx→4フック抽出、TaskTree.tsx→2フック抽出
+- **パフォーマンス**: TaskSelector検索デバウンス、logServiceErrorユーティリティで統一エラーハンドリング
 
 ### 2026-02-11 - 5件バグ修正 + WorkScreen UIリデザイン + フェーズ別サウンド選択
 

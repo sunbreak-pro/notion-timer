@@ -1,52 +1,55 @@
 import { useState, useMemo } from 'react';
-import { Search, X, Plus } from 'lucide-react';
+import { Play, Square, Settings2 } from 'lucide-react';
 import { useAudioContext } from '../../hooks/useAudioContext';
 import { SOUND_TYPES } from '../../constants/sounds';
 import { useSoundTags } from '../../hooks/useSoundTags';
-import { useWorkscreenSelections } from '../../hooks/useWorkscreenSelections';
-import { MusicSoundItem } from './MusicSoundItem';
-import { SoundTagFilter } from './SoundTagFilter';
+import { SoundTagManager } from './SoundTagManager';
+import { EmptySlot } from './EmptySlot';
+import { MusicSlotItem } from './MusicSlotItem';
+import { SoundPickerModal } from './SoundPickerModal';
+
+const MAX_SLOTS = 6;
 
 export function MusicScreen() {
   const audio = useAudioContext();
   const soundTagState = useSoundTags();
-  const wsSelections = useWorkscreenSelections();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'WORK' | 'REST'>('WORK');
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [showTagManager, setShowTagManager] = useState(false);
 
-  const allSounds = useMemo(() => {
-    const builtIn = SOUND_TYPES.map(s => ({
-      id: s.id,
-      label: s.label,
-      isCustom: false,
-    }));
-    const custom = audio.customSounds.map(s => ({
-      id: s.id,
-      label: s.label,
-      isCustom: true,
-    }));
-    return [...builtIn, ...custom];
+  const selectedIds = activeTab === 'WORK'
+    ? audio.workscreenSelections.work
+    : audio.workscreenSelections.rest;
+
+  const activeMixer = activeTab === 'WORK' ? audio.workMixer : audio.restMixer;
+  const toggleFn = activeTab === 'WORK' ? audio.toggleWorkSound : audio.toggleRestSound;
+  const volumeFn = activeTab === 'WORK' ? audio.setWorkVolume : audio.setRestVolume;
+
+  const allSoundsMap = useMemo(() => {
+    const map = new Map<string, { label: string; isCustom: boolean }>();
+    for (const s of SOUND_TYPES) {
+      map.set(s.id, { label: s.label, isCustom: false });
+    }
+    for (const s of audio.customSounds) {
+      map.set(s.id, { label: s.label, isCustom: true });
+    }
+    return map;
   }, [audio.customSounds]);
 
-  const filteredSounds = useMemo(() => {
-    let result = allSounds;
+  const handleAddSound = () => {
+    if (selectedIds.length >= MAX_SLOTS) return;
+    setPickerOpen(true);
+  };
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(s => {
-        const displayName = soundTagState.getDisplayName(s.id);
-        const name = displayName || s.label;
-        return name.toLowerCase().includes(q);
-      });
-    }
+  const handleSelectSound = (soundId: string) => {
+    audio.toggleWorkscreenSelection(soundId, activeTab);
+  };
 
-    if (soundTagState.filterTagIds.length > 0) {
-      result = result.filter(s => soundTagState.soundPassesFilter(s.id));
-    }
+  const handleRemoveSound = (soundId: string) => {
+    audio.toggleWorkscreenSelection(soundId, activeTab);
+  };
 
-    return result;
-  }, [allSounds, searchQuery, soundTagState]);
-
-  const handleAddSound = async () => {
+  const handleAddCustomSound = async () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'audio/mp3,audio/wav,audio/ogg,audio/mpeg,.mp3,.wav,.ogg';
@@ -62,77 +65,126 @@ export function MusicScreen() {
     input.click();
   };
 
+  const emptySlotCount = MAX_SLOTS - selectedIds.length;
+
   return (
     <div className="h-full flex flex-col overflow-auto">
-      <div className="max-w-4xl mx-auto w-full p-6">
+      <div className="max-w-3xl mx-auto w-full p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-notion-text">Music</h1>
-            <div className="flex items-center gap-2 text-xs text-notion-text-secondary">
-              <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 font-medium">
-                W: {wsSelections.selections.work.length}/6
-              </span>
-              <span className="px-2 py-0.5 rounded bg-green-500/10 text-green-500 font-medium">
-                R: {wsSelections.selections.rest.length}/6
-              </span>
-            </div>
+          <h1 className="text-2xl font-bold text-notion-text">Music</h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={audio.toggleManualPlay}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                audio.manualPlay
+                  ? 'bg-green-500 text-white hover:bg-green-600'
+                  : 'bg-notion-hover text-notion-text-secondary hover:text-notion-text'
+              }`}
+            >
+              {audio.manualPlay ? <Square size={14} /> : <Play size={14} />}
+              <span>{audio.manualPlay ? 'Stop' : 'Play'}</span>
+            </button>
+            <button
+              onClick={() => setShowTagManager(v => !v)}
+              className={`p-1.5 rounded-md transition-colors ${
+                showTagManager
+                  ? 'bg-notion-accent text-white'
+                  : 'text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover'
+              }`}
+              title="Manage tags"
+            >
+              <Settings2 size={16} />
+            </button>
           </div>
+        </div>
+
+        {showTagManager && (
+          <div className="mb-4">
+            <SoundTagManager soundTagState={soundTagState} />
+          </div>
+        )}
+
+        {/* Tab bar */}
+        <div className="flex gap-1 mb-5 bg-notion-bg-secondary rounded-lg p-1 border border-notion-border">
           <button
-            onClick={handleAddSound}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm bg-notion-accent text-white hover:opacity-90 transition-opacity"
+            onClick={() => setActiveTab('WORK')}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'WORK'
+                ? 'bg-blue-500 text-white shadow-sm'
+                : 'text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover'
+            }`}
           >
-            <Plus size={14} />
-            <span>Add Sound</span>
+            <span>Work</span>
+            <span className={`text-xs px-1.5 py-0 rounded-full ${
+              activeTab === 'WORK' ? 'bg-white/20' : 'bg-notion-hover'
+            }`}>
+              {audio.workscreenSelections.work.length}/{MAX_SLOTS}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('REST')}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'REST'
+                ? 'bg-green-500 text-white shadow-sm'
+                : 'text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover'
+            }`}
+          >
+            <span>Rest</span>
+            <span className={`text-xs px-1.5 py-0 rounded-full ${
+              activeTab === 'REST' ? 'bg-white/20' : 'bg-notion-hover'
+            }`}>
+              {audio.workscreenSelections.rest.length}/{MAX_SLOTS}
+            </span>
           </button>
         </div>
 
-        {/* Search + Tag filter */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-notion-text-secondary" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search sounds..."
-              className="w-full pl-9 pr-8 py-2 text-sm bg-notion-bg-secondary border border-notion-border rounded-lg text-notion-text outline-none focus:border-notion-accent transition-colors"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-notion-text-secondary hover:text-notion-text"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-        </div>
+        {/* Slots */}
+        <div className="space-y-2">
+          {selectedIds.map(soundId => {
+            const info = allSoundsMap.get(soundId);
+            if (!info) return null;
+            return (
+              <MusicSlotItem
+                key={soundId}
+                soundId={soundId}
+                defaultLabel={info.label}
+                isCustom={info.isCustom}
+                soundTagState={soundTagState}
+                mixer={activeMixer}
+                onToggle={toggleFn}
+                onSetVolume={volumeFn}
+                channelPositions={audio.channelPositions}
+                onSeek={audio.seekSound}
+                onRemove={() => handleRemoveSound(soundId)}
+              />
+            );
+          })}
 
-        <SoundTagFilter soundTagState={soundTagState} />
-
-        {/* Sound list */}
-        <div className="space-y-2 mt-4">
-          {filteredSounds.map(sound => (
-            <MusicSoundItem
-              key={sound.id}
-              soundId={sound.id}
-              defaultLabel={sound.label}
-              isCustom={sound.isCustom}
-              soundTagState={soundTagState}
-              wsSelections={wsSelections}
-            />
-          ))}
-
-          {filteredSounds.length === 0 && (
-            <div className="text-center py-8 text-notion-text-secondary text-sm">
-              {searchQuery || soundTagState.filterTagIds.length > 0
-                ? 'No sounds match the current filter.'
-                : 'No sounds available.'}
-            </div>
+          {emptySlotCount > 0 && (
+            <EmptySlot onAddClick={handleAddSound} />
           )}
         </div>
+
+        {selectedIds.length === 0 && (
+          <div className="text-center py-8 text-notion-text-secondary text-sm">
+            No sounds assigned to {activeTab === 'WORK' ? 'Work' : 'Rest'} phase yet.
+            <br />
+            Click &ldquo;Add Sound&rdquo; to get started.
+          </div>
+        )}
       </div>
+
+      {/* Sound Picker Modal */}
+      <SoundPickerModal
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelectSound={handleSelectSound}
+        excludeSoundIds={selectedIds}
+        customSounds={audio.customSounds}
+        onAddCustomSound={handleAddCustomSound}
+        soundTagState={soundTagState}
+      />
     </div>
   );
 }

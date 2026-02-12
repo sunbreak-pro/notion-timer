@@ -2,7 +2,6 @@ import { lazy, Suspense, useCallback } from "react";
 import { Pin, PinOff, StickyNote } from "lucide-react";
 import { useNoteContext } from "../../hooks/useNoteContext";
 import { NoteList } from "./NoteList";
-import { NoteTagBar } from "./NoteTagBar";
 
 const MemoEditor = lazy(() =>
   import("../TaskDetail/MemoEditor").then((m) => ({ default: m.MemoEditor })),
@@ -37,7 +36,7 @@ export function NotesView() {
         {selectedNote ? (
           <div className="max-w-3xl mx-auto px-8 py-6">
             {/* Title + Pin */}
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-4">
               <input
                 type="text"
                 value={selectedNote.title}
@@ -60,11 +59,6 @@ export function NotesView() {
                   <Pin size={16} />
                 )}
               </button>
-            </div>
-
-            {/* Tags */}
-            <div className="mb-4">
-              <NoteTagBar noteId={selectedNote.id} />
             </div>
 
             {/* Editor */}

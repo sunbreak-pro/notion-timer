@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { SoundTag } from '../types/sound';
 import { getDataService } from '../services';
+import { logServiceError } from '../utils/logError';
 
 export function useSoundTags() {
   const [soundTags, setSoundTags] = useState<SoundTag[]>([]);
@@ -43,7 +44,7 @@ export function useSoundTags() {
         soundTagAssignments.current = assignMap;
         setVersion(v => v + 1);
       } catch (e) {
-        console.warn('[SoundTags] fetch:', e instanceof Error ? e.message : e);
+        logServiceError('SoundTags', 'fetch', e);
       }
     })();
     return () => { cancelled = true; };
@@ -90,7 +91,7 @@ export function useSoundTags() {
     try {
       await getDataService().setTagsForSound(soundId, tagIds);
     } catch (e) {
-      console.warn('[SoundTags] setForSound:', e instanceof Error ? e.message : e);
+      logServiceError('SoundTags', 'setForSound', e);
     }
   }, [soundTags]);
 
@@ -107,7 +108,7 @@ export function useSoundTags() {
     try {
       await getDataService().updateSoundDisplayMeta(soundId, name);
     } catch (e) {
-      console.warn('[SoundTags] updateDisplayMeta:', e instanceof Error ? e.message : e);
+      logServiceError('SoundTags', 'updateDisplayMeta', e);
     }
   }, []);
 

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { SOUND_TYPES } from '../constants/sounds';
 import { getDataService } from '../services';
+import { logServiceError } from '../utils/logError';
 
 export interface SoundState {
   enabled: boolean;
@@ -53,7 +54,7 @@ export function useLocalSoundMixer(customSoundIds: string[] = [], sessionCategor
           return next;
         });
       })
-      .catch((e) => console.warn('[Sound] fetch settings:', e.message));
+      .catch((e) => logServiceError('Sound', 'fetchSettings', e));
     return () => { cancelled = true; };
   }, [sessionCategory, customSoundIds]);
 
@@ -62,7 +63,7 @@ export function useLocalSoundMixer(customSoundIds: string[] = [], sessionCategor
       const current = prev[id];
       const newEnabled = !current.enabled;
       getDataService().updateSoundSetting(id, current.volume, newEnabled, sessionCategory)
-        .catch((e) => console.warn('[Sound] sync:', e.message));
+        .catch((e) => logServiceError('Sound', 'sync', e));
       return { ...prev, [id]: { ...current, enabled: newEnabled } };
     });
   }, [sessionCategory]);
@@ -71,7 +72,7 @@ export function useLocalSoundMixer(customSoundIds: string[] = [], sessionCategor
     setMixer(prev => {
       const current = prev[id];
       getDataService().updateSoundSetting(id, volume, current.enabled, sessionCategory)
-        .catch((e) => console.warn('[Sound] sync:', e.message));
+        .catch((e) => logServiceError('Sound', 'sync', e));
       return { ...prev, [id]: { ...current, volume } };
     });
   }, [sessionCategory]);

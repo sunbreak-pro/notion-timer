@@ -40,6 +40,7 @@ export function TaskNodeEditor({ initialValue, onSave, onCancel }: TaskNodeEdito
       onChange={(e) => setEditValue(e.target.value)}
       onBlur={handleSave}
       onKeyDown={handleKeyDown}
+      maxLength={255}
       className="flex-1 bg-transparent outline-none text-sm text-notion-text px-1 border-b border-notion-accent"
     />
   );

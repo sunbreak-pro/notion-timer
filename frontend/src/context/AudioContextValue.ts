@@ -21,6 +21,10 @@ export interface AudioContextValue {
   seekSound: (id: string, time: number) => void;
   channelPositions: Record<string, { currentTime: number; duration: number }>;
   workscreenSelections: WorkscreenSelections;
+  toggleWorkscreenSelection: (soundId: string, category: 'WORK' | 'REST') => void;
+  isWorkscreenSelected: (soundId: string, category: 'WORK' | 'REST') => boolean;
+  manualPlay: boolean;
+  toggleManualPlay: () => void;
 }
 
 export const AudioContext = createContext<AudioContextValue | null>(null);

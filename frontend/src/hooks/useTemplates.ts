@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { TaskTemplate } from '../types/template';
 import { getDataService } from '../services';
+import { logServiceError } from '../utils/logError';
 
 export function useTemplates() {
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
@@ -12,7 +13,7 @@ export function useTemplates() {
         const loaded = await getDataService().fetchTemplates();
         if (!cancelled) setTemplates(loaded);
       } catch (e) {
-        console.warn('[Templates] fetch:', e instanceof Error ? e.message : e);
+        logServiceError('Templates', 'fetch', e);
       }
     })();
     return () => { cancelled = true; };

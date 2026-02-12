@@ -34,17 +34,38 @@ interface MemoEditorProps {
 export function MemoEditor({ taskId, initialContent, onUpdate }: MemoEditorProps) {
   const debounceRef = useRef<number | null>(null);
   const onUpdateRef = useRef(onUpdate);
+  const latestContentRef = useRef<string | null>(null);
 
   useEffect(() => {
     onUpdateRef.current = onUpdate;
   });
 
+  // Flush pending debounce on unmount (note/task switch)
   useEffect(() => {
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
+      if (latestContentRef.current !== null) {
+        onUpdateRef.current(latestContentRef.current);
+        latestContentRef.current = null;
+      }
     };
+  }, []);
+
+  // Flush pending debounce on window close
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      if (latestContentRef.current !== null) {
+        onUpdateRef.current(latestContentRef.current);
+        latestContentRef.current = null;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
   const editor = useEditor({
@@ -82,8 +103,10 @@ export function MemoEditor({ taskId, initialContent, onUpdate }: MemoEditorProps
         clearTimeout(debounceRef.current);
       }
       const json = JSON.stringify(editor.getJSON());
+      latestContentRef.current = json;
       debounceRef.current = window.setTimeout(() => {
         onUpdateRef.current(json);
+        latestContentRef.current = null;
       }, 800);
     },
     editorProps: {

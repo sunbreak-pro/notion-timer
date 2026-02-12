@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronDown, ChevronRight, Plus, Inbox, Folder, X } from "lucide-react";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useTimerContext } from "../../hooks/useTimerContext";
+import { useDebounce } from "../../hooks/useDebounce";
 import type { TaskNode } from "../../types/taskTree";
 
 interface TaskSelectorProps {
@@ -26,6 +27,7 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
 
   const { getChildren, addNode, updateNode } = useTaskTreeContext();
   const timer = useTimerContext();
+  const debouncedSearch = useDebounce(newTaskValue, 150);
 
   // Inline editing state for Untitled tasks
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -75,24 +77,24 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
     setIsEditingTitle(false);
   };
 
-  // Parse "FolderName/taskName" input pattern
+  // Parse "FolderName/taskName" input pattern (debounced for filtering)
   const parsedInput = useMemo(() => {
-    const idx = newTaskValue.indexOf('/');
-    if (idx < 0) return { folderName: '', taskName: newTaskValue, folder: null as TaskNode | null };
-    const folderName = newTaskValue.substring(0, idx).trim();
-    const taskName = newTaskValue.substring(idx + 1).trim();
+    const idx = debouncedSearch.indexOf('/');
+    if (idx < 0) return { folderName: '', taskName: debouncedSearch, folder: null as TaskNode | null };
+    const folderName = debouncedSearch.substring(0, idx).trim();
+    const taskName = debouncedSearch.substring(idx + 1).trim();
     const rootChildren = getChildren(null);
     const folder = rootChildren.find(
       n => n.type === 'folder' && n.title.toLowerCase() === folderName.toLowerCase()
     ) ?? null;
     return { folderName, taskName, folder };
-  }, [newTaskValue, getChildren]);
+  }, [debouncedSearch, getChildren]);
 
   // Build hierarchical list of TODO tasks
   const items = useMemo(() => {
     const result: SectionItem[] = [];
     const rootChildren = getChildren(null);
-    const filterText = newTaskValue.trim().toLowerCase();
+    const filterText = debouncedSearch.trim().toLowerCase();
 
     const collectTasks = (parentId: string): TaskNode[] => {
       const children = getChildren(parentId);
@@ -157,7 +159,7 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
     });
 
     return result;
-  }, [getChildren, parsedInput, newTaskValue, expandedFolders]);
+  }, [getChildren, parsedInput, debouncedSearch, expandedFolders]);
 
   const handleSelectTask = (task: TaskNode) => {
     timer.openForTask(task.id, task.title, task.workDurationMinutes);
@@ -166,10 +168,25 @@ export function TaskSelector({ currentTitle }: TaskSelectorProps) {
   };
 
   const handleCreateTask = () => {
-    if (parsedInput.folder && parsedInput.taskName) {
-      const newNode = addNode("task", parsedInput.folder.id, parsedInput.taskName);
-      if (!newNode) return;
-      timer.openForTask(newNode.id, newNode.title);
+    // Use live input (not debounced) for task creation
+    const slashIdx = newTaskValue.indexOf('/');
+    if (slashIdx >= 0) {
+      const folderName = newTaskValue.substring(0, slashIdx).trim();
+      const taskName = newTaskValue.substring(slashIdx + 1).trim();
+      if (!taskName) return;
+      const rootChildren = getChildren(null);
+      const folder = rootChildren.find(
+        n => n.type === 'folder' && n.title.toLowerCase() === folderName.toLowerCase()
+      );
+      if (folder) {
+        const newNode = addNode("task", folder.id, taskName);
+        if (!newNode) return;
+        timer.openForTask(newNode.id, newNode.title);
+      } else {
+        const newNode = addNode("task", null, newTaskValue.trim());
+        if (!newNode) return;
+        timer.openForTask(newNode.id, newNode.title);
+      }
     } else {
       const trimmed = newTaskValue.trim();
       if (!trimmed) return;

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getDataService } from '../services';
+import { logServiceError } from '../utils/logError';
 
 const MAX_PER_PHASE = 6;
 
@@ -25,7 +26,7 @@ export function useWorkscreenSelections() {
       });
       setLoaded(true);
     }).catch(err => {
-      console.error('[WorkscreenSelections] load failed:', err);
+      logServiceError('WorkscreenSelections', 'load', err);
       setLoaded(true);
     });
   }, []);
@@ -36,7 +37,7 @@ export function useWorkscreenSelections() {
     try {
       await getDataService().setWorkscreenSelections(category, ids);
     } catch (err) {
-      console.error('[WorkscreenSelections] save failed:', err);
+      logServiceError('WorkscreenSelections', 'save', err);
     } finally {
       savingRef.current = false;
     }

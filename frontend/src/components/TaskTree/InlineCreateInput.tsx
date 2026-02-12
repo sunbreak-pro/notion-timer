@@ -42,6 +42,7 @@ export function InlineCreateInput({
         onBlur={handleSubmit}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
+        maxLength={255}
         className="flex-1 bg-transparent outline-none text-sm text-notion-text px-1 border-b border-notion-accent placeholder:text-notion-text-secondary/50"
       />
     </div>

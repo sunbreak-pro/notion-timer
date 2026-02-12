@@ -27,6 +27,9 @@ export function runMigrations(db: Database.Database): void {
   if (currentVersion < 8) {
     migrateV8(db);
   }
+  if (currentVersion < 9) {
+    migrateV9(db);
+  }
 }
 
 function migrateV1(db: Database.Database): void {
@@ -338,6 +341,17 @@ function migrateV5(db: Database.Database): void {
   db.exec(`
     ALTER TABLE tasks ADD COLUMN due_date TEXT;
     PRAGMA user_version = 5;
+  `);
+}
+
+function migrateV9(db: Database.Database): void {
+  db.exec(`
+    DROP TABLE IF EXISTS task_tags;
+    DROP TABLE IF EXISTS task_tag_definitions;
+    DROP TABLE IF EXISTS note_tags;
+    DROP TABLE IF EXISTS note_tag_definitions;
+
+    PRAGMA user_version = 9;
   `);
 }
 

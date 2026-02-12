@@ -3,6 +3,7 @@ import type { TaskNode, NodeType } from '../types/taskTree';
 import { useTaskTreeCRUD } from './useTaskTreeCRUD';
 import { useTaskTreeDeletion } from './useTaskTreeDeletion';
 import { useTaskTreeMovement } from './useTaskTreeMovement';
+import { logServiceError } from '../utils/logError';
 import { resolveTaskColor } from '../utils/folderColor';
 import { getFolderTag } from '../utils/folderTag';
 import { getDataService } from '../services';
@@ -49,7 +50,7 @@ export function useTaskTreeAPI() {
     setNodes(updated);
     setPersistError(null);
     getDataService().syncTaskTree(updated).catch((e) => {
-      console.error('[TaskTree] sync failed:', e.message);
+      logServiceError('TaskTree', 'sync', e);
       setPersistError(e instanceof Error ? e.message : 'Failed to save tasks');
     });
   }, []);

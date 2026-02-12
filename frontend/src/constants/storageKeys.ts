@@ -6,4 +6,5 @@ export const STORAGE_KEYS = {
   LEFT_SIDEBAR_OPEN: 'sonic-flow-left-sidebar-open',
   RIGHT_SIDEBAR_OPEN: 'sonic-flow-right-sidebar-open',
   MEMO_TAB: 'sonic-flow-memo-tab',
+  EFFECT_VOLUME: 'sonic-flow-effect-volume',
 } as const;

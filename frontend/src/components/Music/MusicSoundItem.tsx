@@ -1,11 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { KeyboardEvent } from 'react';
-import { Volume2, VolumeX, Trash2, Pencil, Clock } from 'lucide-react';
+import { Volume2, VolumeX, Trash2, Pencil, Clock, Check } from 'lucide-react';
 import { useAudioContext } from '../../hooks/useAudioContext';
 import { SOUND_TYPES } from '../../constants/sounds';
 import { SoundTagEditor } from './SoundTagEditor';
 import type { useSoundTags } from '../../hooks/useSoundTags';
-import type { useWorkscreenSelections } from '../../hooks/useWorkscreenSelections';
 
 function formatSeekTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -18,10 +17,11 @@ interface MusicSoundItemProps {
   defaultLabel: string;
   isCustom: boolean;
   soundTagState: ReturnType<typeof useSoundTags>;
-  wsSelections?: ReturnType<typeof useWorkscreenSelections>;
+  toggleWorkscreenSelection?: (soundId: string, category: 'WORK' | 'REST') => void;
+  isWorkscreenSelected?: (soundId: string, category: 'WORK' | 'REST') => boolean;
 }
 
-export function MusicSoundItem({ soundId, defaultLabel, isCustom, soundTagState, wsSelections }: MusicSoundItemProps) {
+export function MusicSoundItem({ soundId, defaultLabel, isCustom, soundTagState, toggleWorkscreenSelection, isWorkscreenSelected }: MusicSoundItemProps) {
   const audio = useAudioContext();
   const mixer = audio.workMixer;
   const soundState = mixer[soundId];
@@ -52,13 +52,17 @@ export function MusicSoundItem({ soundId, defaultLabel, isCustom, soundTagState,
     }
   }, [isEditing]);
 
-  const handleSave = () => {
+  const [showSaved, setShowSaved] = useState(false);
+
+  const handleSave = useCallback(() => {
     const trimmed = editValue.trim();
-    if (trimmed && trimmed !== defaultLabel) {
+    if (trimmed) {
       soundTagState.updateDisplayName(soundId, trimmed);
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 1500);
     }
     setIsEditing(false);
-  };
+  }, [editValue, soundId, soundTagState]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') handleSave();
@@ -81,15 +85,24 @@ export function MusicSoundItem({ soundId, defaultLabel, isCustom, soundTagState,
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           {isEditing ? (
-            <input
-              ref={inputRef}
-              type="text"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onBlur={handleSave}
-              onKeyDown={handleKeyDown}
-              className="text-sm font-medium bg-transparent outline-none border-b border-notion-accent text-notion-text w-full"
-            />
+            <>
+              <input
+                ref={inputRef}
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={handleSave}
+                onKeyDown={handleKeyDown}
+                className="text-sm font-medium bg-transparent outline-none border-b border-notion-accent text-notion-text w-full"
+              />
+              <button
+                onMouseDown={(e) => { e.preventDefault(); handleSave(); }}
+                className="p-0.5 text-notion-accent hover:text-green-500 transition-colors"
+                title="Save"
+              >
+                <Check size={14} />
+              </button>
+            </>
           ) : (
             <span
               className="text-sm font-medium text-notion-text truncate cursor-pointer hover:text-notion-accent transition-colors"
@@ -98,13 +111,16 @@ export function MusicSoundItem({ soundId, defaultLabel, isCustom, soundTagState,
               {displayName}
             </span>
           )}
-          {!isEditing && (
+          {!isEditing && !showSaved && (
             <button
               onClick={() => setIsEditing(true)}
               className="opacity-0 group-hover:opacity-100 p-0.5 text-notion-text-secondary hover:text-notion-text transition-opacity"
             >
               <Pencil size={12} />
             </button>
+          )}
+          {showSaved && (
+            <span className="text-xs text-green-500 font-medium ml-1">Saved!</span>
           )}
         </div>
         <SoundTagEditor soundId={soundId} soundTagState={soundTagState} />
@@ -153,29 +169,29 @@ export function MusicSoundItem({ soundId, defaultLabel, isCustom, soundTagState,
       </div>
 
       {/* W/R workscreen selection toggles */}
-      {wsSelections && (
+      {toggleWorkscreenSelection && isWorkscreenSelected && (
         <div className="flex gap-1 shrink-0">
           <button
-            onClick={() => wsSelections.toggleSelection(soundId, 'WORK')}
-            className={`w-7 h-7 text-xs font-bold rounded transition-colors ${
-              wsSelections.isSelected(soundId, 'WORK')
+            onClick={() => toggleWorkscreenSelection(soundId, 'WORK')}
+            className={`px-2 h-7 text-xs font-bold rounded transition-colors ${
+              isWorkscreenSelected(soundId, 'WORK')
                 ? 'bg-blue-500 text-white'
                 : 'bg-notion-hover text-notion-text-secondary hover:text-notion-text'
             }`}
             title="WorkScreen Work phase"
           >
-            W
+            Work
           </button>
           <button
-            onClick={() => wsSelections.toggleSelection(soundId, 'REST')}
-            className={`w-7 h-7 text-xs font-bold rounded transition-colors ${
-              wsSelections.isSelected(soundId, 'REST')
+            onClick={() => toggleWorkscreenSelection(soundId, 'REST')}
+            className={`px-2 h-7 text-xs font-bold rounded transition-colors ${
+              isWorkscreenSelected(soundId, 'REST')
                 ? 'bg-green-500 text-white'
                 : 'bg-notion-hover text-notion-text-secondary hover:text-notion-text'
             }`}
             title="WorkScreen Rest phase"
           >
-            R
+            Rest
           </button>
         </div>
       )}

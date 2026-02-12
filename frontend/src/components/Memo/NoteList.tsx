@@ -8,7 +8,6 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { useNoteContext } from "../../hooks/useNoteContext";
-import { useTagContext } from "../../hooks/useTagContext";
 import type { NoteSortMode } from "../../types/note";
 
 const SORT_LABELS: Record<NoteSortMode, string> = {
@@ -47,14 +46,10 @@ export function NoteList() {
     setSearchQuery,
     sortMode,
     setSortMode,
-    filterTagIds,
-    setFilterTagIds,
     createNote,
     softDeleteNote,
-    getTagsForNote,
   } = useNoteContext();
 
-  const { noteTags: { tags } } = useTagContext();
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const debounceRef = useRef<number | null>(null);
@@ -68,12 +63,6 @@ export function NoteList() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [localSearch, setSearchQuery]);
-
-  const toggleTagFilter = (tagId: number) => {
-    setFilterTagIds((prev: number[]) =>
-      prev.includes(tagId) ? prev.filter((id: number) => id !== tagId) : [...prev, tagId]
-    );
-  };
 
   return (
     <div className="w-64 shrink-0 border-r border-notion-border h-full flex flex-col">
@@ -111,7 +100,7 @@ export function NoteList() {
         </div>
       </div>
 
-      {/* Sort + Tag filter row */}
+      {/* Sort row */}
       <div className="px-3 py-1 flex items-center gap-1">
         <div className="relative">
           <button
@@ -144,93 +133,54 @@ export function NoteList() {
         </div>
       </div>
 
-      {/* Tag filter chips */}
-      {tags.length > 0 && (
-        <div className="px-3 pb-2 flex gap-1 flex-wrap">
-          {tags.map((tag) => (
-            <button
-              key={tag.id}
-              onClick={() => toggleTagFilter(tag.id)}
-              className={`px-2 py-0.5 text-xs rounded-full border transition-colors ${
-                filterTagIds.includes(tag.id)
-                  ? "border-transparent text-white"
-                  : "border-notion-border text-notion-text-secondary hover:text-notion-text"
-              }`}
-              style={
-                filterTagIds.includes(tag.id)
-                  ? { backgroundColor: tag.color }
-                  : undefined
-              }
-            >
-              {tag.name}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Note items */}
       <div className="flex-1 overflow-y-auto p-1">
         {sortedFilteredNotes.length === 0 && (
           <p className="text-xs text-notion-text-secondary text-center py-4">
-            {searchQuery || filterTagIds.length > 0
+            {searchQuery
               ? "No matching notes"
               : "No notes yet"}
           </p>
         )}
-        {sortedFilteredNotes.map((note) => {
-          const noteTags = getTagsForNote(note.id);
-          return (
-            <div key={note.id} className="group relative">
-              <button
-                onClick={() => setSelectedNoteId(note.id)}
-                className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                  selectedNoteId === note.id
-                    ? "bg-notion-hover"
-                    : "hover:bg-notion-hover"
-                }`}
-              >
-                <div className="flex items-center gap-1.5">
-                  {note.isPinned && (
-                    <Pin
-                      size={10}
-                      className="text-notion-primary shrink-0"
-                    />
-                  )}
-                  <span className="text-sm text-notion-text truncate font-medium">
-                    {note.title || "Untitled"}
-                  </span>
-                </div>
-                {note.content && (
-                  <p className="text-xs text-notion-text-secondary truncate mt-0.5">
-                    {getContentPreview(note.content)}
-                  </p>
+        {sortedFilteredNotes.map((note) => (
+          <div key={note.id} className="group relative">
+            <button
+              onClick={() => setSelectedNoteId(note.id)}
+              className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                selectedNoteId === note.id
+                  ? "bg-notion-hover"
+                  : "hover:bg-notion-hover"
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                {note.isPinned && (
+                  <Pin
+                    size={10}
+                    className="text-notion-primary shrink-0"
+                  />
                 )}
-                {noteTags.length > 0 && (
-                  <div className="flex gap-1 mt-1">
-                    {noteTags.map((t) => (
-                      <div
-                        key={t.id}
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: t.color }}
-                        title={t.name}
-                      />
-                    ))}
-                  </div>
-                )}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  softDeleteNote(note.id);
-                }}
-                className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-red-500 rounded transition-all"
-                title="Delete"
-              >
-                <Trash2 size={12} />
-              </button>
-            </div>
-          );
-        })}
+                <span className="text-sm text-notion-text truncate font-medium">
+                  {note.title || "Untitled"}
+                </span>
+              </div>
+              {note.content && (
+                <p className="text-xs text-notion-text-secondary truncate mt-0.5">
+                  {getContentPreview(note.content)}
+                </p>
+              )}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                softDeleteNote(note.id);
+              }}
+              className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-red-500 rounded transition-all"
+              title="Delete"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );

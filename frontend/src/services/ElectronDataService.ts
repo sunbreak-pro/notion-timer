@@ -6,7 +6,7 @@ import type { MemoNode } from '../types/memo';
 import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../types/ai';
 import type { CustomSoundMeta } from '../types/customSound';
 import type { NoteNode } from '../types/note';
-import type { Tag } from '../types/tag';
+
 import type { TaskTemplate } from '../types/template';
 import type { LogEntry, IpcChannelMetrics, SystemInfo } from '../types/diagnostics';
 
@@ -188,48 +188,6 @@ export class ElectronDataService implements DataService {
     return invoke('ai:updateSettings', settings);
   }
 
-  // Task Tags
-  fetchAllTaskTags(): Promise<Tag[]> {
-    return invoke('db:taskTags:fetchAll');
-  }
-  createTaskTag(name: string, color: string): Promise<Tag> {
-    return invoke('db:taskTags:create', name, color);
-  }
-  updateTaskTag(id: number, updates: { name?: string; color?: string }): Promise<Tag> {
-    return invoke('db:taskTags:update', id, updates.name, updates.color);
-  }
-  deleteTaskTag(id: number): Promise<void> {
-    return invoke('db:taskTags:delete', id);
-  }
-  fetchTagsForTask(taskId: string): Promise<Tag[]> {
-    return invoke('db:taskTags:forTask', taskId);
-  }
-  setTagsForTask(taskId: string, tagIds: number[]): Promise<void> {
-    return invoke('db:taskTags:setForTask', taskId, tagIds);
-  }
-
-  // Note Tags
-  fetchAllNoteTags(): Promise<Tag[]> {
-    return invoke('db:noteTags:fetchAll');
-  }
-  createNoteTag(name: string, color: string): Promise<Tag> {
-    return invoke('db:noteTags:create', name, color);
-  }
-  updateNoteTag(id: number, updates: { name?: string; color?: string }): Promise<Tag> {
-    return invoke('db:noteTags:update', id, updates.name, updates.color);
-  }
-  deleteNoteTag(id: number): Promise<void> {
-    return invoke('db:noteTags:delete', id);
-  }
-  fetchTagsForNote(noteId: string): Promise<Tag[]> {
-    return invoke('db:noteTags:forNote', noteId);
-  }
-  setTagsForNote(noteId: string, tagIds: number[]): Promise<void> {
-    return invoke('db:noteTags:setForNote', noteId, tagIds);
-  }
-  fetchAllNoteTagAssignments(): Promise<Array<{ note_id: string; tag_id: number }>> {
-    return invoke('db:noteTags:allNoteTags');
-  }
 
   // Templates
   fetchTemplates(): Promise<TaskTemplate[]> {

@@ -57,21 +57,7 @@ const ALLOWED_CHANNELS = new Set([
   'ai:advice',
   'ai:fetchSettings',
   'ai:updateSettings',
-  // Task Tags
-  'db:taskTags:fetchAll',
-  'db:taskTags:create',
-  'db:taskTags:update',
-  'db:taskTags:delete',
-  'db:taskTags:forTask',
-  'db:taskTags:setForTask',
-  // Note Tags
-  'db:noteTags:fetchAll',
-  'db:noteTags:create',
-  'db:noteTags:update',
-  'db:noteTags:delete',
-  'db:noteTags:forNote',
-  'db:noteTags:setForNote',
-  'db:noteTags:allNoteTags',
+
   // Templates
   'db:templates:fetchAll',
   'db:templates:create',

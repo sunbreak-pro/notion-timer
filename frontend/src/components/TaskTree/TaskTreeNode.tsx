@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import {
   SortableContext,
@@ -9,7 +9,7 @@ import { GripVertical } from "lucide-react";
 import type { TaskNode } from "../../types/taskTree";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useTimerContext } from "../../hooks/useTimerContext";
-import { useTagContext } from "../../hooks/useTagContext";
+
 import { TaskNodeIndent } from "./TaskNodeIndent";
 import { TaskNodeCheckbox } from "./TaskNodeCheckbox";
 import { TaskNodeEditor } from "./TaskNodeEditor";
@@ -17,10 +17,11 @@ import { TaskNodeContent } from "./TaskNodeContent";
 import { TaskNodeActions } from "./TaskNodeActions";
 import { TaskNodeTimer, TaskNodeTimerBar } from "./TaskNodeTimer";
 import { TaskNodeContextMenu } from "./TaskNodeContextMenu";
-import { TagBadge } from "../Tags/TagBadge";
+
 import { useTemplates } from "../../hooks/useTemplates";
 import { ConfirmDialog } from "../common/ConfirmDialog";
 import { computeFolderProgress } from "../../utils/folderProgress";
+import { fireTaskCompleteConfetti } from "../../utils/confetti";
 
 interface TaskTreeNodeProps {
   node: TaskNode;
@@ -53,7 +54,7 @@ export function TaskTreeNode({
   } = useTaskTreeContext();
 
   const timer = useTimerContext();
-  const { taskTags: { getTagsForEntity: getTagsForTask, loadTagsForEntity: loadTagsForTask, entityTagsVersion: taskTagsVersion } } = useTagContext();
+
   const { createTemplate } = useTemplates();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -86,14 +87,6 @@ export function TaskTreeNode({
     [isFolder, node.id, nodes],
   );
 
-  // Load tags for this node
-  useEffect(() => {
-    if (node.type === 'task') loadTagsForTask(node.id);
-  }, [node.id, node.type, loadTagsForTask]);
-
-  // Force re-render when cache version changes
-  void taskTagsVersion;
-  const nodeTags = node.type === 'task' ? getTagsForTask(node.id) : [];
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -140,6 +133,13 @@ export function TaskTreeNode({
     setShowConfirmDialog(false);
   }, [completeFolderWithChildren, node.id]);
 
+  const handleToggleStatus = useCallback(() => {
+    if (node.status !== 'DONE') {
+      fireTaskCompleteConfetti();
+    }
+    toggleTaskStatus(node.id);
+  }, [node.id, node.status, toggleTaskStatus]);
+
   return (
     <div>
       <div
@@ -164,7 +164,7 @@ export function TaskTreeNode({
           isExpanded={node.isExpanded}
           color={node.color}
           onToggleExpand={() => toggleExpanded(node.id)}
-          onToggleStatus={() => toggleTaskStatus(node.id)}
+          onToggleStatus={handleToggleStatus}
         />
 
         {isEditing ? (
@@ -189,13 +189,6 @@ export function TaskTreeNode({
           />
         )}
 
-        {nodeTags.length > 0 && (
-          <div className="flex items-center gap-0.5 ml-1">
-            {nodeTags.map(tag => (
-              <TagBadge key={tag.id} tag={tag} size="sm" />
-            ))}
-          </div>
-        )}
 
         <TaskNodeTimer
           isActive={isTimerActive}

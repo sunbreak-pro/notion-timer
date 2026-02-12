@@ -96,12 +96,6 @@ export interface CustomSoundMeta {
   createdAt: number;
 }
 
-export interface Tag {
-  id: number;
-  name: string;
-  color: string;
-}
-
 export interface TaskTemplate {
   id: number;
   name: string;

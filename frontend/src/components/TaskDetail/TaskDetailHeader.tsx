@@ -8,7 +8,6 @@ import { formatDuration } from "../../utils/duration";
 import { DateTimePicker } from "../Calendar/DateTimePicker";
 import { FolderTag } from "../shared/FolderTag";
 import { ColorPicker } from "../shared/ColorPicker";
-import { TagEditor } from "../Tags/TagEditor";
 
 interface TaskDetailHeaderProps {
   task: TaskNode;
@@ -136,6 +135,7 @@ export function TaskDetailHeader({
           onChange={(e) => setEditTitleValue(e.target.value)}
           onBlur={handleTitleSave}
           onKeyDown={handleTitleKeyDown}
+          maxLength={255}
           className="text-2xl font-bold bg-transparent outline-none border-b border-notion-accent w-full text-notion-text"
         />
       ) : (
@@ -146,8 +146,6 @@ export function TaskDetailHeader({
           {task.title}
         </h1>
       )}
-
-      <TagEditor taskId={task.id} />
 
       <div className="flex items-center gap-3">
         <button

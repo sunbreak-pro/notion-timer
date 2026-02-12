@@ -1,0 +1,111 @@
+import { useEffect, useCallback } from 'react';
+import type { SectionId } from '../types/taskTree';
+import type { TaskNode } from '../types/taskTree';
+
+interface UseAppKeyboardShortcutsParams {
+  timer: {
+    isRunning: boolean;
+    pause: () => void;
+    start: () => void;
+    reset: () => void;
+  };
+  isTimerModalOpen: boolean;
+  selectedTask: TaskNode | null;
+  addNode: (type: 'task' | 'folder', parentId: string | null, title: string) => TaskNode | undefined;
+  setActiveSection: (section: SectionId) => void;
+  setIsTimerModalOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
+  setIsCommandPaletteOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
+  handleDeleteSelectedTask: () => void;
+}
+
+export function useAppKeyboardShortcuts({
+  timer,
+  isTimerModalOpen,
+  selectedTask,
+  addNode,
+  setActiveSection,
+  setIsTimerModalOpen,
+  setIsCommandPaletteOpen,
+  handleDeleteSelectedTask,
+}: UseAppKeyboardShortcutsParams) {
+  const isInputFocused = useCallback(() => {
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
+    if (document.activeElement?.getAttribute('contenteditable') === 'true') return true;
+    return false;
+  }, []);
+
+  useEffect(() => {
+    const sectionMap: Record<string, SectionId> = {
+      '1': 'tasks',
+      '2': 'music',
+      '3': 'calendar',
+      '4': 'analytics',
+      '5': 'settings',
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+
+      if (mod && !e.shiftKey && e.code === 'KeyK') {
+        const el = document.activeElement;
+        const isEditorWithSelection =
+          el?.getAttribute('contenteditable') === 'true' &&
+          window.getSelection()?.toString();
+        if (!isEditorWithSelection) {
+          e.preventDefault();
+          setIsCommandPaletteOpen((prev: boolean) => !prev);
+          return;
+        }
+      }
+
+      if (mod && e.code === 'Comma') {
+        e.preventDefault();
+        setActiveSection('settings');
+        return;
+      }
+
+      if (mod && !e.shiftKey && sectionMap[e.key]) {
+        e.preventDefault();
+        setActiveSection(sectionMap[e.key]);
+        return;
+      }
+
+      if (mod && e.shiftKey && e.code === 'KeyT') {
+        e.preventDefault();
+        setIsTimerModalOpen((prev: boolean) => !prev);
+        return;
+      }
+
+      if (isInputFocused()) return;
+
+      if (e.key === ' ') {
+        e.preventDefault();
+        if (timer.isRunning) timer.pause();
+        else timer.start();
+      }
+
+      if (e.key === 'n') {
+        e.preventDefault();
+        addNode('task', null, 'New Task');
+      }
+
+      if (e.key === 'r') {
+        e.preventDefault();
+        timer.reset();
+      }
+
+      if (e.key === 'Escape' && isTimerModalOpen) {
+        setIsTimerModalOpen(false);
+      }
+
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedTask) {
+        e.preventDefault();
+        handleDeleteSelectedTask();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [timer, isTimerModalOpen, selectedTask, addNode, isInputFocused, handleDeleteSelectedTask, setActiveSection, setIsTimerModalOpen, setIsCommandPaletteOpen]);
+}

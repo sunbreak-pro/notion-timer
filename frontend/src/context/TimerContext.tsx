@@ -1,17 +1,10 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useReducer, useRef, useCallback, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
-import type { SessionType } from '../types/timer';
 import { TimerContext } from './TimerContextValue';
-import type { ActiveTask } from './TimerContextValue';
 import { STORAGE_KEYS } from '../constants/storageKeys';
 import { getDataService } from '../services';
-
-interface TimerConfig {
-  workDuration: number;
-  breakDuration: number;
-  longBreakDuration: number;
-  sessionsBeforeLongBreak: number;
-}
+import { timerReducer, createInitialState, getDuration } from './timerReducer';
+import { playEffectSound } from '../utils/playEffectSound';
 
 function sendNotification(body: string) {
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
@@ -22,45 +15,10 @@ function sendNotification(body: string) {
   }
 }
 
-function getDuration(sessionType: SessionType, config: TimerConfig): number {
-  switch (sessionType) {
-    case 'WORK': return config.workDuration;
-    case 'BREAK': return config.breakDuration;
-    case 'LONG_BREAK': return config.longBreakDuration;
-  }
-}
-
 export function TimerProvider({ children }: { children: ReactNode }) {
-  const [workDurationMinutes, setWorkDurationMinutesRaw] = useState(25);
-  const [breakDurationMinutes, setBreakDurationMinutesRaw] = useState(5);
-  const [longBreakDurationMinutes, setLongBreakDurationMinutesRaw] = useState(15);
-  const [sessionsBeforeLongBreakState, setSessionsBeforeLongBreakRaw] = useState(4);
-
-  const config: TimerConfig = useMemo(() => ({
-    workDuration: workDurationMinutes * 60,
-    breakDuration: breakDurationMinutes * 60,
-    longBreakDuration: longBreakDurationMinutes * 60,
-    sessionsBeforeLongBreak: sessionsBeforeLongBreakState,
-  }), [workDurationMinutes, breakDurationMinutes, longBreakDurationMinutes, sessionsBeforeLongBreakState]);
-
-  const [sessionType, setSessionType] = useState<SessionType>('WORK');
-  const [remainingSeconds, setRemainingSeconds] = useState(config.workDuration);
-  const [isRunning, setIsRunning] = useState(false);
-  const [completedSessions, setCompletedSessions] = useState(0);
-  const [activeTask, setActiveTask] = useState<ActiveTask | null>(null);
-  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [state, dispatch] = useReducer(timerReducer, undefined, () => createInitialState());
   const intervalRef = useRef<number | null>(null);
   const currentSessionIdRef = useRef<number | null>(null);
-
-  // Refs to avoid stale closures in setInterval callback
-  const sessionTypeRef = useRef(sessionType);
-  const completedSessionsRef = useRef(completedSessions);
-  const configRef = useRef(config);
-  const activeTaskRef = useRef(activeTask);
-  useEffect(() => { sessionTypeRef.current = sessionType; }, [sessionType]);
-  useEffect(() => { completedSessionsRef.current = completedSessions; }, [completedSessions]);
-  useEffect(() => { configRef.current = config; }, [config]);
-  useEffect(() => { activeTaskRef.current = activeTask; }, [activeTask]);
 
   // Load settings from DataService on mount
   useEffect(() => {
@@ -68,17 +26,22 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     getDataService().fetchTimerSettings()
       .then((settings) => {
         if (cancelled) return;
-        if (settings.workDuration) setWorkDurationMinutesRaw(settings.workDuration);
-        if (settings.breakDuration) setBreakDurationMinutesRaw(settings.breakDuration);
-        if (settings.longBreakDuration) setLongBreakDurationMinutesRaw(settings.longBreakDuration);
-        if (settings.sessionsBeforeLongBreak) setSessionsBeforeLongBreakRaw(settings.sessionsBeforeLongBreak);
+        dispatch({
+          type: 'SET_CONFIG',
+          config: {
+            workDuration: (settings.workDuration ?? 25) * 60,
+            breakDuration: (settings.breakDuration ?? 5) * 60,
+            longBreakDuration: (settings.longBreakDuration ?? 15) * 60,
+            sessionsBeforeLongBreak: settings.sessionsBeforeLongBreak ?? 4,
+          },
+        });
       })
       .catch((e) => console.warn('[Timer] fetch settings:', e.message));
     return () => { cancelled = true; };
   }, []);
 
-  const totalDuration = getDuration(sessionType, config);
-  const progress = ((totalDuration - remainingSeconds) / totalDuration) * 100;
+  const totalDuration = getDuration(state.sessionType, state.config);
+  const progress = ((totalDuration - state.remainingSeconds) / totalDuration) * 100;
 
   const clearTimer = useCallback(() => {
     if (intervalRef.current !== null) {
@@ -89,120 +52,67 @@ export function TimerProvider({ children }: { children: ReactNode }) {
 
   const endCurrentSession = useCallback((duration: number, completed: boolean) => {
     if (currentSessionIdRef.current !== null) {
-      getDataService().endTimerSession(currentSessionIdRef.current, duration, completed).catch((e) => console.warn('[Timer] end session:', e.message));
+      getDataService().endTimerSession(currentSessionIdRef.current, duration, completed)
+        .catch((e) => console.warn('[Timer] end session:', e.message));
       currentSessionIdRef.current = null;
     }
   }, []);
 
   const advanceSession = useCallback(() => {
     clearTimer();
-    setIsRunning(false);
-
-    const currentSessionType = sessionTypeRef.current;
-    const currentCompleted = completedSessionsRef.current;
-    const currentConfig = configRef.current;
-
     // End current session as completed
-    const completedDuration = currentSessionType === 'WORK'
-      ? currentConfig.workDuration
-      : currentSessionType === 'BREAK'
-        ? currentConfig.breakDuration
-        : currentConfig.longBreakDuration;
+    const completedDuration = getDuration(state.sessionType, state.config);
     endCurrentSession(completedDuration, true);
 
-    if (currentSessionType === 'WORK') {
-      // Show completion modal instead of auto-transitioning
-      setShowCompletionModal(true);
+    dispatch({ type: 'ADVANCE_SESSION' });
+
+    if (state.sessionType === 'WORK') {
       sendNotification('WORK完了！');
+      playEffectSound('/sounds/session_complete_sound.mp3');
     } else {
-      // REST completed → auto-transition to WORK
-      const newCompleted = currentCompleted + 1;
-      setCompletedSessions(newCompleted);
-      setSessionType('WORK');
-      setRemainingSeconds(currentConfig.workDuration);
       sendNotification('休憩終了！作業を再開しましょう');
     }
-  }, [clearTimer, endCurrentSession]);
+  }, [clearTimer, endCurrentSession, state.sessionType, state.config]);
 
-  const extendWork = useCallback((minutes: number) => {
-    setShowCompletionModal(false);
-    setRemainingSeconds(minutes * 60);
-    setIsRunning(true);
-    const task = activeTaskRef.current;
-    getDataService().startTimerSession('WORK', task?.id).then((session) => {
-      currentSessionIdRef.current = session.id;
-    }).catch((e) => console.warn('[Timer] start session:', e.message));
-  }, []);
-
-  const startRest = useCallback(() => {
-    setShowCompletionModal(false);
-    const currentCompleted = completedSessionsRef.current + 1;
-    setCompletedSessions(currentCompleted);
-    const currentConfig = configRef.current;
-    const task = activeTaskRef.current;
-    if (currentCompleted % currentConfig.sessionsBeforeLongBreak === 0) {
-      setSessionType('LONG_BREAK');
-      setRemainingSeconds(currentConfig.longBreakDuration);
-    } else {
-      setSessionType('BREAK');
-      setRemainingSeconds(currentConfig.breakDuration);
-    }
-    setIsRunning(true);
-    const st = currentCompleted % currentConfig.sessionsBeforeLongBreak === 0 ? 'LONG_BREAK' : 'BREAK';
-    getDataService().startTimerSession(st, task?.id).then((session) => {
-      currentSessionIdRef.current = session.id;
-    }).catch((e) => console.warn('[Timer] start session:', e.message));
-  }, []);
-
-  const dismissCompletionModal = useCallback(() => {
-    setShowCompletionModal(false);
-  }, []);
-
+  // Timer interval effect
   useEffect(() => {
-    if (!isRunning) {
+    if (!state.isRunning) {
       clearTimer();
       return;
     }
 
     intervalRef.current = window.setInterval(() => {
-      setRemainingSeconds(prev => {
-        if (prev <= 1) {
-          advanceSession();
-          return 0;
-        }
-        return prev - 1;
-      });
+      dispatch({ type: 'TICK' });
     }, 1000);
 
     return clearTimer;
-  }, [isRunning, clearTimer, advanceSession]);
+  }, [state.isRunning, clearTimer]);
+
+  // Watch for timer reaching zero
+  useEffect(() => {
+    if (state.isRunning && state.remainingSeconds <= 0) {
+      advanceSession();
+    }
+  }, [state.remainingSeconds, state.isRunning, advanceSession]);
 
   const start = useCallback(() => {
-    setIsRunning(true);
-    // Record session start
-    const st = sessionTypeRef.current;
-    const task = activeTaskRef.current;
-    getDataService().startTimerSession(st, task?.id).then((session) => {
-      currentSessionIdRef.current = session.id;
-    }).catch((e) => console.warn('[Timer] start session:', e.message));
-  }, []);
+    dispatch({ type: 'START' });
+    getDataService().startTimerSession(state.sessionType, state.activeTask?.id)
+      .then((session) => { currentSessionIdRef.current = session.id; })
+      .catch((e) => console.warn('[Timer] start session:', e.message));
+  }, [state.sessionType, state.activeTask]);
 
   const pause = useCallback(() => {
-    setIsRunning(false);
-    // Record partial session
-    const currentConfig = configRef.current;
-    const st = sessionTypeRef.current;
-    const total = getDuration(st, currentConfig);
-    endCurrentSession(total - remainingSeconds, false);
-  }, [endCurrentSession, remainingSeconds]);
+    dispatch({ type: 'PAUSE' });
+    const total = getDuration(state.sessionType, state.config);
+    endCurrentSession(total - state.remainingSeconds, false);
+  }, [endCurrentSession, state.sessionType, state.config, state.remainingSeconds]);
 
   const reset = useCallback(() => {
     clearTimer();
-    setIsRunning(false);
-    // End session if running
     endCurrentSession(0, false);
-    setRemainingSeconds(getDuration(sessionType, config));
-  }, [sessionType, config, clearTimer, endCurrentSession]);
+    dispatch({ type: 'RESET' });
+  }, [clearTimer, endCurrentSession]);
 
   const formatTime = useCallback((seconds: number): string => {
     const m = Math.floor(seconds / 60);
@@ -213,105 +123,124 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const startForTask = useCallback((id: string, title: string) => {
     clearTimer();
     endCurrentSession(0, false);
-    setActiveTask({ id, title });
-    setSessionType('WORK');
-    setRemainingSeconds(workDurationMinutes * 60);
-    setIsRunning(true);
-    getDataService().startTimerSession('WORK', id).then((session) => {
-      currentSessionIdRef.current = session.id;
-    }).catch((e) => console.warn('[Timer] start session:', e.message));
-  }, [clearTimer, workDurationMinutes, endCurrentSession]);
+    const durationSeconds = state.config.workDuration;
+    dispatch({ type: 'START_FOR_TASK', task: { id, title }, durationSeconds });
+    getDataService().startTimerSession('WORK', id)
+      .then((session) => { currentSessionIdRef.current = session.id; })
+      .catch((e) => console.warn('[Timer] start session:', e.message));
+  }, [clearTimer, endCurrentSession, state.config.workDuration]);
 
   const openForTask = useCallback((id: string, title: string, durationMinutes?: number) => {
     clearTimer();
     endCurrentSession(0, false);
-    setActiveTask({ id, title });
-    setSessionType('WORK');
-    const dur = durationMinutes ?? workDurationMinutes;
-    setRemainingSeconds(dur * 60);
-    setIsRunning(false);
-  }, [clearTimer, workDurationMinutes, endCurrentSession]);
+    const dur = durationMinutes ?? state.config.workDuration / 60;
+    dispatch({ type: 'OPEN_FOR_TASK', task: { id, title }, durationSeconds: dur * 60 });
+  }, [clearTimer, endCurrentSession, state.config.workDuration]);
 
   const clearTask = useCallback(() => {
-    setActiveTask(null);
+    dispatch({ type: 'SET_ACTIVE_TASK', task: null });
   }, []);
 
   const updateActiveTaskTitle = useCallback((title: string) => {
-    setActiveTask(prev => prev ? { ...prev, title } : null);
+    dispatch({ type: 'UPDATE_ACTIVE_TASK_TITLE', title });
   }, []);
 
   const syncSettings = useCallback((w: number, b: number, lb: number, s: number) => {
     getDataService().updateTimerSettings({
-      workDuration: w,
-      breakDuration: b,
-      longBreakDuration: lb,
-      sessionsBeforeLongBreak: s,
+      workDuration: w, breakDuration: b, longBreakDuration: lb, sessionsBeforeLongBreak: s,
     }).catch((e) => console.warn('[Timer] sync settings:', e.message));
   }, []);
 
+  const workDurationMinutes = state.config.workDuration / 60;
+  const breakDurationMinutes = state.config.breakDuration / 60;
+  const longBreakDurationMinutes = state.config.longBreakDuration / 60;
+
   const setWorkDurationMinutes = useCallback((min: number) => {
     const clamped = Math.max(5, Math.min(240, min));
-    setWorkDurationMinutesRaw(clamped);
-    if (!isRunning && sessionType === 'WORK') {
-      setRemainingSeconds(clamped * 60);
-    }
-    syncSettings(clamped, breakDurationMinutes, longBreakDurationMinutes, sessionsBeforeLongBreakState);
-  }, [isRunning, sessionType, breakDurationMinutes, longBreakDurationMinutes, sessionsBeforeLongBreakState, syncSettings]);
+    dispatch({ type: 'SET_CONFIG', config: { workDuration: clamped * 60 } });
+    syncSettings(clamped, state.config.breakDuration / 60, state.config.longBreakDuration / 60, state.config.sessionsBeforeLongBreak);
+  }, [syncSettings, state.config]);
 
   const setBreakDurationMinutes = useCallback((min: number) => {
     const clamped = Math.max(1, Math.min(60, min));
-    setBreakDurationMinutesRaw(clamped);
-    if (!isRunning && sessionType === 'BREAK') {
-      setRemainingSeconds(clamped * 60);
-    }
-    syncSettings(workDurationMinutes, clamped, longBreakDurationMinutes, sessionsBeforeLongBreakState);
-  }, [isRunning, sessionType, workDurationMinutes, longBreakDurationMinutes, sessionsBeforeLongBreakState, syncSettings]);
+    dispatch({ type: 'SET_CONFIG', config: { breakDuration: clamped * 60 } });
+    syncSettings(state.config.workDuration / 60, clamped, state.config.longBreakDuration / 60, state.config.sessionsBeforeLongBreak);
+  }, [syncSettings, state.config]);
 
   const setLongBreakDurationMinutes = useCallback((min: number) => {
     const clamped = Math.max(1, Math.min(60, min));
-    setLongBreakDurationMinutesRaw(clamped);
-    if (!isRunning && sessionType === 'LONG_BREAK') {
-      setRemainingSeconds(clamped * 60);
-    }
-    syncSettings(workDurationMinutes, breakDurationMinutes, clamped, sessionsBeforeLongBreakState);
-  }, [isRunning, sessionType, workDurationMinutes, breakDurationMinutes, sessionsBeforeLongBreakState, syncSettings]);
+    dispatch({ type: 'SET_CONFIG', config: { longBreakDuration: clamped * 60 } });
+    syncSettings(state.config.workDuration / 60, state.config.breakDuration / 60, clamped, state.config.sessionsBeforeLongBreak);
+  }, [syncSettings, state.config]);
 
   const setSessionsBeforeLongBreak = useCallback((count: number) => {
     const clamped = Math.max(1, Math.min(20, count));
-    setSessionsBeforeLongBreakRaw(clamped);
-    syncSettings(workDurationMinutes, breakDurationMinutes, longBreakDurationMinutes, clamped);
-  }, [workDurationMinutes, breakDurationMinutes, longBreakDurationMinutes, syncSettings]);
+    dispatch({ type: 'SET_CONFIG', config: { sessionsBeforeLongBreak: clamped } });
+    syncSettings(state.config.workDuration / 60, state.config.breakDuration / 60, state.config.longBreakDuration / 60, clamped);
+  }, [syncSettings, state.config]);
+
+  const extendWork = useCallback((minutes: number) => {
+    dispatch({ type: 'EXTEND_WORK', minutes });
+    getDataService().startTimerSession('WORK', state.activeTask?.id)
+      .then((session) => { currentSessionIdRef.current = session.id; })
+      .catch((e) => console.warn('[Timer] start session:', e.message));
+  }, [state.activeTask]);
+
+  const startRest = useCallback(() => {
+    const newCompleted = state.completedSessions + 1;
+    const isLongBreak = newCompleted % state.config.sessionsBeforeLongBreak === 0;
+    dispatch({ type: 'START_REST' });
+    const st = isLongBreak ? 'LONG_BREAK' : 'BREAK';
+    getDataService().startTimerSession(st as 'LONG_BREAK' | 'BREAK', state.activeTask?.id)
+      .then((session) => { currentSessionIdRef.current = session.id; })
+      .catch((e) => console.warn('[Timer] start session:', e.message));
+  }, [state.completedSessions, state.config.sessionsBeforeLongBreak, state.activeTask]);
+
+  const dismissCompletionModal = useCallback(() => {
+    dispatch({ type: 'DISMISS_COMPLETION_MODAL' });
+  }, []);
+
+  const value = useMemo(() => ({
+    sessionType: state.sessionType,
+    remainingSeconds: state.remainingSeconds,
+    isRunning: state.isRunning,
+    completedSessions: state.completedSessions,
+    progress,
+    totalDuration,
+    sessionsBeforeLongBreak: state.config.sessionsBeforeLongBreak,
+    workDurationMinutes,
+    breakDurationMinutes,
+    longBreakDurationMinutes,
+    activeTask: state.activeTask,
+    showCompletionModal: state.showCompletionModal,
+    start,
+    pause,
+    reset,
+    formatTime,
+    startForTask,
+    openForTask,
+    clearTask,
+    updateActiveTaskTitle,
+    setWorkDurationMinutes,
+    setBreakDurationMinutes,
+    setLongBreakDurationMinutes,
+    setSessionsBeforeLongBreak,
+    extendWork,
+    startRest,
+    dismissCompletionModal,
+  }), [
+    state.sessionType, state.remainingSeconds, state.isRunning, state.completedSessions,
+    progress, totalDuration, state.config.sessionsBeforeLongBreak,
+    workDurationMinutes, breakDurationMinutes, longBreakDurationMinutes,
+    state.activeTask, state.showCompletionModal,
+    start, pause, reset, formatTime, startForTask, openForTask, clearTask,
+    updateActiveTaskTitle, setWorkDurationMinutes, setBreakDurationMinutes,
+    setLongBreakDurationMinutes, setSessionsBeforeLongBreak, extendWork, startRest,
+    dismissCompletionModal,
+  ]);
 
   return (
-    <TimerContext.Provider value={{
-      sessionType,
-      remainingSeconds,
-      isRunning,
-      completedSessions,
-      progress,
-      totalDuration,
-      sessionsBeforeLongBreak: sessionsBeforeLongBreakState,
-      workDurationMinutes,
-      breakDurationMinutes,
-      longBreakDurationMinutes,
-      activeTask,
-      showCompletionModal,
-      start,
-      pause,
-      reset,
-      formatTime,
-      startForTask,
-      openForTask,
-      clearTask,
-      updateActiveTaskTitle,
-      setWorkDurationMinutes,
-      setBreakDurationMinutes,
-      setLongBreakDurationMinutes,
-      setSessionsBeforeLongBreak,
-      extendWork,
-      startRest,
-      dismissCompletionModal,
-    }}>
+    <TimerContext.Provider value={value}>
       {children}
     </TimerContext.Provider>
   );

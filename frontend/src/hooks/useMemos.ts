@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { MemoNode } from '../types/memo';
 import { getDataService } from '../services';
+import { logServiceError } from '../utils/logError';
 
 function formatDateKey(date: Date): string {
   const y = date.getFullYear();
@@ -23,7 +24,7 @@ export function useMemos() {
           setMemos(loaded);
         }
       } catch (e) {
-        console.warn('[Memo] fetch:', e instanceof Error ? e.message : e);
+        logServiceError('Memo', 'fetch', e);
       }
     })();
     return () => { cancelled = true; };
@@ -46,12 +47,12 @@ export function useMemos() {
         return [newMemo, ...prev];
       }
     });
-    getDataService().upsertMemo(date, content).catch((e) => console.warn('[Memo] sync:', e.message));
+    getDataService().upsertMemo(date, content).catch((e) => logServiceError('Memo', 'sync', e));
   }, []);
 
   const deleteMemo = useCallback((date: string) => {
     setMemos(prev => prev.filter(m => m.date !== date));
-    getDataService().deleteMemo(date).catch((e) => console.warn('[Memo] delete:', e.message));
+    getDataService().deleteMemo(date).catch((e) => logServiceError('Memo', 'delete', e));
   }, []);
 
   const getMemoForDate = useCallback((date: string): MemoNode | undefined => {
@@ -60,7 +61,7 @@ export function useMemos() {
 
   const selectedMemo = getMemoForDate(selectedDate);
 
-  return {
+  return useMemo(() => ({
     memos,
     selectedDate,
     setSelectedDate,
@@ -68,5 +69,5 @@ export function useMemos() {
     upsertMemo,
     deleteMemo,
     getMemoForDate,
-  };
+  }), [memos, selectedDate, selectedMemo, upsertMemo, deleteMemo, getMemoForDate]);
 }

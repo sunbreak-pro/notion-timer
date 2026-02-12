@@ -44,11 +44,7 @@ export function registerDataIOHandlers(db: Database.Database): void {
         soundSettings: safeQuery(db, 'SELECT * FROM sound_settings'),
         soundPresets: safeQuery(db, 'SELECT * FROM sound_presets'),
         memos: safeQuery(db, 'SELECT * FROM memos'),
-        taskTagDefinitions: safeQuery(db, 'SELECT * FROM task_tag_definitions'),
-        taskTags: safeQuery(db, 'SELECT * FROM task_tags'),
-        noteTagDefinitions: safeQuery(db, 'SELECT * FROM note_tag_definitions'),
         notes: safeQuery(db, 'SELECT * FROM notes'),
-        noteTags: safeQuery(db, 'SELECT * FROM note_tags'),
         templates: safeQuery(db, 'SELECT * FROM task_templates'),
         soundTagDefinitions: safeQuery(db, 'SELECT * FROM sound_tag_definitions'),
         soundTagAssignments: safeQuery(db, 'SELECT * FROM sound_tag_assignments'),
@@ -94,11 +90,7 @@ export function registerDataIOHandlers(db: Database.Database): void {
       const importAll = db.transaction(() => {
         // Clear all tables
         db.exec(`
-          DELETE FROM note_tags;
           DELETE FROM notes;
-          DELETE FROM task_tags;
-          DELETE FROM task_tag_definitions;
-          DELETE FROM note_tag_definitions;
           DELETE FROM sound_tag_assignments;
           DELETE FROM sound_tag_definitions;
           DELETE FROM sound_display_meta;
@@ -175,30 +167,6 @@ export function registerDataIOHandlers(db: Database.Database): void {
           }
         }
 
-        // Import task tag definitions
-        if (Array.isArray(data.taskTagDefinitions)) {
-          const insertTag = db.prepare(`INSERT INTO task_tag_definitions (id, name, color) VALUES (@id, @name, @color)`);
-          for (const t of data.taskTagDefinitions) {
-            insertTag.run(t);
-          }
-        }
-
-        // Import task_tags
-        if (Array.isArray(data.taskTags)) {
-          const insertTaskTag = db.prepare(`INSERT INTO task_tags (task_id, tag_id) VALUES (@task_id, @tag_id)`);
-          for (const tt of data.taskTags) {
-            insertTaskTag.run(tt);
-          }
-        }
-
-        // Import note tag definitions
-        if (Array.isArray(data.noteTagDefinitions)) {
-          const insertTag = db.prepare(`INSERT INTO note_tag_definitions (id, name, color) VALUES (@id, @name, @color)`);
-          for (const t of data.noteTagDefinitions) {
-            insertTag.run(t);
-          }
-        }
-
         // Import templates
         if (Array.isArray(data.templates)) {
           const insertTemplate = db.prepare(`
@@ -218,14 +186,6 @@ export function registerDataIOHandlers(db: Database.Database): void {
           `);
           for (const n of data.notes) {
             insertNote.run(n);
-          }
-        }
-
-        // Import note_tags
-        if (Array.isArray(data.noteTags)) {
-          const insertNoteTag = db.prepare(`INSERT INTO note_tags (note_id, tag_id) VALUES (@note_id, @tag_id)`);
-          for (const nt of data.noteTags) {
-            insertNoteTag.run(nt);
           }
         }
 
