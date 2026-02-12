@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout";
 import type { LayoutHandle } from "./components/Layout";
 import { TaskDetail } from "./components/TaskDetail";
 import { WorkScreen } from "./components/WorkScreen";
+import { SessionCompletionModal } from "./components/WorkScreen/SessionCompletionModal";
 import { Settings } from "./components/Settings";
 import { Tips } from "./components/Tips";
 import { CalendarView } from "./components/Calendar/CalendarView";
@@ -23,7 +24,6 @@ import type { SectionId } from "./types/taskTree";
 
 function App() {
   const [activeSection, setActiveSection] = useState<SectionId>("tasks");
-  const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const layoutRef = useRef<LayoutHandle | null>(null);
@@ -54,13 +54,11 @@ function App() {
     toggleTaskStatus,
     setSelectedTaskId,
     setActiveSection,
-    setIsTimerModalOpen,
     setMemoDate,
   });
 
   const commands = useAppCommands({
     setActiveSection,
-    setIsTimerModalOpen,
     addNode,
     selectedTask,
     softDelete,
@@ -71,11 +69,9 @@ function App() {
 
   useAppKeyboardShortcuts({
     timer,
-    isTimerModalOpen,
     selectedTask,
     addNode,
     setActiveSection,
-    setIsTimerModalOpen,
     setIsCommandPaletteOpen,
     handleDeleteSelectedTask: handlers.handleDeleteSelectedTask,
   });
@@ -83,7 +79,6 @@ function App() {
   useElectronMenuActions({
     addNode,
     setActiveSection,
-    setIsTimerModalOpen,
     layoutRef,
   });
 
@@ -114,6 +109,8 @@ function App() {
         return <MemoView />;
       case "music":
         return <MusicScreen />;
+      case "work":
+        return <WorkScreen onCompleteTask={handlers.handleCompleteTask} />;
       case "calendar":
         return (
           <CalendarView
@@ -144,7 +141,6 @@ function App() {
       <Layout
         activeSection={activeSection}
         onSectionChange={setActiveSection}
-        onOpenTimerModal={() => setIsTimerModalOpen(true)}
         onCreateFolder={handlers.handleCreateFolder}
         onCreateTask={handlers.handleCreateTask}
         onSelectTask={setSelectedTaskId}
@@ -155,8 +151,13 @@ function App() {
         {renderContent()}
       </Layout>
 
-      {isTimerModalOpen && (
-        <WorkScreen isOverlay onClose={() => setIsTimerModalOpen(false)} onCompleteTask={handlers.handleCompleteTask} />
+      {timer.showCompletionModal && (
+        <SessionCompletionModal
+          onExtend={timer.extendWork}
+          onStartRest={timer.startRest}
+          onDismiss={timer.dismissCompletionModal}
+          onCompleteTask={timer.activeTask ? handlers.handleCompleteTask : undefined}
+        />
       )}
 
       <CommandPalette

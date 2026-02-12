@@ -31,7 +31,6 @@ interface LayoutProps {
   children: ReactNode;
   activeSection: SectionId;
   onSectionChange: (section: SectionId) => void;
-  onOpenTimerModal: () => void;
   onCreateFolder: (title: string) => void;
   onCreateTask?: (title: string) => void;
   onSelectTask?: (id: string) => void;
@@ -44,7 +43,6 @@ export function Layout({
   children,
   activeSection,
   onSectionChange,
-  onOpenTimerModal,
   onCreateFolder,
   onCreateTask,
   onSelectTask,
@@ -137,7 +135,6 @@ export function Layout({
         <LeftSidebar
           activeSection={activeSection}
           onSectionChange={onSectionChange}
-          onOpenTimerModal={onOpenTimerModal}
           onToggle={() => setLeftSidebarOpen(false)}
         />
       ) : (

@@ -28,7 +28,7 @@ export function PomodoroSettings({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-colors ${
@@ -38,12 +38,12 @@ export function PomodoroSettings({
         }`}
       >
         <Settings size={14} />
-        ポモドーロを設定する
+        ポモドーロ設定
       </button>
 
       {isOpen && (
         <div
-          className={`absolute bottom-10 z-99 w-full max-w-xs space-y-4 p-4 rounded-lg border border-notion-border bg-notion-bg-secondary ${disabled ? "opacity-50 pointer-events-none" : ""}`}
+          className={`absolute top-full right-0 mt-2 z-50 w-72 space-y-4 p-4 rounded-lg border border-notion-border bg-notion-bg-secondary shadow-lg ${disabled ? "opacity-50 pointer-events-none" : ""}`}
         >
           <div>
             <label className="block text-sm font-medium text-notion-text-secondary mb-1">

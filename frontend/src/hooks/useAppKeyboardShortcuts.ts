@@ -9,22 +9,18 @@ interface UseAppKeyboardShortcutsParams {
     start: () => void;
     reset: () => void;
   };
-  isTimerModalOpen: boolean;
   selectedTask: TaskNode | null;
   addNode: (type: 'task' | 'folder', parentId: string | null, title: string) => TaskNode | undefined;
   setActiveSection: (section: SectionId) => void;
-  setIsTimerModalOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   setIsCommandPaletteOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   handleDeleteSelectedTask: () => void;
 }
 
 export function useAppKeyboardShortcuts({
   timer,
-  isTimerModalOpen,
   selectedTask,
   addNode,
   setActiveSection,
-  setIsTimerModalOpen,
   setIsCommandPaletteOpen,
   handleDeleteSelectedTask,
 }: UseAppKeyboardShortcutsParams) {
@@ -73,7 +69,7 @@ export function useAppKeyboardShortcuts({
 
       if (mod && e.shiftKey && e.code === 'KeyT') {
         e.preventDefault();
-        setIsTimerModalOpen((prev: boolean) => !prev);
+        setActiveSection('work');
         return;
       }
 
@@ -95,10 +91,6 @@ export function useAppKeyboardShortcuts({
         timer.reset();
       }
 
-      if (e.key === 'Escape' && isTimerModalOpen) {
-        setIsTimerModalOpen(false);
-      }
-
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedTask) {
         e.preventDefault();
         handleDeleteSelectedTask();
@@ -107,5 +99,5 @@ export function useAppKeyboardShortcuts({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [timer, isTimerModalOpen, selectedTask, addNode, isInputFocused, handleDeleteSelectedTask, setActiveSection, setIsTimerModalOpen, setIsCommandPaletteOpen]);
+  }, [timer, selectedTask, addNode, isInputFocused, handleDeleteSelectedTask, setActiveSection, setIsCommandPaletteOpen]);
 }

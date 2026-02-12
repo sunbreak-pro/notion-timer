@@ -6,14 +6,12 @@ import { getDataService } from '../services';
 interface UseElectronMenuActionsParams {
   addNode: (type: 'task' | 'folder', parentId: string | null, title: string) => TaskNode | undefined;
   setActiveSection: (section: SectionId) => void;
-  setIsTimerModalOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   layoutRef: RefObject<LayoutHandle | null>;
 }
 
 export function useElectronMenuActions({
   addNode,
   setActiveSection,
-  setIsTimerModalOpen,
   layoutRef,
 }: UseElectronMenuActionsParams) {
   useEffect(() => {
@@ -32,7 +30,7 @@ export function useElectronMenuActions({
           setActiveSection('tips');
           break;
         case 'toggle-timer-modal':
-          setIsTimerModalOpen((prev: boolean) => !prev);
+          setActiveSection('work');
           break;
         case 'toggle-left-sidebar':
           layoutRef.current?.toggleLeftSidebar();
@@ -51,5 +49,5 @@ export function useElectronMenuActions({
       }
     });
     return () => { cleanup?.(); };
-  }, [addNode, setActiveSection, setIsTimerModalOpen, layoutRef]);
+  }, [addNode, setActiveSection, layoutRef]);
 }

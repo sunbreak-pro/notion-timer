@@ -1,4 +1,6 @@
-import { Volume2, VolumeX, X, Clock } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import type { KeyboardEvent } from 'react';
+import { Volume2, VolumeX, X, Clock, Pencil, Check } from 'lucide-react';
 import { SOUND_TYPES } from '../../constants/sounds';
 import { SoundTagEditor } from './SoundTagEditor';
 import type { SoundMixerState } from '../../hooks/useLocalSoundMixer';
@@ -46,6 +48,40 @@ export function MusicSlotItem({
   // Force re-render when tag cache changes
   void soundTagState.version;
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(displayName);
+  const [showSaved, setShowSaved] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setEditValue(soundTagState.getDisplayName(soundId) || defaultLabel);
+  }, [soundId, defaultLabel, soundTagState]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleSave = useCallback(() => {
+    const trimmed = editValue.trim();
+    if (trimmed) {
+      soundTagState.updateDisplayName(soundId, trimmed);
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 1500);
+    }
+    setIsEditing(false);
+  }, [editValue, soundId, soundTagState]);
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSave();
+    if (e.key === 'Escape') {
+      setEditValue(displayName);
+      setIsEditing(false);
+    }
+  };
+
   return (
     <div className="flex items-center gap-3 p-3 rounded-lg bg-notion-bg-secondary border border-notion-border hover:border-notion-accent/30 transition-colors group">
       {/* Icon */}
@@ -57,9 +93,46 @@ export function MusicSlotItem({
 
       {/* Name + tags */}
       <div className="flex-1 min-w-0">
-        <span className="text-sm font-medium text-notion-text truncate block">
-          {displayName}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {isEditing ? (
+            <>
+              <input
+                ref={inputRef}
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={handleSave}
+                onKeyDown={handleKeyDown}
+                className="text-sm font-medium bg-transparent outline-none border-b border-notion-accent text-notion-text w-full"
+              />
+              <button
+                onMouseDown={(e) => { e.preventDefault(); handleSave(); }}
+                className="p-0.5 text-notion-accent hover:text-green-500 transition-colors"
+                title="Save"
+              >
+                <Check size={14} />
+              </button>
+            </>
+          ) : (
+            <span
+              className="text-sm font-medium text-notion-text truncate cursor-pointer hover:text-notion-accent transition-colors"
+              onClick={() => setIsEditing(true)}
+            >
+              {displayName}
+            </span>
+          )}
+          {!isEditing && !showSaved && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="opacity-0 group-hover:opacity-100 p-0.5 text-notion-text-secondary hover:text-notion-text transition-opacity"
+            >
+              <Pencil size={12} />
+            </button>
+          )}
+          {showSaved && (
+            <span className="text-xs text-green-500 font-medium ml-1">Saved!</span>
+          )}
+        </div>
         <SoundTagEditor soundId={soundId} soundTagState={soundTagState} />
       </div>
 

@@ -12,7 +12,6 @@ interface UseTaskDetailHandlersParams {
   toggleTaskStatus: (id: string) => void;
   setSelectedTaskId: (id: string | null) => void;
   setActiveSection: (section: SectionId) => void;
-  setIsTimerModalOpen: (open: boolean) => void;
   setMemoDate: (date: string) => void;
 }
 
@@ -26,19 +25,18 @@ export function useTaskDetailHandlers({
   toggleTaskStatus,
   setSelectedTaskId,
   setActiveSection,
-  setIsTimerModalOpen,
   setMemoDate,
 }: UseTaskDetailHandlersParams) {
   const handlePlayTask = useCallback((node: TaskNode) => {
     timer.openForTask(node.id, node.title, node.workDurationMinutes);
-    setIsTimerModalOpen(true);
-  }, [timer, setIsTimerModalOpen]);
+    setActiveSection('work');
+  }, [timer, setActiveSection]);
 
   const handlePlaySelectedTask = useCallback(() => {
     if (!selectedTask) return;
     timer.openForTask(selectedTask.id, selectedTask.title, selectedTask.workDurationMinutes);
-    setIsTimerModalOpen(true);
-  }, [selectedTask, timer, setIsTimerModalOpen]);
+    setActiveSection('work');
+  }, [selectedTask, timer, setActiveSection]);
 
   const handleDeleteSelectedTask = useCallback(() => {
     if (!selectedTask) return;
@@ -83,8 +81,8 @@ export function useTaskDetailHandlers({
     timer.reset();
     if (timer.showCompletionModal) timer.dismissCompletionModal();
     timer.clearTask();
-    setIsTimerModalOpen(false);
-  }, [timer, toggleTaskStatus, setIsTimerModalOpen]);
+    setActiveSection('tasks');
+  }, [timer, toggleTaskStatus, setActiveSection]);
 
   const handleCalendarSelectTask = useCallback((taskId: string) => {
     setSelectedTaskId(taskId);
@@ -97,8 +95,8 @@ export function useTaskDetailHandlers({
     const newNode = addNode('task', null, 'Untitled', { scheduledAt: scheduledDate.toISOString() });
     if (!newNode) return;
     timer.openForTask(newNode.id, newNode.title, newNode.workDurationMinutes);
-    setIsTimerModalOpen(true);
-  }, [addNode, timer, setIsTimerModalOpen]);
+    setActiveSection('work');
+  }, [addNode, timer, setActiveSection]);
 
   const handleCalendarSelectMemo = useCallback((date: string) => {
     setMemoDate(date);

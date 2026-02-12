@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { Music } from "lucide-react";
 import { SOUND_TYPES } from "../../constants/sounds";
 import type { SoundMixerState } from "../../hooks/useLocalSoundMixer";
@@ -16,13 +16,10 @@ interface SoundMixerProps {
   onSetRestVolume: (id: string, volume: number) => void;
   customSounds?: CustomSoundMeta[];
   activeSessionType: SessionType;
-  onManualTabSwitch?: (tab: 'WORK' | 'REST') => void;
   channelPositions?: Record<string, { currentTime: number; duration: number }>;
   onSeekSound?: (id: string, time: number) => void;
   workscreenSelections: WorkscreenSelections;
 }
-
-type TabType = "WORK" | "REST";
 
 export function SoundMixer({
   workMixer,
@@ -33,27 +30,15 @@ export function SoundMixer({
   onSetRestVolume,
   customSounds = [],
   activeSessionType,
-  onManualTabSwitch,
   channelPositions,
   onSeekSound,
   workscreenSelections,
 }: SoundMixerProps) {
-  const [activeTab, setActiveTab] = useState<TabType>(
-    activeSessionType === "WORK" ? "WORK" : "REST",
-  );
-
-  // React-recommended getDerivedStateFromProps pattern (no useEffect cascade)
-  const lastSyncedRef = useRef(activeSessionType);
-  if (lastSyncedRef.current !== activeSessionType) {
-    lastSyncedRef.current = activeSessionType;
-    const newTab: TabType = activeSessionType === 'WORK' ? 'WORK' : 'REST';
-    if (activeTab !== newTab) setActiveTab(newTab);
-  }
-
-  const mixer = activeTab === "WORK" ? workMixer : restMixer;
-  const onToggle = activeTab === "WORK" ? onToggleWorkSound : onToggleRestSound;
-  const onVolumeChange =
-    activeTab === "WORK" ? onSetWorkVolume : onSetRestVolume;
+  const isWork = activeSessionType === "WORK";
+  const mixer = isWork ? workMixer : restMixer;
+  const onToggle = isWork ? onToggleWorkSound : onToggleRestSound;
+  const onVolumeChange = isWork ? onSetWorkVolume : onSetRestVolume;
+  const selectedIds = isWork ? workscreenSelections.work : workscreenSelections.rest;
 
   // Build lookup maps for sound info
   const soundMap = useMemo(() => {
@@ -67,11 +52,6 @@ export function SoundMixer({
     return map;
   }, [customSounds]);
 
-  // Filter to only selected sounds for the current tab
-  const selectedIds = activeTab === "WORK"
-    ? workscreenSelections.work
-    : workscreenSelections.rest;
-
   const filteredSounds = useMemo(() => {
     return selectedIds
       .map(id => {
@@ -84,29 +64,6 @@ export function SoundMixer({
 
   return (
     <div>
-      <div className="flex gap-1 mb-3 p-1 bg-notion-hover rounded-lg">
-        <button
-          onClick={() => { setActiveTab("WORK"); onManualTabSwitch?.("WORK"); }}
-          className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            activeTab === "WORK"
-              ? "bg-notion-bg text-notion-text shadow-sm"
-              : "text-notion-text-secondary hover:text-notion-text"
-          }`}
-        >
-          Work
-        </button>
-        <button
-          onClick={() => { setActiveTab("REST"); onManualTabSwitch?.("REST"); }}
-          className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            activeTab === "REST"
-              ? "bg-notion-bg text-notion-text shadow-sm"
-              : "text-notion-text-secondary hover:text-notion-text"
-          }`}
-        >
-          Rest
-        </button>
-      </div>
-
       <div className="flex flex-col gap-1.5">
         {filteredSounds.map((sound) => {
           const state = mixer[sound.id] ?? { enabled: false, volume: 50 };

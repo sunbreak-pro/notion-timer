@@ -24,7 +24,6 @@ import {
 
 interface UseAppCommandsParams {
   setActiveSection: (section: SectionId) => void;
-  setIsTimerModalOpen: (open: boolean) => void;
   addNode: (type: 'task' | 'folder', parentId: string | null, title: string) => TaskNode | undefined;
   selectedTask: TaskNode | null;
   softDelete: (id: string) => void;
@@ -40,7 +39,6 @@ interface UseAppCommandsParams {
 
 export function useAppCommands({
   setActiveSection,
-  setIsTimerModalOpen,
   addNode,
   selectedTask,
   softDelete,
@@ -72,6 +70,14 @@ export function useAppCommands({
         shortcut: isMac ? '⌘2' : 'Ctrl+2',
         icon: Timer,
         action: () => setActiveSection('music'),
+      },
+      {
+        id: 'nav-work',
+        title: 'Go to Work',
+        category: 'Navigation',
+        shortcut: isMac ? '⌘⇧T' : 'Ctrl+Shift+T',
+        icon: Play,
+        action: () => setActiveSection('work'),
       },
       {
         id: 'nav-calendar',
@@ -133,14 +139,6 @@ export function useAppCommands({
         },
       },
       {
-        id: 'timer-modal',
-        title: 'Open timer modal',
-        category: 'Timer',
-        shortcut: isMac ? '⌘⇧T' : 'Ctrl+Shift+T',
-        icon: Timer,
-        action: () => setIsTimerModalOpen(true),
-      },
-      {
         id: 'timer-toggle',
         title: timer.isRunning ? 'Pause timer' : 'Start timer',
         category: 'Timer',
@@ -176,6 +174,6 @@ export function useAppCommands({
         action: () => layoutRef.current?.toggleRightSidebar(),
       },
     ],
-    [addNode, selectedTask, softDelete, setSelectedTaskId, timer, setActiveSection, setIsTimerModalOpen, layoutRef],
+    [addNode, selectedTask, softDelete, setSelectedTaskId, timer, setActiveSection, layoutRef],
   );
 }

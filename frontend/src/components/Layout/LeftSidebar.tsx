@@ -2,6 +2,7 @@ import {
   CheckSquare,
   BookOpen,
   Music,
+  Play,
   Calendar,
   BarChart3,
   Settings,
@@ -16,7 +17,6 @@ import { isMac } from "../../utils/platform";
 interface SidebarProps {
   activeSection: SectionId;
   onSectionChange: (section: SectionId) => void;
-  onOpenTimerModal: () => void;
   onToggle: () => void;
 }
 
@@ -25,6 +25,7 @@ const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] =
     { id: "tasks", label: "Tasks", icon: CheckSquare },
     { id: "memo", label: "Memo", icon: BookOpen },
     { id: "music", label: "Music", icon: Music },
+    { id: "work", label: "Work", icon: Play },
     { id: "calendar", label: "Calendar", icon: Calendar },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "settings", label: "Settings", icon: Settings },
@@ -34,7 +35,6 @@ const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] =
 export function LeftSidebar({
   activeSection,
   onSectionChange,
-  onOpenTimerModal,
   onToggle,
 }: SidebarProps) {
   const timer = useTimerContext();
@@ -73,7 +73,7 @@ export function LeftSidebar({
                 <span>{item.label}</span>
               </button>
 
-              {item.id === "music" && showTimer && (
+              {item.id === "work" && showTimer && (
                 <div className="ml-3 mr-2 mb-1 px-3 py-2 rounded-md bg-notion-hover/50">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -85,7 +85,7 @@ export function LeftSidebar({
                       </p>
                     </div>
                     <button
-                      onClick={onOpenTimerModal}
+                      onClick={() => onSectionChange('work')}
                       className="p-1 text-notion-text-secondary hover:text-notion-text rounded transition-colors shrink-0 cursor-pointer"
                     >
                       <Pencil size={14} />

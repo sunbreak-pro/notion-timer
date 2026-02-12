@@ -9,8 +9,8 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **グローバルタイマー**: 画面遷移してもタイマーが継続するContextベースのポモドーロタイマー
 - **タスク期限管理**: Flagアイコンでdue date設定、DateTimePickerで日時選択
 - **集中タイマー**: WORK/BREAK/LONG_BREAK対応、ポモドーロ設定UI（Work/Break/Long Break/Sessions数を個別設定）、ドットインジケーター表示、プログレスバー、WORK完了時モーダル（延長5〜30分/休憩選択/タスク完了）
-- **タイマーモーダル**: タスクのPlayボタンでモーダル表示、閉じてもバックグラウンドでタイマー継続
-- **サイドバータイマー表示**: タイマー実行中はサイドバーにタスク名・残り時間・編集ボタンを表示
+- **Work画面**: LeftSidebarの「Work」セクションで常時アクセス可能、ヘッダーにセッション完了・タスク完了・ポモドーロ設定ボタンを横並び配置、SoundMixerはsessionTypeに応じて自動切替
+- **サイドバータイマー表示**: タイマー実行中はWork項目下にタスク名・残り時間・編集ボタンを表示
 - **TaskTreeタイマー表示**: 実行中のタスク行に残り時間テキスト+ミニプログレスバーを表示
 - **Music管理画面**: Work/Restタブ切替式の6スロットUI、空スロットクリックでサウンドピッカーモーダル起動、各フェーズ最大6音、スロット毎にボリューム・トグル・シーク・削除操作、タグフィルタ付きピッカー、カスタムサウンド追加、タイマー非依存の独立再生ボタン、タグ管理パネル
 - **ノイズミキサー**: 6種の環境音（Rain, Thunder, Wind, Ocean, Birds, Fire）、Web Audio APIによるリアルタイム再生・ミキシング、Work/Rest別サウンド設定、タブ切替でサウンド再生も切替、シークコントロール（再生位置スライダー）、WorkScreenではフェーズ別選択サウンドのみコンパクトリスト表示
@@ -62,6 +62,20 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-12 - WorkScreen UI改善 + Sidebar Work Section追加
+
+#### 概要
+WorkScreenをモーダルオーバーレイから独立セクションに移行。LeftSidebarに「Work」メニュー追加、ボタン類をヘッダーに横並び配置、SoundMixerのWork/Restタブを削除しsessionType自動切替化、「セッション完了」ボタン追加、SessionCompletionModalをApp.tsxレベルに移動してどの画面からでも表示可能に。Music画面の音楽名インライン編集バグも修正（MusicSlotItemに編集機能追加）。
+
+#### 変更点
+- **WorkScreen**: overlay/onClose props削除、ヘッダーにTaskSelector+セッション完了+タスク完了+ポモドーロ設定ボタンを横並び配置
+- **SoundMixer**: Work/Restタブ削除、activeSessionTypeから直接mixer/toggle/volumeを導出
+- **PomodoroSettings**: ドロップダウンをbottom-10からtop-full下向き開きに変更
+- **LeftSidebar**: Workメニュー追加（Playアイコン）、mini timerをWork項目下に移動、onOpenTimerModal削除
+- **App.tsx**: isTimerModalOpen state削除、work caseをrenderContentに追加、SessionCompletionModalをグローバル配置
+- **Hooks**: useTaskDetailHandlers/useAppKeyboardShortcuts/useAppCommands/useElectronMenuActionsからsetIsTimerModalOpen削除、setActiveSection('work')に統一
+- **MusicSlotItem**: インライン名前編集機能追加（クリック→input→Enter/blur保存）
 
 ### 2026-02-12 - Music画面リデザイン + WorkScreen同期バグ修正
 
