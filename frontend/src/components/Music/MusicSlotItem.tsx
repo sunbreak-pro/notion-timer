@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { KeyboardEvent } from 'react';
-import { Volume2, VolumeX, X, Clock, Pencil, Check } from 'lucide-react';
-import { SOUND_TYPES } from '../../constants/sounds';
+import { Volume2, VolumeX, X, Clock, Check, Play, Pause, Music2, Pencil } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { SoundTagEditor } from './SoundTagEditor';
+import { SOUND_TYPES } from '../../constants/sounds';
 import type { SoundMixerState } from '../../hooks/useLocalSoundMixer';
 import type { useSoundTags } from '../../hooks/useSoundTags';
 
@@ -23,12 +24,13 @@ interface MusicSlotItemProps {
   channelPositions: Record<string, { currentTime: number; duration: number }>;
   onSeek: (id: string, time: number) => void;
   onRemove: () => void;
+  isPreviewing: boolean;
+  onTogglePreview: () => void;
 }
 
 export function MusicSlotItem({
   soundId,
   defaultLabel,
-  isCustom,
   soundTagState,
   mixer,
   onToggle,
@@ -36,14 +38,17 @@ export function MusicSlotItem({
   channelPositions,
   onSeek,
   onRemove,
+  isPreviewing: _isPreviewing,
+  onTogglePreview: _onTogglePreview,
 }: MusicSlotItemProps) {
+  const { t } = useTranslation();
   const soundState = mixer[soundId];
   const enabled = soundState?.enabled ?? false;
   const volume = soundState?.volume ?? 50;
   const displayName = soundTagState.getDisplayName(soundId) || defaultLabel;
 
-  const builtIn = SOUND_TYPES.find(s => s.id === soundId);
-  const Icon = builtIn?.icon;
+  // Resolve sound type icon
+  const SoundIcon = SOUND_TYPES.find(s => s.id === soundId)?.icon ?? Music2;
 
   // Force re-render when tag cache changes
   void soundTagState.version;
@@ -75,6 +80,7 @@ export function MusicSlotItem({
   }, [editValue, soundId, soundTagState]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    e.stopPropagation();
     if (e.key === 'Enter') handleSave();
     if (e.key === 'Escape') {
       setEditValue(displayName);
@@ -82,110 +88,157 @@ export function MusicSlotItem({
     }
   };
 
+  const currentTags = soundTagState.getTagsForSound(soundId);
+  const showSeek = enabled && (channelPositions[soundId]?.duration ?? 0) > 0;
+
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-notion-bg-secondary border border-notion-border hover:border-notion-accent/30 transition-colors group">
-      {/* Icon */}
-      <div className="w-8 h-8 rounded-md bg-notion-hover flex items-center justify-center shrink-0">
-        {Icon ? <Icon size={16} className="text-notion-text-secondary" /> : (
-          <Volume2 size={16} className="text-notion-text-secondary" />
-        )}
+    <div
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg border transition-colors group ${
+        enabled
+          ? 'border-notion-accent/40 bg-notion-accent/5'
+          : 'border-notion-border bg-notion-bg-secondary'
+      }`}
+    >
+      {/* Play/Pause toggle */}
+      <button
+        onClick={() => onToggle(soundId)}
+        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+          enabled
+            ? 'bg-notion-accent text-white'
+            : 'bg-notion-hover text-notion-text-secondary hover:text-notion-text hover:bg-notion-accent/20'
+        }`}
+        title={enabled ? t('music.disable') : t('music.enable')}
+      >
+        {enabled ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+      </button>
+
+      {/* Sound type icon (decorative) */}
+      <div className={`p-1.5 rounded-md shrink-0 ${
+        enabled ? 'text-notion-accent' : 'text-notion-text-secondary'
+      }`}>
+        <SoundIcon size={16} />
       </div>
 
-      {/* Name + tags */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          {isEditing ? (
-            <>
-              <input
-                ref={inputRef}
-                type="text"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onBlur={handleSave}
-                onKeyDown={handleKeyDown}
-                className="text-sm font-medium bg-transparent outline-none border-b border-notion-accent text-notion-text w-full"
-              />
-              <button
-                onMouseDown={(e) => { e.preventDefault(); handleSave(); }}
-                className="p-0.5 text-notion-accent hover:text-green-500 transition-colors"
-                title="Save"
-              >
-                <Check size={14} />
-              </button>
-            </>
-          ) : (
-            <span
-              className="text-sm font-medium text-notion-text truncate cursor-pointer hover:text-notion-accent transition-colors"
-              onClick={() => setIsEditing(true)}
-            >
-              {displayName}
-            </span>
-          )}
-          {!isEditing && !showSaved && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="opacity-0 group-hover:opacity-100 p-0.5 text-notion-text-secondary hover:text-notion-text transition-opacity"
-            >
-              <Pencil size={12} />
-            </button>
-          )}
-          {showSaved && (
-            <span className="text-xs text-green-500 font-medium ml-1">Saved!</span>
-          )}
-        </div>
-        <SoundTagEditor soundId={soundId} soundTagState={soundTagState} />
-      </div>
+      {/* Edit name (always visible, before name) */}
+      {!isEditing && (
+        <button
+          onClick={() => setIsEditing(true)}
+          className="p-1 rounded text-notion-text-secondary hover:text-notion-text hover:bg-notion-hover transition-colors shrink-0"
+          title={t('music.editName')}
+        >
+          <Pencil size={14} />
+        </button>
+      )}
 
-      {/* Volume + Seek sliders */}
-      <div className="flex flex-col gap-1 shrink-0">
-        <div className="flex items-center gap-2">
+      {/* Name + tag dots */}
+      {isEditing ? (
+        <div className="flex items-center gap-1 min-w-0 flex-1">
+          <input
+            ref={inputRef}
+            type="text"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={handleSave}
+            onKeyDown={handleKeyDown}
+            className="text-sm font-medium bg-transparent outline-none border-b border-notion-accent text-notion-text flex-1 min-w-0"
+          />
           <button
-            onClick={() => onToggle(soundId)}
-            className={`p-1 rounded transition-colors ${
-              enabled ? 'text-notion-accent' : 'text-notion-text-secondary hover:text-notion-text'
-            }`}
+            onMouseDown={(e) => { e.preventDefault(); handleSave(); }}
+            className="p-0.5 text-notion-accent hover:text-green-500 transition-colors shrink-0"
+            title={t('music.save')}
           >
-            {enabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            <Check size={14} />
           </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1.5 min-w-0 shrink-0 w-[160px]">
+          <span
+            className={`text-sm font-medium truncate ${
+              enabled ? 'text-notion-text' : 'text-notion-text-secondary'
+            }`}
+            title={displayName}
+          >
+            {displayName}
+          </span>
+          {showSaved && (
+            <span className="text-xs text-green-500 font-medium shrink-0">&#10003;</span>
+          )}
+          {/* Tag dots */}
+          {currentTags.length > 0 && (
+            <div className="flex items-center gap-0.5 shrink-0">
+              {currentTags.slice(0, 4).map(tag => (
+                <span
+                  key={tag.id}
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: tag.color }}
+                  title={tag.name}
+                />
+              ))}
+              {currentTags.length > 4 && (
+                <span className="text-[9px] text-notion-text-secondary">+{currentTags.length - 4}</span>
+              )}
+            </div>
+          )}
+          {/* Tag editor (+ button, hover only) */}
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity relative shrink-0">
+            <SoundTagEditor soundId={soundId} soundTagState={soundTagState} hidePills />
+          </div>
+        </div>
+      )}
+
+      {/* Volume slider */}
+      <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+        {enabled ? (
+          <Volume2 size={16} className="text-notion-text-secondary shrink-0" />
+        ) : (
+          <VolumeX size={16} className="text-notion-text-secondary shrink-0" />
+        )}
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={volume}
+          onChange={(e) => onSetVolume(soundId, Number(e.target.value))}
+          className="w-20 h-1 accent-[--color-accent] cursor-pointer"
+        />
+        <span className="text-[10px] text-notion-text-secondary w-6 text-right tabular-nums">
+          {volume}
+        </span>
+      </div>
+
+      {/* Seek bar */}
+      {showSeek ? (
+        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <Clock size={14} className="text-notion-text-secondary shrink-0" />
           <input
             type="range"
             min={0}
-            max={100}
-            value={volume}
-            onChange={(e) => onSetVolume(soundId, Number(e.target.value))}
-            className="w-20 accent-notion-accent"
+            max={channelPositions[soundId]?.duration ?? 0}
+            step={0.1}
+            value={channelPositions[soundId]?.currentTime ?? 0}
+            onChange={(e) => onSeek(soundId, Number(e.target.value))}
+            className="w-60 h-1 accent-[--color-text-secondary] cursor-pointer"
           />
-          <span className="text-xs text-notion-text-secondary w-7 text-right tabular-nums">
-            {volume}
+          <span className="text-[10px] text-notion-text-secondary tabular-nums shrink-0">
+            {formatSeekTime(channelPositions[soundId]?.currentTime ?? 0)}
           </span>
         </div>
-        {enabled && (channelPositions[soundId]?.duration ?? 0) > 0 && (
-          <div className="flex items-center gap-2">
-            <Clock size={14} className="text-notion-text-secondary p-0.5" />
-            <input
-              type="range"
-              min={0}
-              max={channelPositions[soundId]?.duration ?? 0}
-              step={0.1}
-              value={channelPositions[soundId]?.currentTime ?? 0}
-              onChange={(e) => onSeek(soundId, Number(e.target.value))}
-              className="w-20 accent-notion-text-secondary"
-            />
-            <span className="text-[10px] text-notion-text-secondary w-7 text-right tabular-nums">
-              {formatSeekTime(channelPositions[soundId]?.currentTime ?? 0)}
-            </span>
-          </div>
-        )}
-      </div>
+      ) : null}
 
-      {/* Remove from slot */}
-      <button
-        onClick={onRemove}
-        className="opacity-0 group-hover:opacity-100 p-1 text-notion-text-secondary hover:text-notion-danger transition-opacity"
-        title="Remove from slot"
-      >
-        <X size={14} />
-      </button>
+      {/* Spacer to push action buttons to the right */}
+      <div className="flex-1" />
+
+      {/* Hover-only action buttons */}
+      <div className="flex items-center gap-0.5 shrink-0 transition-opacity opacity-0 group-hover:opacity-100">
+        {/* Remove from slot */}
+        <button
+          onClick={onRemove}
+          className="p-1.5 rounded text-notion-text-secondary hover:text-notion-danger hover:bg-notion-hover transition-colors"
+          title={t('music.removeFromSlot')}
+        >
+          <X size={14} />
+        </button>
+      </div>
     </div>
   );
 }
