@@ -1,24 +1,24 @@
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
-import type { FontSize } from '../../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
-const FONT_SIZES: { value: FontSize; label: string }[] = [
-  { value: 'small', label: 'Small' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'large', label: 'Large' },
-];
+const FONT_SIZE_PX: Record<number, number> = {
+  1: 12, 2: 13, 3: 14, 4: 16, 5: 18,
+  6: 19, 7: 20, 8: 22, 9: 23, 10: 25,
+};
 
 export function AppearanceSettings() {
   const { theme, fontSize, toggleTheme, setFontSize } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-notion-text">Appearance</h3>
+      <h3 className="text-lg font-semibold text-notion-text">{t('settings.appearance')}</h3>
 
       <div className="flex items-center justify-between py-3">
         <div>
-          <p className="text-sm font-medium text-notion-text">Dark Mode</p>
-          <p className="text-xs text-notion-text-secondary">Switch between light and dark themes</p>
+          <p className="text-sm font-medium text-notion-text">{t('settings.darkMode')}</p>
+          <p className="text-xs text-notion-text-secondary">{t('settings.darkModeDesc')}</p>
         </div>
         <button
           onClick={toggleTheme}
@@ -37,21 +37,24 @@ export function AppearanceSettings() {
       </div>
 
       <div className="py-3">
-        <p className="text-sm font-medium text-notion-text mb-2">Font Size</p>
-        <div className="flex gap-2">
-          {FONT_SIZES.map(({ value, label }) => (
-            <button
-              key={value}
-              onClick={() => setFontSize(value)}
-              className={`px-4 py-2 text-sm rounded-md border transition-colors ${
-                fontSize === value
-                  ? 'border-notion-accent bg-notion-accent/10 text-notion-accent'
-                  : 'border-notion-border text-notion-text-secondary hover:border-notion-text-secondary'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm font-medium text-notion-text">{t('settings.fontSize')}</p>
+          <span className="text-xs text-notion-text-secondary tabular-nums">
+            {FONT_SIZE_PX[fontSize] ?? 18}px
+          </span>
+        </div>
+        <input
+          type="range"
+          min={1}
+          max={10}
+          step={1}
+          value={fontSize}
+          onChange={(e) => setFontSize(Number(e.target.value))}
+          className="w-full accent-[var(--notion-accent)]"
+        />
+        <div className="flex justify-between text-xs text-notion-text-secondary mt-1">
+          <span>{t('settings.fontSizeSmall')}</span>
+          <span>{t('settings.fontSizeLarge')}</span>
         </div>
       </div>
     </div>

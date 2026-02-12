@@ -5,6 +5,10 @@ export const STORAGE_KEYS = {
   NOTIFICATIONS_ENABLED: 'sonic-flow-notifications-enabled',
   LEFT_SIDEBAR_OPEN: 'sonic-flow-left-sidebar-open',
   RIGHT_SIDEBAR_OPEN: 'sonic-flow-right-sidebar-open',
+  LEFT_SIDEBAR_WIDTH: 'sonic-flow-left-sidebar-width',
+  LANGUAGE: 'sonic-flow-language',
   MEMO_TAB: 'sonic-flow-memo-tab',
   EFFECT_VOLUME: 'sonic-flow-effect-volume',
+  ACTIVE_CALENDAR_ID: 'sonic-flow-active-calendar-id',
+  TASK_TREE_FOLDER_FILTER: 'sonic-flow-task-tree-folder-filter',
 } as const;

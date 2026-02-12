@@ -5,17 +5,24 @@ import type { SectionId } from "../../types/taskTree";
 import type { TaskNode } from "../../types/taskTree";
 import { LeftSidebar } from "./LeftSidebar";
 import { RightSidebar } from "./RightSidebar";
+import { CalendarSidebar } from "../Calendar/CalendarSidebar";
 import { MainContent } from "./MainContent";
 import { STORAGE_KEYS } from "../../constants/storageKeys";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 
-const MIN_WIDTH = 200;
-const MAX_WIDTH = 400;
-const DEFAULT_WIDTH = 280;
+const RIGHT_MIN_WIDTH = 200;
+const RIGHT_MAX_WIDTH = 400;
+const RIGHT_DEFAULT_WIDTH = 280;
 
-function deserializeWidth(raw: string): number {
-  const val = parseInt(raw, 10);
-  return val >= MIN_WIDTH && val <= MAX_WIDTH ? val : DEFAULT_WIDTH;
+const LEFT_MIN_WIDTH = 160;
+const LEFT_MAX_WIDTH = 320;
+const LEFT_DEFAULT_WIDTH = 240;
+
+function deserializeWidth(min: number, max: number, def: number) {
+  return (raw: string): number => {
+    const val = parseInt(raw, 10);
+    return val >= min && val <= max ? val : def;
+  };
 }
 
 function deserializeBool(raw: string): boolean {
@@ -50,10 +57,11 @@ export function Layout({
   selectedTaskId,
   handleRef,
 }: LayoutProps) {
+  // Right sidebar
   const [rightSidebarWidth, setRightSidebarWidth] = useLocalStorage<number>(
     STORAGE_KEYS.RIGHT_SIDEBAR_WIDTH,
-    DEFAULT_WIDTH,
-    { serialize: String, deserialize: deserializeWidth },
+    RIGHT_DEFAULT_WIDTH,
+    { serialize: String, deserialize: deserializeWidth(RIGHT_MIN_WIDTH, RIGHT_MAX_WIDTH, RIGHT_DEFAULT_WIDTH) },
   );
   const [leftSidebarOpen, setLeftSidebarOpen] = useLocalStorage<boolean>(
     STORAGE_KEYS.LEFT_SIDEBAR_OPEN,
@@ -65,8 +73,17 @@ export function Layout({
     true,
     { serialize: String, deserialize: deserializeBool },
   );
-  const isResizing = useRef(false);
-  const [dragWidth, setDragWidth] = useState<number | null>(null);
+  const isResizingRight = useRef(false);
+  const [dragRightWidth, setDragRightWidth] = useState<number | null>(null);
+
+  // Left sidebar
+  const [leftSidebarWidth, setLeftSidebarWidth] = useLocalStorage<number>(
+    STORAGE_KEYS.LEFT_SIDEBAR_WIDTH,
+    LEFT_DEFAULT_WIDTH,
+    { serialize: String, deserialize: deserializeWidth(LEFT_MIN_WIDTH, LEFT_MAX_WIDTH, LEFT_DEFAULT_WIDTH) },
+  );
+  const isResizingLeft = useRef(false);
+  const [dragLeftWidth, setDragLeftWidth] = useState<number | null>(null);
 
   useEffect(() => {
     if (handleRef) {
@@ -92,28 +109,51 @@ export function Layout({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [setLeftSidebarOpen, setRightSidebarOpen]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  // Right sidebar resize
+  const handleRightMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    isResizing.current = true;
+    isResizingRight.current = true;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, []);
+
+  // Left sidebar resize
+  const handleLeftMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizingLeft.current = true;
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
   }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing.current) return;
-      const newWidth = document.documentElement.clientWidth - e.clientX;
-      const clamped = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
-      setDragWidth(clamped);
+      if (isResizingRight.current) {
+        const newWidth = document.documentElement.clientWidth - e.clientX;
+        const clamped = Math.max(RIGHT_MIN_WIDTH, Math.min(RIGHT_MAX_WIDTH, newWidth));
+        setDragRightWidth(clamped);
+      }
+      if (isResizingLeft.current) {
+        const clamped = Math.max(LEFT_MIN_WIDTH, Math.min(LEFT_MAX_WIDTH, e.clientX));
+        setDragLeftWidth(clamped);
+      }
     };
 
     const handleMouseUp = () => {
-      if (isResizing.current) {
-        isResizing.current = false;
+      if (isResizingRight.current) {
+        isResizingRight.current = false;
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
-        setDragWidth((prev) => {
+        setDragRightWidth((prev) => {
           if (prev !== null) setRightSidebarWidth(prev);
+          return null;
+        });
+      }
+      if (isResizingLeft.current) {
+        isResizingLeft.current = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        setDragLeftWidth((prev) => {
+          if (prev !== null) setLeftSidebarWidth(prev);
           return null;
         });
       }
@@ -125,18 +165,29 @@ export function Layout({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [setRightSidebarWidth]);
+  }, [setRightSidebarWidth, setLeftSidebarWidth]);
 
-  const showRightSidebar = activeSection === "tasks";
+  const showTasksSidebar = activeSection === "tasks";
+  const showCalendarSidebar = activeSection === "calendar";
+  const showRightSidebar = showTasksSidebar || showCalendarSidebar;
+
+  const currentLeftWidth = dragLeftWidth ?? leftSidebarWidth;
 
   return (
     <div className="flex min-h-screen">
       {leftSidebarOpen ? (
-        <LeftSidebar
-          activeSection={activeSection}
-          onSectionChange={onSectionChange}
-          onToggle={() => setLeftSidebarOpen(false)}
-        />
+        <div className="relative shrink-0" style={{ width: currentLeftWidth }}>
+          <LeftSidebar
+            width={currentLeftWidth}
+            activeSection={activeSection}
+            onSectionChange={onSectionChange}
+            onToggle={() => setLeftSidebarOpen(false)}
+          />
+          <div
+            onMouseDown={handleLeftMouseDown}
+            className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-notion-accent/30 transition-colors z-10"
+          />
+        </div>
       ) : (
         <div className="w-12 h-screen bg-notion-bg-secondary border-r border-notion-border flex flex-col items-center pt-4 shrink-0">
           <button
@@ -152,21 +203,28 @@ export function Layout({
         (rightSidebarOpen ? (
           <div
             className="relative shrink-0"
-            style={{ width: dragWidth ?? rightSidebarWidth }}
+            style={{ width: dragRightWidth ?? rightSidebarWidth }}
           >
             <div
-              onMouseDown={handleMouseDown}
+              onMouseDown={handleRightMouseDown}
               className="absolute top-0 left-0 w-1.5 h-full cursor-col-resize hover:bg-notion-accent/30 transition-colors z-10"
             />
-            <RightSidebar
-              width={dragWidth ?? rightSidebarWidth}
-              onCreateFolder={onCreateFolder}
-              onCreateTask={onCreateTask}
-              onSelectTask={onSelectTask}
-              onPlayTask={onPlayTask}
-              selectedTaskId={selectedTaskId}
-              onToggle={() => setRightSidebarOpen(false)}
-            />
+            {showTasksSidebar ? (
+              <RightSidebar
+                width={dragRightWidth ?? rightSidebarWidth}
+                onCreateFolder={onCreateFolder}
+                onCreateTask={onCreateTask}
+                onSelectTask={onSelectTask}
+                onPlayTask={onPlayTask}
+                selectedTaskId={selectedTaskId}
+                onToggle={() => setRightSidebarOpen(false)}
+              />
+            ) : (
+              <CalendarSidebar
+                width={dragRightWidth ?? rightSidebarWidth}
+                onToggle={() => setRightSidebarOpen(false)}
+              />
+            )}
           </div>
         ) : (
           <div className="w-12 h-screen bg-notion-bg-subsidebar border-l border-notion-border flex flex-col items-center pt-4 shrink-0">

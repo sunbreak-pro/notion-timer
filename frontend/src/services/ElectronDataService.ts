@@ -8,6 +8,7 @@ import type { CustomSoundMeta } from '../types/customSound';
 import type { NoteNode } from '../types/note';
 
 import type { TaskTemplate } from '../types/template';
+import type { CalendarNode } from '../types/calendar';
 import type { LogEntry, IpcChannelMetrics, SystemInfo } from '../types/diagnostics';
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
@@ -201,6 +202,20 @@ export class ElectronDataService implements DataService {
   }
   deleteTemplate(id: number): Promise<void> {
     return invoke('db:templates:delete', id);
+  }
+
+  // Calendars
+  fetchCalendars(): Promise<CalendarNode[]> {
+    return invoke('db:calendars:fetchAll');
+  }
+  createCalendar(id: string, title: string, folderId: string): Promise<CalendarNode> {
+    return invoke('db:calendars:create', id, title, folderId);
+  }
+  updateCalendar(id: string, updates: Partial<Pick<CalendarNode, 'title' | 'folderId' | 'order'>>): Promise<CalendarNode> {
+    return invoke('db:calendars:update', id, updates);
+  }
+  deleteCalendar(id: string): Promise<void> {
+    return invoke('db:calendars:delete', id);
   }
 
   // Data I/O

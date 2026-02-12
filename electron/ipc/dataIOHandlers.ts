@@ -49,6 +49,7 @@ export function registerDataIOHandlers(db: Database.Database): void {
         soundTagDefinitions: safeQuery(db, 'SELECT * FROM sound_tag_definitions'),
         soundTagAssignments: safeQuery(db, 'SELECT * FROM sound_tag_assignments'),
         soundDisplayMeta: safeQuery(db, 'SELECT * FROM sound_display_meta'),
+        calendars: safeQuery(db, 'SELECT * FROM calendars'),
         aiSettings: safeQueryOne(db, 'SELECT * FROM ai_settings WHERE id = 1'),
       },
     };
@@ -90,6 +91,7 @@ export function registerDataIOHandlers(db: Database.Database): void {
       const importAll = db.transaction(() => {
         // Clear all tables
         db.exec(`
+          DELETE FROM calendars;
           DELETE FROM notes;
           DELETE FROM sound_tag_assignments;
           DELETE FROM sound_tag_definitions;
@@ -186,6 +188,17 @@ export function registerDataIOHandlers(db: Database.Database): void {
           `);
           for (const n of data.notes) {
             insertNote.run(n);
+          }
+        }
+
+        // Import calendars
+        if (Array.isArray(data.calendars)) {
+          const insertCalendar = db.prepare(`
+            INSERT INTO calendars (id, title, folder_id, "order", created_at, updated_at)
+            VALUES (@id, @title, @folder_id, @order, @created_at, @updated_at)
+          `);
+          for (const c of data.calendars) {
+            insertCalendar.run(c);
           }
         }
 

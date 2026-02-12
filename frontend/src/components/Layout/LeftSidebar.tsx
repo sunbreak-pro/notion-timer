@@ -13,35 +13,42 @@ import {
 import type { SectionId } from "../../types/taskTree";
 import { useTimerContext } from "../../hooks/useTimerContext";
 import { isMac } from "../../utils/platform";
+import { useTranslation } from "react-i18next";
 
 interface SidebarProps {
+  width: number;
   activeSection: SectionId;
   onSectionChange: (section: SectionId) => void;
   onToggle: () => void;
 }
 
-const menuItems: { id: SectionId; label: string; icon: typeof CheckSquare }[] =
+const menuItems: { id: SectionId; labelKey: string; icon: typeof CheckSquare }[] =
   [
-    { id: "tasks", label: "Tasks", icon: CheckSquare },
-    { id: "memo", label: "Memo", icon: BookOpen },
-    { id: "music", label: "Music", icon: Music },
-    { id: "work", label: "Work", icon: Play },
-    { id: "calendar", label: "Calendar", icon: Calendar },
-    { id: "analytics", label: "Analytics", icon: BarChart3 },
-    { id: "settings", label: "Settings", icon: Settings },
-    { id: "tips", label: "Tips", icon: Lightbulb },
+    { id: "tasks", labelKey: "sidebar.tasks", icon: CheckSquare },
+    { id: "memo", labelKey: "sidebar.memo", icon: BookOpen },
+    { id: "music", labelKey: "sidebar.music", icon: Music },
+    { id: "work", labelKey: "sidebar.work", icon: Play },
+    { id: "calendar", labelKey: "sidebar.calendar", icon: Calendar },
+    { id: "analytics", labelKey: "sidebar.analytics", icon: BarChart3 },
+    { id: "settings", labelKey: "sidebar.settings", icon: Settings },
+    { id: "tips", labelKey: "sidebar.tips", icon: Lightbulb },
   ];
 
 export function LeftSidebar({
+  width,
   activeSection,
   onSectionChange,
   onToggle,
 }: SidebarProps) {
   const timer = useTimerContext();
+  const { t } = useTranslation();
   const showTimer = timer.activeTask !== null || timer.isRunning;
 
   return (
-    <aside className="w-60 h-screen bg-notion-bg-secondary border-r border-notion-border flex flex-col">
+    <aside
+      className="h-screen bg-notion-bg-secondary border-r border-notion-border flex flex-col"
+      style={{ width }}
+    >
       <div
         className={`flex justify-between items-center p-4 border-b border-notion-border titlebar-drag${
           isMac ? ' pt-10' : ''
@@ -70,7 +77,7 @@ export function LeftSidebar({
                 }`}
               >
                 <Icon size={18} />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </button>
 
               {item.id === "work" && showTimer && (
@@ -78,7 +85,7 @@ export function LeftSidebar({
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-notion-text-secondary truncate">
-                        {timer.activeTask?.title ?? "Free Session"}
+                        {timer.activeTask?.title ?? t('sidebar.freeSession')}
                       </p>
                       <p className="text-sm font-mono tabular-nums text-notion-accent">
                         {timer.formatTime(timer.remainingSeconds)}

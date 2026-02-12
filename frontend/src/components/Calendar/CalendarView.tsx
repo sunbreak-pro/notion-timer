@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useMemoContext } from "../../hooks/useMemoContext";
+import { useCalendarContext } from "../../hooks/useCalendarContext";
 import { useCalendar } from "../../hooks/useCalendar";
+import { getDescendantTasks } from "../../utils/getDescendantTasks";
 import { CalendarHeader } from "./CalendarHeader";
 import { MonthlyView } from "./MonthlyView";
 import { WeeklyTimeGrid } from "./WeeklyTimeGrid";
@@ -27,6 +29,14 @@ export function CalendarView({
 }: CalendarViewProps) {
   const { nodes, getTaskColor, getFolderTagForTask } = useTaskTreeContext();
   const { memos } = useMemoContext();
+  const { activeCalendar } = useCalendarContext();
+
+  // Filter nodes by active calendar's folder subtree
+  const filteredNodes = useMemo(() => {
+    if (!activeCalendar) return nodes;
+    return getDescendantTasks(activeCalendar.folderId, nodes);
+  }, [activeCalendar, nodes]);
+
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -38,7 +48,7 @@ export function CalendarView({
   const [tagFilter, setTagFilter] = useState<string>("");
 
   const { tasksByDate, calendarDays, weekDays } = useCalendar(
-    nodes,
+    filteredNodes,
     year,
     month,
     filter,

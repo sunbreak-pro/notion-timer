@@ -125,6 +125,15 @@ export interface SoundDisplayMeta {
   displayName: string | null;
 }
 
+export interface CalendarNode {
+  id: string;
+  title: string;
+  folderId: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MigrationPayload {
   tasks?: TaskNode[];
   timerSettings?: Partial<TimerSettings>;

@@ -9,12 +9,14 @@ import { MemoProvider } from './context/MemoContext'
 import { TimerProvider } from './context/TimerContext'
 import { AudioProvider } from './context/AudioContext'
 import { NoteProvider } from './context/NoteContext'
+import { CalendarProvider } from './context/CalendarContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <ThemeProvider>
         <TaskTreeProvider>
+          <CalendarProvider>
           <MemoProvider>
             <NoteProvider>
               <TimerProvider>
@@ -24,6 +26,7 @@ createRoot(document.getElementById('root')!).render(
               </TimerProvider>
             </NoteProvider>
           </MemoProvider>
+          </CalendarProvider>
         </TaskTreeProvider>
       </ThemeProvider>
     </ErrorBoundary>

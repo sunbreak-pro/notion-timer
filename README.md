@@ -24,7 +24,8 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **Tips画面**: ショートカット一覧（6カテゴリ/29件）、タスク/タイマー/カレンダー/メモ/アナリティクス/エディタの操作ガイド（7タブ構成）
 - **リッチテキストエディタ**: TipTap拡張（Toggle List/Table/Callout/Image）、スラッシュコマンド対応、テキスト選択時Bubbleツールバー（Bold/Italic/Strikethrough/Code/Link/TextColor）
 - **コマンドパレット**: ⌘Kで起動、16コマンド（Navigation/Task/Timer/View）をリアルタイム検索・実行
-- **カレンダー**: 月/週表示切替、タスクを日付別に表示、フィルタリング（incomplete/completed）
+- **カレンダー**: 月/週表示切替、タスクを日付別に表示、フィルタリング（incomplete/completed）、複数カレンダー対応（フォルダ別ビュー）、カレンダーサイドバーで切替
+- **タスクツリーフォルダフィルタ**: PROJECTSセクションにドロップダウンフィルター、フォルダ単位で表示絞り込み
 - **アナリティクス**: 基本統計（総タスク数、完了率、フォルダ数）
 - **データ管理**: SQLite永続化（better-sqlite3）、JSON Export/Import、バックアップ付きインポート
 - **自由メモ（Notes）**: 日付に縛られないフリーフォームノート、ピン留め、全文検索、ソート切替（更新日/作成日/タイトル）、ソフトデリート対応
@@ -62,6 +63,25 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-12 - 複数カレンダー + タスクツリーフォルダフィルタリング
+
+#### 概要
+フォルダ増加時のカレンダー・タスクツリーの視覚情報過多を解決。カレンダーをフォルダ単位で分割表示する複数カレンダー機能と、タスクツリーのPROJECTSセクションにフォルダフィルタリングを追加。
+
+#### 変更点
+- **DB**: migrateV10追加、calendarsテーブル（id/title/folder_id/order/timestamps、ON DELETE CASCADE）
+- **Backend**: calendarRepository.ts（CRUD）、calendarHandlers.ts（4チャンネル）、preload.ts/registerAll.ts更新
+- **DataService**: CalendarNode型定義、DataService/ElectronDataServiceにcalendar CRUD 4メソッド追加
+- **CalendarContext**: CalendarProvider + useCalendars hook + useCalendarContext（activeCalendarIdのlocalStorage永続化）
+- **CalendarSidebar**: カレンダー一覧表示、All Tasks/個別カレンダー切替、作成/リネーム/削除、コンテキストメニュー
+- **CalendarCreateDialog**: タイトル入力 + フォルダ選択ドロップダウン（パス表示付き）
+- **CalendarView**: activeCalendar選択時にgetDescendantTasksでフォルダサブツリーのタスクのみ表示
+- **Layout.tsx**: calendar セクション時にCalendarSidebar表示（既存サイドバーリサイズ・開閉ロジック共用）
+- **FolderFilterDropdown**: タスクツリーPROJECTSヘッダーにフィルタードロップダウン追加
+- **TaskTree.tsx**: filterFolderIdでPROJECTS/COMPLETEDセクションをフォルダ単位でフィルタ（localStorage永続化、削除時自動リセット）
+- **ユーティリティ**: getDescendantTasks（サブツリー再帰取得）、flattenFolders（パス付きフォルダ一覧）
+- **Data I/O**: export/importにcalendarsテーブル対応追加
 
 ### 2026-02-12 - WorkScreen UI改善 + Sidebar Work Section追加
 

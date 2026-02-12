@@ -63,6 +63,11 @@ const ALLOWED_CHANNELS = new Set([
   'db:templates:create',
   'db:templates:getById',
   'db:templates:delete',
+  // Calendars
+  'db:calendars:fetchAll',
+  'db:calendars:create',
+  'db:calendars:update',
+  'db:calendars:delete',
   // Data I/O
   'data:export',
   'data:import',

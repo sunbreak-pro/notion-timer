@@ -20,6 +20,8 @@ import { registerCustomSoundHandlers } from './customSoundHandlers';
 import { registerNoteHandlers } from './noteHandlers';
 
 import { registerTemplateHandlers } from './templateHandlers';
+import { createCalendarRepository } from '../database/calendarRepository';
+import { registerCalendarHandlers } from './calendarHandlers';
 import { registerDataIOHandlers } from './dataIOHandlers';
 import { registerDiagnosticsHandlers } from './diagnosticsHandlers';
 import { registerUpdaterHandlers } from './updaterHandlers';
@@ -62,6 +64,7 @@ export function registerAllHandlers(db: Database.Database): void {
     ['CustomSound', () => registerCustomSoundHandlers(createCustomSoundRepository())],
 
     ['Templates', () => registerTemplateHandlers(templates)],
+    ['Calendars', () => registerCalendarHandlers(createCalendarRepository(db))],
     ['App', () => registerAppHandlers({ tasks, timer, sound: getSoundRepo(), memo })],
     ['DataIO', () => registerDataIOHandlers(db)],
     ['Diagnostics', () => registerDiagnosticsHandlers(db)],

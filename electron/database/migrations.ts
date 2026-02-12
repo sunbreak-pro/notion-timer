@@ -30,6 +30,9 @@ export function runMigrations(db: Database.Database): void {
   if (currentVersion < 9) {
     migrateV9(db);
   }
+  if (currentVersion < 10) {
+    migrateV10(db);
+  }
 }
 
 function migrateV1(db: Database.Database): void {
@@ -352,6 +355,23 @@ function migrateV9(db: Database.Database): void {
     DROP TABLE IF EXISTS note_tag_definitions;
 
     PRAGMA user_version = 9;
+  `);
+}
+
+function migrateV10(db: Database.Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS calendars (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      folder_id TEXT NOT NULL,
+      "order" INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (folder_id) REFERENCES tasks(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_calendars_folder ON calendars(folder_id);
+
+    PRAGMA user_version = 10;
   `);
 }
 

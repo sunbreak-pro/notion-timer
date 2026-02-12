@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   DndContext,
   pointerWithin,
@@ -28,6 +28,10 @@ import { TaskTreeNode } from "./TaskTreeNode";
 import { InlineCreateInput } from "./InlineCreateInput";
 
 import { TemplateDialog } from "../Templates/TemplateDialog";
+import { FolderFilterDropdown } from "./FolderFilterDropdown";
+import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { getDescendantTasks } from "../../utils/getDescendantTasks";
+import { STORAGE_KEYS } from "../../constants/storageKeys";
 import type { TaskNode } from "../../types/taskTree";
 
 interface TaskTreeProps {
@@ -67,6 +71,18 @@ export function TaskTree({
   const [isCreatingInboxTask, setIsCreatingInboxTask] = useState(false);
   const [isCreatingProjectFolder, setIsCreatingProjectFolder] = useState(false);
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
+  const [filterFolderId, setFilterFolderId] = useLocalStorage<string | null>(
+    STORAGE_KEYS.TASK_TREE_FOLDER_FILTER,
+    null,
+    { serialize: (v) => v ?? '', deserialize: (v) => v || null },
+  );
+
+  // Reset filter if the folder no longer exists
+  useEffect(() => {
+    if (filterFolderId && !nodes.find(n => n.id === filterFolderId)) {
+      setFilterFolderId(null);
+    }
+  }, [filterFolderId, nodes, setFilterFolderId]);
 
   const { sensors, activeNode, handleDragStart, handleDragEnd, handleDragCancel } =
     useTaskTreeDnd({ nodes, moveNode, moveNodeInto, moveToRoot });
@@ -76,18 +92,30 @@ export function TaskTree({
     () => rootChildren.filter((n) => n.type === "task" && n.status !== "DONE"),
     [rootChildren],
   );
-  const folders = useMemo(
-    () => rootChildren.filter((n) => n.type === "folder" && n.status !== "DONE"),
-    [rootChildren],
-  );
-  const completedRootTasks = useMemo(
-    () => rootChildren.filter((n) => n.type === "task" && n.status === "DONE"),
-    [rootChildren],
-  );
-  const completedFolders = useMemo(
-    () => rootChildren.filter((n) => n.type === "folder" && n.status === "DONE"),
-    [rootChildren],
-  );
+  const folders = useMemo(() => {
+    if (!filterFolderId) {
+      return rootChildren.filter((n) => n.type === "folder" && n.status !== "DONE");
+    }
+    const target = nodes.find(n => n.id === filterFolderId);
+    if (!target) return rootChildren.filter((n) => n.type === "folder" && n.status !== "DONE");
+    return target.status !== "DONE" ? [target] : [];
+  }, [rootChildren, filterFolderId, nodes]);
+
+  const completedRootTasks = useMemo(() => {
+    if (!filterFolderId) {
+      return rootChildren.filter((n) => n.type === "task" && n.status === "DONE");
+    }
+    // When filtered, show completed tasks from the filtered folder's subtree
+    const descendants = getDescendantTasks(filterFolderId, nodes);
+    return descendants.filter(n => n.type === "task" && n.status === "DONE");
+  }, [rootChildren, filterFolderId, nodes]);
+
+  const completedFolders = useMemo(() => {
+    if (!filterFolderId) {
+      return rootChildren.filter((n) => n.type === "folder" && n.status === "DONE");
+    }
+    return []; // Don't show completed folders when filtering
+  }, [rootChildren, filterFolderId]);
   const hasCompleted = completedRootTasks.length > 0 || completedFolders.length > 0;
 
   const inboxIds = useMemo(() => inboxTasks.map((n) => n.id), [inboxTasks]);
@@ -180,7 +208,13 @@ export function TaskTree({
               >
                 <FolderOpen size={14} />
                 <div className="flex-row flex items-center justify-between w-full">
-                  Projects
+                  <div className="flex items-center gap-1.5">
+                    Projects
+                    <FolderFilterDropdown
+                      filterFolderId={filterFolderId}
+                      onFilterChange={setFilterFolderId}
+                    />
+                  </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={(e) => { e.stopPropagation(); setIsTemplateDialogOpen(true); }}
