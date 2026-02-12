@@ -23,6 +23,7 @@ cd frontend && npm run build        # tsc -b && vite build
 cd frontend && npm run lint         # ESLint
 cd frontend && npm run test         # Vitest（単発実行）
 cd frontend && npm run test:watch   # Vitest（ウォッチモード）
+cd frontend && npx vitest run src/path/to/File.test.tsx  # 単一テスト実行
 ```
 
 ### Electron単体
@@ -66,7 +67,7 @@ Repository層 (better-sqlite3 → userData/sonic-flow.db)
 
 テーブル: tasks, timer_settings, timer_sessions, sound_settings, sound_presets, memos, ai_settings, tags, task_tags, task_templates, custom_sounds
 
-**localStorage は UI状態のみ**（6キー、`constants/storageKeys.ts`）: theme, font-size, sidebar幅, 通知ON/OFF, 左右サイドバー開閉。
+**localStorage は UI状態のみ**（12キー、`constants/storageKeys.ts`）: theme, font-size, language, sidebar幅(左右), サイドバー開閉(左右), 通知ON/OFF, メモタブ, エフェクト音量, アクティブカレンダーID, フォルダフィルタ。
 
 ### DataService 抽象化レイヤー（重要）
 フロントエンドは `DataService` インターフェース経由でデータアクセス。直接IPCを呼ばない。
@@ -110,7 +111,7 @@ electron/
 
 **Context Provider スタック** (`main.tsx`):
 ```
-StrictMode → ErrorBoundary → ThemeProvider → TaskTreeProvider → MemoProvider → TimerProvider → AudioProvider → TagProvider → App
+StrictMode → ErrorBoundary → ThemeProvider → TaskTreeProvider → CalendarProvider → MemoProvider → NoteProvider → TimerProvider → AudioProvider → App
 ```
 
 **ルーティング**: React Routerなし。`App.tsx`が`activeSection`状態で7セクション（tasks/memo/session/calendar/analytics/settings/tips）を切り替え。
@@ -137,7 +138,7 @@ WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerMo
 - `useLocalSoundMixer` — サウンドミキサー状態管理（ボリューム、有効/無効）
 - `useAudioEngine` — Web Audio APIによるリアルタイム再生・フェードイン/アウト
 - `useCustomSounds` — カスタムサウンドメタデータ + IPC blob管理
-- `useTimerContext` / `useTaskTreeContext` / `useAudioContext` / `useMemoContext` / `useTagContext` — Context消費用ラッパー
+- `useTimerContext` / `useTaskTreeContext` / `useAudioContext` / `useMemoContext` / `useNoteContext` / `useCalendarContext` — Context消費用ラッパー
 
 **タイマーシステム**:
 - `TimerContext`がクライアントサイド`setInterval`でカウントダウン
@@ -150,6 +151,15 @@ WorkScreenはモーダルオーバーレイとしても表示可能（`isTimerMo
 **リッチテキスト**: TipTap (`@tiptap/react`) でタスクメモ編集（MemoEditor）。`React.lazy`で遅延ロード。
 
 **IDはString型**: `"task-xxx"`/`"folder-xxx"`形式。
+
+**i18n**: `react-i18next`使用。対応言語: en/ja。ロケールファイル: `frontend/src/i18n/locales/{en,ja}.json`。言語設定は`localStorage`（`sonic-flow-language`）に保存。
+
+### テスト構成
+テストファイルはソースと同じディレクトリに配置（`*.test.ts` / `*.spec.tsx`）。
+テストユーティリティ（`frontend/src/test/`）:
+- `setup.ts` — localStorage/Notification/electronAPIのモック
+- `mockDataService.ts` — DataServiceの全メソッドモック
+- `renderWithProviders.tsx` — 全Providerラップ済みrender関数
 
 ---
 
