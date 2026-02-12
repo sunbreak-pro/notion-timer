@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
-import { Play, Square, Settings2, Search, X, Plus } from 'lucide-react';
+import { Settings2, Search, X, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAudioContext } from '../../hooks/useAudioContext';
+import { usePreviewAudio } from '../../hooks/usePreviewAudio';
 import { SOUND_TYPES } from '../../constants/sounds';
 import { useSoundTags } from '../../hooks/useSoundTags';
 import { SoundTagManager } from './SoundTagManager';
@@ -16,6 +17,7 @@ const MAX_SLOTS = 6;
 export function MusicScreen() {
   const audio = useAudioContext();
   const soundTagState = useSoundTags();
+  const preview = usePreviewAudio();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'WORK' | 'REST' | 'ALL'>('WORK');
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -55,10 +57,7 @@ export function MusicScreen() {
       });
     }
     if (soundTagState.filterTagIds.length > 0) {
-      filtered = filtered.filter(s => {
-        const tags = soundTagState.getSoundTagIds(s.id);
-        return soundTagState.filterTagIds.some(fid => tags.includes(fid));
-      });
+      filtered = filtered.filter(s => soundTagState.soundPassesFilter(s.id));
     }
     return filtered;
   }, [allSoundsSearch, audio.customSounds, soundTagState]);
@@ -101,17 +100,6 @@ export function MusicScreen() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-notion-text">{t('music.title')}</h1>
           <div className="flex items-center gap-2">
-            <button
-              onClick={audio.toggleManualPlay}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                audio.manualPlay
-                  ? 'bg-green-500 text-white hover:bg-green-600'
-                  : 'bg-notion-hover text-notion-text-secondary hover:text-notion-text'
-              }`}
-            >
-              {audio.manualPlay ? <Square size={14} /> : <Play size={14} />}
-              <span>{audio.manualPlay ? t('music.stop') : t('music.play')}</span>
-            </button>
             <button
               onClick={() => setShowTagManager(v => !v)}
               className={`p-1.5 rounded-md transition-colors ${
@@ -201,6 +189,8 @@ export function MusicScreen() {
                     channelPositions={audio.channelPositions}
                     onSeek={audio.seekSound}
                     onRemove={() => handleRemoveSound(soundId)}
+                    isPreviewing={preview.previewingId === soundId}
+                    onTogglePreview={() => preview.togglePreview(soundId, audio.soundSources[soundId])}
                   />
                 );
               })}
@@ -256,6 +246,8 @@ export function MusicScreen() {
                   soundTagState={soundTagState}
                   toggleWorkscreenSelection={audio.toggleWorkscreenSelection}
                   isWorkscreenSelected={audio.isWorkscreenSelected}
+                  isPreviewing={preview.previewingId === s.id}
+                  onTogglePreview={() => preview.togglePreview(s.id, audio.soundSources[s.id])}
                 />
               ))}
             </div>
