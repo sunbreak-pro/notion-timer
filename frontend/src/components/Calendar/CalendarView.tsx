@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useMemoContext } from "../../hooks/useMemoContext";
@@ -66,7 +66,8 @@ export function CalendarView({
     return map;
   }, [memos]);
 
-  const handlePrev = useCallback(() => {
+  /* eslint-disable react-hooks/exhaustive-deps -- React Compiler auto-memoizes */
+  const handlePrev = () => {
     if (viewMode === "week") {
       setWeekStartDate((prev) => {
         const d = new Date(prev);
@@ -79,9 +80,9 @@ export function CalendarView({
         setYear((y) => y - 1);
       } else setMonth((m) => m - 1);
     }
-  }, [viewMode, month]);
+  };
 
-  const handleNext = useCallback(() => {
+  const handleNext = () => {
     if (viewMode === "week") {
       setWeekStartDate((prev) => {
         const d = new Date(prev);
@@ -94,14 +95,14 @@ export function CalendarView({
         setYear((y) => y + 1);
       } else setMonth((m) => m + 1);
     }
-  }, [viewMode, month]);
+  };
 
-  const handleToday = useCallback(() => {
+  const handleToday = () => {
     const now = new Date();
     setYear(now.getFullYear());
     setMonth(now.getMonth());
     setWeekStartDate(getInitialWeekStart());
-  }, []);
+  };
 
   // Collect available tags from visible tasks
   const availableTags = useMemo(() => {
@@ -150,6 +151,7 @@ export function CalendarView({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleNext, handlePrev, handleToday]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // Filter tasksByDate by tag
   const filteredTasksByDate = useMemo(() => {

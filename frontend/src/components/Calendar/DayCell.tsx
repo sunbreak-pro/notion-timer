@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { Plus } from "lucide-react";
 import type { TaskNode } from "../../types/taskTree";
 import type { MemoNode } from "../../types/memo";
@@ -39,7 +39,7 @@ export function DayCell({
   const [showMore, setShowMore] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
-  const closeMore = useCallback(() => setShowMore(false), []);
+  const closeMore = () => setShowMore(false);
   useClickOutside(moreRef, closeMore, showMore);
 
   return (

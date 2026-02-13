@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import {
   Calendar as CalendarIcon,
   X,
@@ -47,7 +47,7 @@ export function DateTimePicker({
   const [hour, setHour] = useState(current.getHours());
   const [minute, setMinute] = useState(current.getMinutes());
 
-  const closeDropdown = useCallback(() => setOpen(false), []);
+  const closeDropdown = () => setOpen(false);
   useClickOutside(ref, closeDropdown, open);
 
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();

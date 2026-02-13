@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { Calendar as CalendarIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { formatDateKey } from '../../utils/dateKey';
@@ -43,7 +43,7 @@ export function DateTimeRangePicker({
 
   const [selectingEnd, setSelectingEnd] = useState(false);
 
-  const closeDropdown = useCallback(() => setOpen(false), []);
+  const closeDropdown = () => setOpen(false);
   useClickOutside(ref, closeDropdown, open);
 
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
