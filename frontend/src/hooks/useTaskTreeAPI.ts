@@ -61,7 +61,11 @@ export function useTaskTreeAPI() {
   const getChildren = useCallback((parentId: string | null) => {
     return activeNodes
       .filter(n => n.parentId === parentId)
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => {
+        if (a.type === 'folder' && b.type !== 'folder') return -1;
+        if (a.type !== 'folder' && b.type === 'folder') return 1;
+        return a.order - b.order;
+      });
   }, [activeNodes]);
 
   const getNodeDepth = useCallback((nodeId: string): number => {

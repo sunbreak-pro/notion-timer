@@ -1,4 +1,5 @@
 import { validateTagName, validateTaskTitle, validateNoteTitle, MAX_TAG_NAME_LENGTH, MAX_TASK_TITLE_LENGTH, MAX_NOTE_TITLE_LENGTH } from './validation';
+import { describe, it, expect } from 'vitest';
 
 describe('validateTagName', () => {
   it('accepts valid tag names', () => {

@@ -87,7 +87,7 @@ export function useTaskTreeMovement(
     }));
   }, [nodes, persist]);
 
-  const moveNode = useCallback((activeId: string, overId: string) => {
+  const moveNode = useCallback((activeId: string, overId: string, position: 'above' | 'below' = 'above') => {
     const active = nodes.find(n => n.id === activeId);
     const over = nodes.find(n => n.id === overId);
     if (!active || !over) return;
@@ -99,16 +99,22 @@ export function useTaskTreeMovement(
     if (isDescendant(activeId, overId)) return;
 
     if (active.parentId === over.parentId) {
+      // Block folder↔task reordering within the same parent
+      if (active.type === 'folder' && over.type !== 'folder') return;
+      if (active.type !== 'folder' && over.type === 'folder') return;
+
       const siblings = nodes
         .filter(n => !n.isDeleted && n.parentId === active.parentId)
         .sort((a, b) => a.order - b.order);
       const oldIndex = siblings.findIndex(n => n.id === activeId);
-      const newIndex = siblings.findIndex(n => n.id === overId);
-      if (oldIndex === -1 || newIndex === -1) return;
+      const overIdx = siblings.findIndex(n => n.id === overId);
+      if (oldIndex === -1 || overIdx === -1) return;
 
       const reordered = [...siblings];
       const [moved] = reordered.splice(oldIndex, 1);
-      reordered.splice(newIndex, 0, moved);
+      const newOverIdx = reordered.findIndex(n => n.id === overId);
+      const insertAt = position === 'below' ? newOverIdx + 1 : newOverIdx;
+      reordered.splice(insertAt, 0, moved);
 
       const orderMap = new Map(reordered.map((n, i) => [n.id, i]));
       persist(nodes.map(n => orderMap.has(n.id) ? { ...n, order: orderMap.get(n.id)! } : n));
@@ -125,7 +131,17 @@ export function useTaskTreeMovement(
         .filter(n => !n.isDeleted && n.parentId === newParentId && n.id !== activeId)
         .sort((a, b) => a.order - b.order);
       const overIndex = newSiblings.findIndex(n => n.id === overId);
-      newSiblings.splice(overIndex === -1 ? newSiblings.length : overIndex, 0, active);
+      let insertIndex = overIndex === -1 ? newSiblings.length : (position === 'below' ? overIndex + 1 : overIndex);
+
+      // Clamp insertion index to folder/task zone boundaries
+      const firstTaskIdx = newSiblings.findIndex(n => n.type !== 'folder');
+      if (active.type === 'task') {
+        insertIndex = Math.max(insertIndex, firstTaskIdx === -1 ? newSiblings.length : firstTaskIdx);
+      } else if (active.type === 'folder') {
+        insertIndex = Math.min(insertIndex, firstTaskIdx === -1 ? newSiblings.length : firstTaskIdx);
+      }
+
+      newSiblings.splice(insertIndex, 0, active);
 
       const orderMap = new Map(newSiblings.map((n, i) => [n.id, i]));
 

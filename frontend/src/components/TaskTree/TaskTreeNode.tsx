@@ -36,7 +36,7 @@ interface TaskTreeNodeProps {
   onSelectTask?: (id: string) => void;
   selectedTaskId?: string | null;
   sortMode?: SortMode;
-  overInfo?: { overId: string; position: 'above' | 'below' | 'inside' } | null;
+  overInfo?: { overId: string; position: "above" | "below" | "inside" } | null;
 }
 
 export function TaskTreeNode({
@@ -46,7 +46,7 @@ export function TaskTreeNode({
   onPlayTask,
   onSelectTask,
   selectedTaskId,
-  sortMode = 'manual',
+  sortMode = "manual",
   overInfo,
 }: TaskTreeNodeProps) {
   const {
@@ -87,7 +87,10 @@ export function TaskTreeNode({
   } = useSortable({ id: node.id });
 
   const rawChildren = getChildren(node.id);
-  const children = useMemo(() => sortTaskNodes(rawChildren, sortMode), [rawChildren, sortMode]);
+  const children = useMemo(
+    () => sortTaskNodes(rawChildren, sortMode),
+    [rawChildren, sortMode],
+  );
   const childIds = useMemo(() => children.map((c) => c.id), [children]);
   const isFolder = node.type === "folder";
   const isDone = node.type === "task" && node.status === "DONE";
@@ -96,17 +99,21 @@ export function TaskTreeNode({
   const isSelected = node.type === "task" && selectedTaskId === node.id;
 
   const progress = useMemo(
-    () => isFolder ? computeFolderProgress(node.id, nodes) : undefined,
+    () => (isFolder ? computeFolderProgress(node.id, nodes) : undefined),
     [isFolder, node.id, nodes],
   );
 
+  const inheritedColor = !isFolder
+    ? resolveTaskColor(node.id, nodes)
+    : undefined;
 
-  const inheritedColor = !isFolder ? resolveTaskColor(node.id, nodes) : undefined;
-
-  const style = {
+  const transformStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.15 : 1,
+  };
+
+  const bgStyle = {
     ...(isFolder && node.color && !isSelected
       ? { backgroundColor: `${node.color}30` }
       : {}),
@@ -115,13 +122,10 @@ export function TaskTreeNode({
       : {}),
   };
 
-  const handleContextMenu = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      setContextMenu({ x: e.clientX, y: e.clientY });
-    },
-    [],
-  );
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  }, []);
 
   const handleSaveAsTemplate = useCallback(() => {
     // Collect folder + all descendants
@@ -130,7 +134,7 @@ export function TaskTreeNode({
       const kids = getChildren(parentId);
       for (const child of kids) {
         collected.push(child);
-        if (child.type === 'folder') collect(child.id);
+        if (child.type === "folder") collect(child.id);
       }
     };
     collected.push(node);
@@ -152,86 +156,95 @@ export function TaskTreeNode({
   }, [completeFolderWithChildren, node.id]);
 
   const handleToggleStatus = useCallback(() => {
-    if (node.status !== 'DONE') {
+    if (node.status !== "DONE") {
       fireTaskCompleteConfetti();
-      setCompletionToast(t('taskTree.taskComplete', { name: node.title }));
+      setCompletionToast(t("taskTree.taskComplete", { name: node.title }));
     }
     toggleTaskStatus(node.id);
   }, [node.id, node.status, node.title, toggleTaskStatus, t]);
 
   return (
     <div>
-      <div
-        ref={setNodeRef}
-        style={style}
-        className={`group flex items-center gap-0.5 rounded-md hover:bg-notion-hover transition-colors border-l-2 ${isSelected ? "bg-notion-hover border-l-notion-accent" : "border-l-transparent"} ${isFolder && overInfo?.overId === node.id && overInfo.position === 'inside' && !isDragging ? "ring-2 ring-notion-accent/50" : ""} ${isDone || isFolderDone ? "opacity-60 hover:opacity-90" : ""}`}
-        onContextMenu={handleContextMenu}
-        {...attributes}
-      >
-        {sortMode === 'manual' ? (
-          <button
-            {...listeners}
-            className="opacity-0 group-hover:opacity-100 p-0.5 cursor-grab text-notion-text-secondary"
-          >
-            <GripVertical size={18} />
-          </button>
-        ) : (
-          <div className="w-[22px] shrink-0" />
-        )}
+      <div ref={setNodeRef} style={transformStyle} {...attributes}>
+        {/* "above" drop indicator */}
+        {overInfo?.overId === node.id &&
+          overInfo.position === "above" &&
+          !isDragging && (
+            <div className="h-0.5 bg-notion-accent rounded-full mx-2" />
+          )}
 
-        <TaskNodeIndent depth={depth} isLastChild={isLastChild} />
-
-        <TaskNodeCheckbox
-          isFolder={isFolder}
-          isDone={isDone}
-          isExpanded={node.isExpanded}
-          color={node.color}
-          onToggleExpand={() => toggleExpanded(node.id)}
-          onToggleStatus={handleToggleStatus}
-        />
-
-        {isEditing ? (
-          <TaskNodeEditor
-            initialValue={node.title}
-            onSave={(value) => {
-              updateNode(node.id, { title: value });
-            }}
-            onCancel={() => setIsEditing(false)}
-          />
-        ) : (
-          <TaskNodeContent
-            title={node.title}
-            isDone={isDone || isFolderDone}
+        {/* Content row */}
+        <div
+          className={`group flex items-center gap-0.5 py-1 rounded-md hover:bg-notion-hover transition-colors border-l-2 ${isSelected ? "bg-notion-hover border-l-notion-accent" : "border-l-transparent"} ${isFolder && overInfo?.overId === node.id && overInfo.position === "inside" && !isDragging ? "ring-2 ring-notion-accent/50" : ""} ${isDone || isFolderDone ? "opacity-60 hover:opacity-90" : ""}`}
+          style={bgStyle}
+          onContextMenu={handleContextMenu}
+        >
+          {sortMode === "manual" ? (
+            <button
+              {...listeners}
+              className="opacity-0 group-hover:opacity-100 p-0.5 cursor-grab text-notion-text-secondary"
+            >
+              <GripVertical size={18} />
+            </button>
+          ) : (
+            <div className="w-5.5 shrink-0" />
+          )}
+          <TaskNodeIndent depth={depth} isLastChild={isLastChild} />
+          <TaskNodeCheckbox
             isFolder={isFolder}
-            progress={progress}
-            onSelectTask={onSelectTask}
-            onStartEditing={() => setIsEditing(true)}
+            isDone={isDone}
+            isExpanded={node.isExpanded}
+            color={node.color}
             onToggleExpand={() => toggleExpanded(node.id)}
-            nodeId={node.id}
+            onToggleStatus={handleToggleStatus}
           />
-        )}
 
+          {isEditing ? (
+            <TaskNodeEditor
+              initialValue={node.title}
+              onSave={(value) => {
+                updateNode(node.id, { title: value });
+              }}
+              onCancel={() => setIsEditing(false)}
+            />
+          ) : (
+            <TaskNodeContent
+              title={node.title}
+              isDone={isDone || isFolderDone}
+              isFolder={isFolder}
+              progress={progress}
+              onSelectTask={onSelectTask}
+              onStartEditing={() => setIsEditing(true)}
+              onToggleExpand={() => toggleExpanded(node.id)}
+              nodeId={node.id}
+            />
+          )}
 
-        <TaskNodeTimer
-          isActive={isTimerActive}
-          remainingSeconds={timer.remainingSeconds}
-          formatTime={timer.formatTime}
-        />
+          <TaskNodeTimer
+            isActive={isTimerActive}
+            remainingSeconds={timer.remainingSeconds}
+            formatTime={timer.formatTime}
+          />
 
-        <TaskNodeActions
-          node={node}
-          isDone={isDone}
-          isTimerActive={isTimerActive}
-          isFolderDone={isFolderDone}
-          makeFolder={(node) => addNode("folder", node.id, t('taskTree.newFolderDefault'))}
-          makeTask={(node) => addNode("task", node.id, t('taskTree.newTaskDefault'))}
-          onPlayTask={onPlayTask}
-          onDelete={(id) => setShowDeleteConfirm(true)}
-          onCompleteFolder={isFolder ? handleCompleteFolder : undefined}
-        />
+          <TaskNodeActions
+            node={node}
+            isDone={isDone}
+            isTimerActive={isTimerActive}
+            isFolderDone={isFolderDone}
+            makeFolder={(node) =>
+              addNode("folder", node.id, t("taskTree.newFolderDefault"))
+            }
+            makeTask={(node) =>
+              addNode("task", node.id, t("taskTree.newTaskDefault"))
+            }
+            onPlayTask={onPlayTask}
+            onDelete={(id) => setShowDeleteConfirm(true)}
+            onCompleteFolder={isFolder ? handleCompleteFolder : undefined}
+          />
+        </div>
       </div>
 
-      {overInfo?.overId === node.id && overInfo.position === 'below' && (
+      {overInfo?.overId === node.id && overInfo.position === "below" && !isDragging && (
         <div className="h-0.5 bg-notion-accent rounded-full mx-2" />
       )}
 
@@ -244,8 +257,12 @@ export function TaskTreeNode({
           isFolderDone={isFolderDone}
           hasParent={node.parentId !== null}
           onRename={() => setIsEditing(true)}
-          onAddTask={() => addNode("task", node.id, t('taskTree.newTaskDefault'))}
-          onAddFolder={() => addNode("folder", node.id, t('taskTree.newFolderDefault'))}
+          onAddTask={() =>
+            addNode("task", node.id, t("taskTree.newTaskDefault"))
+          }
+          onAddFolder={() =>
+            addNode("folder", node.id, t("taskTree.newFolderDefault"))
+          }
           onStartTimer={() => onPlayTask?.(node)}
           onMoveToRoot={() => moveToRoot(node.id)}
           onSaveAsTemplate={isFolder ? handleSaveAsTemplate : undefined}
@@ -257,7 +274,7 @@ export function TaskTreeNode({
 
       {showConfirmDialog && (
         <ConfirmDialog
-          message={t('taskTree.folderCompleteConfirm')}
+          message={t("taskTree.folderCompleteConfirm")}
           onConfirm={handleConfirmComplete}
           onCancel={() => setShowConfirmDialog(false)}
         />
@@ -265,8 +282,11 @@ export function TaskTreeNode({
 
       {showDeleteConfirm && (
         <ConfirmDialog
-          message={t('taskTree.deleteConfirm', { name: node.title })}
-          onConfirm={() => { softDelete(node.id); setShowDeleteConfirm(false); }}
+          message={t("taskTree.deleteConfirm", { name: node.title })}
+          onConfirm={() => {
+            softDelete(node.id);
+            setShowDeleteConfirm(false);
+          }}
           onCancel={() => setShowDeleteConfirm(false)}
         />
       )}

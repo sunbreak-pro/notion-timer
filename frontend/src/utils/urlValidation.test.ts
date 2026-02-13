@@ -1,4 +1,5 @@
 import { isValidUrl } from './urlValidation';
+import { describe, it, expect } from 'vitest';
 
 describe('isValidUrl', () => {
   it('accepts http URLs', () => {

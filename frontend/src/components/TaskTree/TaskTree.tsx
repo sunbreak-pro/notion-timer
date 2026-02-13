@@ -248,7 +248,7 @@ export function TaskTree({
                 </div>
               </div>
               <SortableContext items={folderIds} strategy={verticalListSortingStrategy}>
-                <div className="space-y-2">
+                <div>
                   {folders.map((node) => (
                     <TaskTreeNode key={node.id} node={node} depth={0} onPlayTask={onPlayTask} onSelectTask={onSelectTask} selectedTaskId={selectedTaskId} sortMode={sortMode} overInfo={overInfo} />
                   ))}

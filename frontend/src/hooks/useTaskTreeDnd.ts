@@ -17,10 +17,15 @@ export interface OverInfo {
 
 interface UseTaskTreeDndParams {
   nodes: TaskNode[];
-  moveNode: (activeId: string, overId: string) => void;
+  moveNode: (activeId: string, overId: string, position?: 'above' | 'below') => void;
   moveNodeInto: (activeId: string, overId: string) => void;
   moveToRoot: (id: string) => void;
 }
+
+const getPointerY = (event: DragOverEvent | DragEndEvent): number | null => {
+  if (!(event.activatorEvent instanceof PointerEvent)) return null;
+  return event.activatorEvent.clientY + event.delta.y;
+};
 
 export function useTaskTreeDnd({ nodes, moveNode, moveNodeInto, moveToRoot }: UseTaskTreeDndParams) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -50,10 +55,28 @@ export function useTaskTreeDnd({ nodes, moveNode, moveNodeInto, moveToRoot }: Us
       return;
     }
 
+    const pointerY = getPointerY(event);
+    if (!pointerY || !over.rect) {
+      setOverInfo({ overId, position: overNode.type === 'folder' ? 'inside' : 'below' });
+      return;
+    }
+
     if (overNode.type === 'folder') {
-      setOverInfo({ overId, position: 'inside' });
+      // 3-zone: top 30% = above, middle 40% = inside, bottom 30% = below
+      const { top, height } = over.rect;
+      const ratio = (pointerY - top) / height;
+      if (ratio < 0.3) {
+        setOverInfo({ overId, position: 'above' });
+      } else if (ratio > 0.7) {
+        setOverInfo({ overId, position: 'below' });
+      } else {
+        setOverInfo({ overId, position: 'inside' });
+      }
     } else {
-      setOverInfo({ overId, position: 'below' });
+      // 2-zone: top 50% = above, bottom 50% = below
+      const { top, height } = over.rect;
+      const relY = pointerY - top;
+      setOverInfo({ overId, position: relY < height / 2 ? 'above' : 'below' });
     }
   }, [nodes]);
 
@@ -80,12 +103,37 @@ export function useTaskTreeDnd({ nodes, moveNode, moveNodeInto, moveToRoot }: Us
     const overNode = nodes.find((n) => n.id === overId);
     if (!overNode) return;
 
-    const isOverFolder = overNode.type === 'folder';
-    const isDifferentParent = activeNode.parentId !== overNode.id;
-    if (isOverFolder && isDifferentParent) {
-      moveNodeInto(active.id as string, over.id as string);
+    if (overNode.type === 'folder') {
+      const pointerY = getPointerY(event);
+      if (!pointerY || !over.rect) {
+        // Fallback: drop inside
+        if (activeNode.parentId !== overNode.id) {
+          moveNodeInto(active.id as string, over.id as string);
+        }
+        return;
+      }
+
+      const { top, height } = over.rect;
+      const ratio = (pointerY - top) / height;
+
+      if (ratio < 0.3) {
+        moveNode(active.id as string, over.id as string, 'above');
+      } else if (ratio > 0.7) {
+        moveNode(active.id as string, over.id as string, 'below');
+      } else {
+        if (activeNode.parentId !== overNode.id) {
+          moveNodeInto(active.id as string, over.id as string);
+        }
+      }
     } else {
-      moveNode(active.id as string, over.id as string);
+      const pointerY = getPointerY(event);
+      if (!pointerY || !over.rect) {
+        moveNode(active.id as string, over.id as string, 'below');
+        return;
+      }
+      const { top, height } = over.rect;
+      const position = (pointerY - top) < height / 2 ? 'above' : 'below';
+      moveNode(active.id as string, over.id as string, position);
     }
   }, [nodes, moveNode, moveNodeInto, moveToRoot]);
 
