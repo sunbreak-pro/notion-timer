@@ -11,4 +11,5 @@ export const STORAGE_KEYS = {
   EFFECT_VOLUME: 'sonic-flow-effect-volume',
   ACTIVE_CALENDAR_ID: 'sonic-flow-active-calendar-id',
   TASK_TREE_FOLDER_FILTER: 'sonic-flow-task-tree-folder-filter',
+  TASK_TREE_SORT_MODE: 'sonic-flow-task-tree-sort-mode',
 } as const;

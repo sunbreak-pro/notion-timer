@@ -19,7 +19,7 @@ export function InlineCreateInput({
     inputRef.current?.focus();
   }, []);
 
-  const handleSubmit = () => {
+  const handleBlurSubmit = () => {
     const trimmed = value.trim();
     if (trimmed) {
       onSubmit(trimmed);
@@ -28,7 +28,15 @@ export function InlineCreateInput({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSubmit();
+    if (e.key === "Enter") {
+      const trimmed = value.trim();
+      if (trimmed) {
+        onSubmit(trimmed);
+        setValue("");
+      } else {
+        onCancel();
+      }
+    }
     if (e.key === "Escape") onCancel();
   };
 
@@ -39,11 +47,11 @@ export function InlineCreateInput({
         type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        onBlur={handleSubmit}
+        onBlur={handleBlurSubmit}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         maxLength={255}
-        className="flex-1 bg-transparent outline-none text-sm text-notion-text px-1 border-b border-notion-accent placeholder:text-notion-text-secondary/50"
+        className="flex-1 bg-transparent outline-none text-[15px] text-notion-text px-1 border-b border-notion-accent placeholder:text-notion-text-secondary/50"
       />
     </div>
   );

@@ -46,13 +46,13 @@ export function TaskNodeCheckbox({
   return (
     <button
       onClick={onToggleStatus}
-      className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
+      className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-all ${
         isDone
-          ? "bg-notion-accent border-notion-accent text-gray-900"
+          ? "bg-notion-accent border-notion-accent text-gray-900 hover:bg-notion-accent/70 hover:border-notion-accent/70"
           : "border-notion-border hover:border-notion-accent"
       }`}
     >
-      {isDone && <Check size={10} />}
+      {isDone && <Check size={10} className="check-animate" />}
     </button>
   );
 }

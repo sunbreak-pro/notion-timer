@@ -273,6 +273,36 @@ body {
   opacity: 0.8;
 }
 
+/* Check completion animation */
+@keyframes check-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.check-animate {
+  animation: check-pop 300ms ease-out;
+}
+
+/* Completion toast animations */
+@keyframes slide-in-toast {
+  0% { transform: translateY(-100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fade-out-toast {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.toast-enter {
+  animation: slide-in-toast 300ms ease-out;
+}
+
+.toast-exit {
+  animation: fade-out-toast 300ms ease-in forwards;
+}
+
 /* Bubble Toolbar */
 .bubble-toolbar {
   display: flex;

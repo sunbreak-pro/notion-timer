@@ -10,6 +10,7 @@ interface TaskNodeEditorProps {
 export function TaskNodeEditor({ initialValue, onSave, onCancel }: TaskNodeEditorProps) {
   const [editValue, setEditValue] = useState(initialValue);
   const inputRef = useRef<HTMLInputElement>(null);
+  const savedValueRef = useRef(initialValue);
 
   useEffect(() => {
     if (inputRef.current) {
@@ -18,18 +19,25 @@ export function TaskNodeEditor({ initialValue, onSave, onCancel }: TaskNodeEdito
     }
   }, []);
 
-  const handleSave = () => {
+  const handleBlurSave = () => {
     const trimmed = editValue.trim();
-    if (trimmed && trimmed !== initialValue) {
+    if (trimmed && trimmed !== savedValueRef.current) {
       onSave(trimmed);
-    } else {
-      onCancel();
     }
+    onCancel();
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     e.stopPropagation();
-    if (e.key === "Enter") handleSave();
+    if (e.key === "Enter") {
+      const trimmed = editValue.trim();
+      if (trimmed && trimmed !== savedValueRef.current) {
+        onSave(trimmed);
+        savedValueRef.current = trimmed;
+      } else {
+        onCancel();
+      }
+    }
     if (e.key === "Escape") onCancel();
   };
 
@@ -39,10 +47,10 @@ export function TaskNodeEditor({ initialValue, onSave, onCancel }: TaskNodeEdito
       type="text"
       value={editValue}
       onChange={(e) => setEditValue(e.target.value)}
-      onBlur={handleSave}
+      onBlur={handleBlurSave}
       onKeyDown={handleKeyDown}
       maxLength={255}
-      className="flex-1 bg-transparent outline-none text-sm text-notion-text px-1 border-b border-notion-accent"
+      className="flex-1 bg-transparent outline-none text-[15px] text-notion-text px-1 border-b border-notion-accent"
     />
   );
 }

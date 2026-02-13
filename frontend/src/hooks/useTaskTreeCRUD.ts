@@ -53,14 +53,36 @@ export function useTaskTreeCRUD(
   }, [nodes, persist]);
 
   const toggleTaskStatus = useCallback((id: string) => {
+    const target = nodes.find(n => n.id === id);
+    if (!target || target.type !== 'task') return;
+
+    const newStatus: TaskStatus = target.status === 'TODO' ? 'DONE' : 'TODO';
+    const siblings = nodes
+      .filter(n => !n.isDeleted && n.parentId === target.parentId && n.id !== id)
+      .sort((a, b) => a.order - b.order);
+
+    const incomplete = siblings.filter(n => n.status !== 'DONE');
+    const complete = siblings.filter(n => n.status === 'DONE');
+
+    const updatedTarget = {
+      ...target,
+      status: newStatus,
+      completedAt: newStatus === 'DONE' ? new Date().toISOString() : undefined,
+    };
+
+    // DONE: append to end after all complete siblings
+    // TODO: insert at end of incomplete group (before complete siblings)
+    const reordered = newStatus === 'DONE'
+      ? [...incomplete, ...complete, updatedTarget]
+      : [...incomplete, updatedTarget, ...complete];
+
+    const orderMap = new Map<string, number>();
+    reordered.forEach((n, i) => orderMap.set(n.id, i));
+
     persist(nodes.map(n => {
-      if (n.id !== id || n.type !== 'task') return n;
-      const newStatus: TaskStatus = n.status === 'TODO' ? 'DONE' : 'TODO';
-      return {
-        ...n,
-        status: newStatus,
-        completedAt: newStatus === 'DONE' ? new Date().toISOString() : undefined,
-      };
+      if (n.id === id) return { ...updatedTarget, order: orderMap.get(id) ?? updatedTarget.order };
+      if (orderMap.has(n.id)) return { ...n, order: orderMap.get(n.id)! };
+      return n;
     }));
   }, [nodes, persist]);
 

@@ -33,7 +33,7 @@ export function TaskNodeContent({
       onDoubleClick={() => {
         onStartEditing();
       }}
-      className={`flex-1 text-sm cursor-pointer truncate ${
+      className={`flex-1 text-[15px] cursor-pointer truncate ${
         isDone
           ? "line-through text-notion-text-secondary"
           : "text-notion-text"

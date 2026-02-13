@@ -148,7 +148,13 @@
     "completed": "完了済み",
     "newFolderDefault": "新しいフォルダ",
     "newTaskDefault": "新しいタスク",
-    "folderCompleteConfirm": "フォルダ内の未完了タスクもすべて完了になります。よろしいですか？"
+    "folderCompleteConfirm": "フォルダ内の未完了タスクもすべて完了になります。よろしいですか？",
+    "deleteConfirm": "「{{name}}」を削除しますか？ゴミ箱に移動されます。",
+    "taskComplete": "{{name}} 完了！",
+    "sort": "並べ替え",
+    "sortManual": "手動",
+    "sortStatus": "ステータス",
+    "sortSchedule": "スケジュール日"
   },
   "memo": {
     "daily": "日記",

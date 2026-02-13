@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import type { TaskNode } from "../../types/taskTree";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useTimerContext } from "../../hooks/useTimerContext";
+import { resolveTaskColor } from "../../utils/folderColor";
 
 import { TaskNodeIndent } from "./TaskNodeIndent";
 import { TaskNodeCheckbox } from "./TaskNodeCheckbox";
@@ -21,8 +22,11 @@ import { TaskNodeContextMenu } from "./TaskNodeContextMenu";
 
 import { useTemplates } from "../../hooks/useTemplates";
 import { ConfirmDialog } from "../common/ConfirmDialog";
+import { CompletionToast } from "../common/CompletionToast";
 import { computeFolderProgress } from "../../utils/folderProgress";
 import { fireTaskCompleteConfetti } from "../../utils/confetti";
+import { sortTaskNodes } from "../../utils/sortTaskNodes";
+import type { SortMode } from "../../utils/sortTaskNodes";
 
 interface TaskTreeNodeProps {
   node: TaskNode;
@@ -31,6 +35,8 @@ interface TaskTreeNodeProps {
   onPlayTask?: (node: TaskNode) => void;
   onSelectTask?: (id: string) => void;
   selectedTaskId?: string | null;
+  sortMode?: SortMode;
+  overInfo?: { overId: string; position: 'above' | 'below' | 'inside' } | null;
 }
 
 export function TaskTreeNode({
@@ -40,6 +46,8 @@ export function TaskTreeNode({
   onPlayTask,
   onSelectTask,
   selectedTaskId,
+  sortMode = 'manual',
+  overInfo,
 }: TaskTreeNodeProps) {
   const {
     nodes,
@@ -65,6 +73,8 @@ export function TaskTreeNode({
     y: number;
   } | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [completionToast, setCompletionToast] = useState<string | null>(null);
 
   const {
     attributes,
@@ -76,7 +86,8 @@ export function TaskTreeNode({
     isOver,
   } = useSortable({ id: node.id });
 
-  const children = getChildren(node.id);
+  const rawChildren = getChildren(node.id);
+  const children = useMemo(() => sortTaskNodes(rawChildren, sortMode), [rawChildren, sortMode]);
   const childIds = useMemo(() => children.map((c) => c.id), [children]);
   const isFolder = node.type === "folder";
   const isDone = node.type === "task" && node.status === "DONE";
@@ -90,12 +101,17 @@ export function TaskTreeNode({
   );
 
 
+  const inheritedColor = !isFolder ? resolveTaskColor(node.id, nodes) : undefined;
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
     ...(isFolder && node.color && !isSelected
       ? { backgroundColor: `${node.color}30` }
+      : {}),
+    ...(!isFolder && inheritedColor && !isSelected
+      ? { backgroundColor: `${inheritedColor}18` }
       : {}),
   };
 
@@ -138,25 +154,30 @@ export function TaskTreeNode({
   const handleToggleStatus = useCallback(() => {
     if (node.status !== 'DONE') {
       fireTaskCompleteConfetti();
+      setCompletionToast(t('taskTree.taskComplete', { name: node.title }));
     }
     toggleTaskStatus(node.id);
-  }, [node.id, node.status, toggleTaskStatus]);
+  }, [node.id, node.status, node.title, toggleTaskStatus, t]);
 
   return (
     <div>
       <div
         ref={setNodeRef}
         style={style}
-        className={`group flex items-center gap-0.5 rounded-md hover:bg-notion-hover transition-colors border-l-2 ${isSelected ? "bg-notion-hover border-l-notion-accent" : "border-l-transparent"} ${isFolder && isOver && !isDragging ? "ring-2 ring-notion-accent/50" : ""}`}
+        className={`group flex items-center gap-0.5 rounded-md hover:bg-notion-hover transition-colors border-l-2 ${isSelected ? "bg-notion-hover border-l-notion-accent" : "border-l-transparent"} ${isFolder && overInfo?.overId === node.id && overInfo.position === 'inside' && !isDragging ? "ring-2 ring-notion-accent/50" : ""} ${isDone || isFolderDone ? "opacity-60 hover:opacity-90" : ""}`}
         onContextMenu={handleContextMenu}
         {...attributes}
       >
-        <button
-          {...listeners}
-          className="opacity-0 group-hover:opacity-100 p-0.5 cursor-grab text-notion-text-secondary"
-        >
-          <GripVertical size={18} />
-        </button>
+        {sortMode === 'manual' ? (
+          <button
+            {...listeners}
+            className="opacity-0 group-hover:opacity-100 p-0.5 cursor-grab text-notion-text-secondary"
+          >
+            <GripVertical size={18} />
+          </button>
+        ) : (
+          <div className="w-[22px] shrink-0" />
+        )}
 
         <TaskNodeIndent depth={depth} isLastChild={isLastChild} />
 
@@ -174,7 +195,6 @@ export function TaskTreeNode({
             initialValue={node.title}
             onSave={(value) => {
               updateNode(node.id, { title: value });
-              setIsEditing(false);
             }}
             onCancel={() => setIsEditing(false)}
           />
@@ -206,10 +226,14 @@ export function TaskTreeNode({
           makeFolder={(node) => addNode("folder", node.id, t('taskTree.newFolderDefault'))}
           makeTask={(node) => addNode("task", node.id, t('taskTree.newTaskDefault'))}
           onPlayTask={onPlayTask}
-          onDelete={softDelete}
+          onDelete={(id) => setShowDeleteConfirm(true)}
           onCompleteFolder={isFolder ? handleCompleteFolder : undefined}
         />
       </div>
+
+      {overInfo?.overId === node.id && overInfo.position === 'below' && (
+        <div className="h-0.5 bg-notion-accent rounded-full mx-2" />
+      )}
 
       {contextMenu && (
         <TaskNodeContextMenu
@@ -226,7 +250,7 @@ export function TaskTreeNode({
           onMoveToRoot={() => moveToRoot(node.id)}
           onSaveAsTemplate={isFolder ? handleSaveAsTemplate : undefined}
           onCompleteFolder={isFolder ? handleCompleteFolder : undefined}
-          onDelete={() => softDelete(node.id)}
+          onDelete={() => setShowDeleteConfirm(true)}
           onClose={() => setContextMenu(null)}
         />
       )}
@@ -236,6 +260,21 @@ export function TaskTreeNode({
           message={t('taskTree.folderCompleteConfirm')}
           onConfirm={handleConfirmComplete}
           onCancel={() => setShowConfirmDialog(false)}
+        />
+      )}
+
+      {showDeleteConfirm && (
+        <ConfirmDialog
+          message={t('taskTree.deleteConfirm', { name: node.title })}
+          onConfirm={() => { softDelete(node.id); setShowDeleteConfirm(false); }}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
+
+      {completionToast && (
+        <CompletionToast
+          taskName={completionToast}
+          onDismiss={() => setCompletionToast(null)}
         />
       )}
 
@@ -260,6 +299,8 @@ export function TaskTreeNode({
                 onPlayTask={onPlayTask}
                 onSelectTask={onSelectTask}
                 selectedTaskId={selectedTaskId}
+                sortMode={sortMode}
+                overInfo={overInfo}
               />
             ))}
           </div>

@@ -6,8 +6,14 @@ import {
   useSensors,
   type DragStartEvent,
   type DragEndEvent,
+  type DragOverEvent,
 } from '@dnd-kit/core';
 import type { TaskNode } from '../types/taskTree';
+
+export interface OverInfo {
+  overId: string;
+  position: 'above' | 'below' | 'inside';
+}
 
 interface UseTaskTreeDndParams {
   nodes: TaskNode[];
@@ -18,6 +24,7 @@ interface UseTaskTreeDndParams {
 
 export function useTaskTreeDnd({ nodes, moveNode, moveNodeInto, moveToRoot }: UseTaskTreeDndParams) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [overInfo, setOverInfo] = useState<OverInfo | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -28,8 +35,31 @@ export function useTaskTreeDnd({ nodes, moveNode, moveNodeInto, moveToRoot }: Us
     setActiveId(event.active.id as string);
   }, []);
 
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const { over } = event;
+    if (!over) {
+      setOverInfo(null);
+      return;
+    }
+
+    const overId = over.id as string;
+    const overNode = nodes.find((n) => n.id === overId);
+
+    if (!overNode) {
+      setOverInfo(null);
+      return;
+    }
+
+    if (overNode.type === 'folder') {
+      setOverInfo({ overId, position: 'inside' });
+    } else {
+      setOverInfo({ overId, position: 'below' });
+    }
+  }, [nodes]);
+
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     setActiveId(null);
+    setOverInfo(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -61,9 +91,10 @@ export function useTaskTreeDnd({ nodes, moveNode, moveNodeInto, moveToRoot }: Us
 
   const handleDragCancel = useCallback(() => {
     setActiveId(null);
+    setOverInfo(null);
   }, []);
 
   const activeNode = activeId ? nodes.find((n) => n.id === activeId) : null;
 
-  return { sensors, activeId, activeNode, handleDragStart, handleDragEnd, handleDragCancel };
+  return { sensors, activeId, activeNode, overInfo, handleDragStart, handleDragOver, handleDragEnd, handleDragCancel };
 }
