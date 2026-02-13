@@ -1,5 +1,13 @@
 import { useMemo, useState, useEffect } from "react";
-import { BarChart3, CheckCircle2, Circle, FolderOpen, Clock, Hash, TrendingUp } from "lucide-react";
+import {
+  BarChart3,
+  CheckCircle2,
+  Circle,
+  FolderOpen,
+  Clock,
+  Hash,
+  TrendingUp,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { getDataService } from "../../services";
@@ -13,7 +21,7 @@ export function AnalyticsView() {
   const { t } = useTranslation();
   const { nodes } = useTaskTreeContext();
   const [sessions, setSessions] = useState<TimerSession[]>([]);
-  const [period, setPeriod] = useState<Period>('day');
+  const [period, setPeriod] = useState<Period>("day");
 
   useEffect(() => {
     getDataService().fetchTimerSessions().then(setSessions);
@@ -65,36 +73,38 @@ export function AnalyticsView() {
   const formatHours = (minutes: number) => {
     const h = Math.floor(minutes / 60);
     const m = Math.round(minutes % 60);
-    return t('analytics.hours', { hours: h, minutes: m });
+    return t("analytics.hours", { hours: h, minutes: m });
   };
 
   return (
     <div className="h-full flex flex-col overflow-auto">
       <div className="max-w-3xl mx-auto w-full px-8 py-6">
-        <h2 className="text-2xl font-bold text-notion-text mb-6">{t('analytics.title')}</h2>
+        <h2 className="text-2xl font-bold text-notion-text mb-6">
+          {t("analytics.title")}
+        </h2>
 
         <div className="grid grid-cols-2 gap-4 mb-8">
           <StatCard
             icon={<BarChart3 size={20} />}
-            label={t('analytics.totalTasks')}
+            label={t("analytics.totalTasks")}
             value={stats.totalTasks}
             color="text-notion-accent"
           />
           <StatCard
             icon={<CheckCircle2 size={20} />}
-            label={t('analytics.completed')}
+            label={t("analytics.completed")}
             value={stats.completedTasks}
             color="text-notion-success"
           />
           <StatCard
             icon={<Circle size={20} />}
-            label={t('analytics.inProgress')}
+            label={t("analytics.inProgress")}
             value={stats.incompleteTasks}
             color="text-yellow-500"
           />
           <StatCard
             icon={<FolderOpen size={20} />}
-            label={t('analytics.folders')}
+            label={t("analytics.folders")}
             value={stats.totalFolders}
             color="text-notion-text-secondary"
           />
@@ -103,7 +113,7 @@ export function AnalyticsView() {
         <div className="bg-notion-bg-secondary rounded-lg p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-notion-text">
-              {t('analytics.todayRate')}
+              {t("analytics.todayRate")}
             </span>
             <span className="text-sm font-bold text-notion-success">
               {stats.todayCompletionRate}%
@@ -112,7 +122,7 @@ export function AnalyticsView() {
               </span>
             </span>
           </div>
-          <div className="w-full h-3 bg-notion-border rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-notion-hover rounded-full overflow-hidden">
             <div
               className="h-full bg-notion-success rounded-full transition-all duration-500"
               style={{ width: `${stats.todayCompletionRate}%` }}
@@ -123,13 +133,13 @@ export function AnalyticsView() {
         <div className="bg-notion-bg-secondary rounded-lg p-4 mb-8">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-notion-text">
-              {t('analytics.totalRate')}
+              {t("analytics.totalRate")}
             </span>
             <span className="text-sm font-bold text-notion-accent">
               {stats.completionRate}%
             </span>
           </div>
-          <div className="w-full h-3 bg-notion-border rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-notion-hover rounded-full overflow-hidden">
             <div
               className="h-full bg-notion-accent rounded-full transition-all duration-500"
               style={{ width: `${stats.completionRate}%` }}
@@ -143,19 +153,19 @@ export function AnalyticsView() {
             <div className="grid grid-cols-3 gap-4 mb-6">
               <StatCard
                 icon={<Clock size={20} />}
-                label={t('analytics.totalWorkTime')}
+                label={t("analytics.totalWorkTime")}
                 valueStr={formatHours(summary.totalMinutes)}
                 color="text-blue-500"
               />
               <StatCard
                 icon={<Hash size={20} />}
-                label={t('analytics.sessions')}
+                label={t("analytics.sessions")}
                 value={summary.totalSessions}
                 color="text-purple-500"
               />
               <StatCard
                 icon={<TrendingUp size={20} />}
-                label={t('analytics.avgPerDay')}
+                label={t("analytics.avgPerDay")}
                 valueStr={formatHours(summary.avgMinutesPerDay)}
                 color="text-orange-500"
               />
@@ -163,19 +173,22 @@ export function AnalyticsView() {
 
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-notion-text">
-                {t('analytics.workTime')}
+                {t("analytics.workTime")}
               </h3>
               <PeriodSelector value={period} onChange={setPeriod} />
             </div>
 
             <div className="space-y-4">
               <WorkTimeChart sessions={sessions} period={period} />
-              <TaskWorkTimeChart sessions={sessions} taskNameMap={taskNameMap} />
+              <TaskWorkTimeChart
+                sessions={sessions}
+                taskNameMap={taskNameMap}
+              />
             </div>
           </>
         ) : (
           <p className="text-sm text-notion-text-secondary mt-4 text-center">
-            {t('analytics.noSessions')}
+            {t("analytics.noSessions")}
           </p>
         )}
       </div>
@@ -200,7 +213,9 @@ function StatCard({
     <div className="bg-notion-bg-secondary rounded-lg p-4 flex items-center gap-3">
       <div className={color}>{icon}</div>
       <div>
-        <p className="text-2xl font-bold text-notion-text">{valueStr ?? value}</p>
+        <p className="text-2xl font-bold text-notion-text">
+          {valueStr ?? value}
+        </p>
         <p className="text-xs text-notion-text-secondary">{label}</p>
       </div>
     </div>
