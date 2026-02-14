@@ -93,6 +93,7 @@ const ALLOWED_CHANNELS = new Set([
   // Data I/O
   "data:export",
   "data:import",
+  "data:reset",
   // App
   "app:migrateFromLocalStorage",
   // Diagnostics

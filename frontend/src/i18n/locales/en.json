@@ -60,6 +60,10 @@
     "exportFailed": "Export failed: {{error}}",
     "importSuccess": "Data imported. Reloading...",
     "importFailed": "Import failed: {{error}}",
+    "reset": "Reset All Data",
+    "resetConfirm": "All data will be deleted and the app will return to its initial state. This action cannot be undone. A backup is created automatically before resetting. Are you sure?",
+    "resetSuccess": "Data reset. Reloading...",
+    "resetFailed": "Reset failed: {{error}}",
     "unknownError": "Unknown error"
   },
   "trash": {

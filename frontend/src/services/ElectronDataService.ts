@@ -393,6 +393,9 @@ export class ElectronDataService implements DataService {
   importData(): Promise<boolean> {
     return invoke("data:import");
   }
+  resetData(): Promise<boolean> {
+    return invoke("data:reset");
+  }
 
   // Diagnostics
   fetchLogs(options?: { level?: string; limit?: number }): Promise<LogEntry[]> {

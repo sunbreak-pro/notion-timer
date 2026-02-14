@@ -326,6 +326,94 @@ export function registerDataIOHandlers(db: Database.Database): void {
       throw e;
     }
   });
+
+  ipcMain.handle("data:reset", async () => {
+    const dbPath = path.join(app.getPath("userData"), "sonic-flow.db");
+    const backupPath = path.join(
+      app.getPath("userData"),
+      `sonic-flow-backup-${formatTimestamp()}.db`,
+    );
+
+    try {
+      // Create backup before reset
+      if (fs.existsSync(dbPath)) {
+        fs.copyFileSync(dbPath, backupPath);
+      }
+
+      try {
+        const resetAll = db.transaction(() => {
+          db.exec(`
+            DELETE FROM playlist_items;
+            DELETE FROM playlists;
+            DELETE FROM routine_logs;
+            DELETE FROM routines;
+            DELETE FROM calendars;
+            DELETE FROM notes;
+            DELETE FROM note_tags;
+            DELETE FROM sound_tag_assignments;
+            DELETE FROM sound_tag_definitions;
+            DELETE FROM sound_display_meta;
+            DELETE FROM sound_workscreen_selections;
+            DELETE FROM task_templates;
+            DELETE FROM timer_sessions;
+            DELETE FROM pomodoro_presets;
+            DELETE FROM sound_settings;
+            DELETE FROM sound_presets;
+            DELETE FROM memos;
+            DELETE FROM task_tags;
+            DELETE FROM task_tag_definitions;
+            DELETE FROM tasks;
+          `);
+
+          // Reset timer_settings to defaults
+          db.prepare(
+            `
+            UPDATE timer_settings
+            SET work_duration = 25, break_duration = 5,
+                long_break_duration = 15, sessions_before_long_break = 4,
+                updated_at = datetime('now')
+            WHERE id = 1
+          `,
+          ).run();
+
+          // Clear AI settings
+          db.prepare(
+            `
+            UPDATE ai_settings
+            SET api_key = '', model = 'gemini-2.0-flash',
+                updated_at = datetime('now')
+            WHERE id = 1
+          `,
+          ).run();
+        });
+
+        resetAll();
+
+        // Delete custom sound files
+        const customSoundsDir = path.join(
+          app.getPath("userData"),
+          "custom-sounds",
+        );
+        if (fs.existsSync(customSoundsDir)) {
+          const files = fs.readdirSync(customSoundsDir);
+          for (const file of files) {
+            fs.unlinkSync(path.join(customSoundsDir, file));
+          }
+        }
+
+        return true;
+      } catch (e) {
+        log.error("[DataIO] Reset failed, restoring backup:", e);
+        if (fs.existsSync(backupPath)) {
+          fs.copyFileSync(backupPath, dbPath);
+        }
+        throw e;
+      }
+    } catch (e) {
+      log.error("[DataIO] reset failed:", e);
+      throw e;
+    }
+  });
 }
 
 function validateImportData(data: Record<string, unknown>): void {

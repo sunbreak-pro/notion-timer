@@ -214,6 +214,7 @@ export interface DataService {
   // Data I/O
   exportData(): Promise<boolean>;
   importData(): Promise<boolean>;
+  resetData(): Promise<boolean>;
 
   // Diagnostics
   fetchLogs(options?: { level?: string; limit?: number }): Promise<LogEntry[]>;

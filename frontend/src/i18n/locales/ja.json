@@ -60,6 +60,10 @@
     "exportFailed": "エクスポート失敗: {{error}}",
     "importSuccess": "データをインポートしました。再読み込み中...",
     "importFailed": "インポート失敗: {{error}}",
+    "reset": "すべてのデータをリセット",
+    "resetConfirm": "すべてのデータが削除され、アプリが初期状態に戻ります。この操作は取り消せません。リセット前にバックアップが自動作成されます。本当にリセットしますか？",
+    "resetSuccess": "データをリセットしました。再読み込み中...",
+    "resetFailed": "リセット失敗: {{error}}",
     "unknownError": "不明なエラー"
   },
   "trash": {
