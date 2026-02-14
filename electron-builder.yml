@@ -4,6 +4,8 @@ directories:
   output: release
   buildResources: resources
 
+afterSign: scripts/notarize.js
+
 files:
   - electron/dist/**/*
   - "!electron/dist/**/*.js.map"
@@ -19,6 +21,10 @@ mac:
     - zip
   category: public.app-category.productivity
   darkModeSupport: true
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
 
 dmg:
   contents:
@@ -36,6 +42,8 @@ dmg:
 win:
   target:
     - nsis
+  signingHashAlgorithms:
+    - sha256
 
 nsis:
   oneClick: false

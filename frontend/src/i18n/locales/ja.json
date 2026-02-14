@@ -430,7 +430,8 @@
     "task": "タスク",
     "note": "ノート",
     "selectFolder": "フォルダ",
-    "routineIndicator": "{{completed}}/{{total}}"
+    "routineIndicator": "{{completed}}/{{total}}",
+    "noteItem": "ノート"
   },
   "common": {
     "cancel": "キャンセル",
@@ -532,7 +533,9 @@
     "allTasks": "すべてのタスク",
     "rename": "名前を変更",
     "delete": "削除",
-    "empty": "カレンダーはまだありません。フォルダでタスクをフィルターするために作成しましょう。"
+    "empty": "カレンダーはまだありません。フォルダでタスクをフィルターするために作成しましょう。",
+    "tasksTab": "タスク",
+    "memoTab": "メモ"
   },
   "calendarCreate": {
     "title": "新しいカレンダー",

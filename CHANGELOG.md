@@ -4,6 +4,15 @@
 
 ---
 
+## Code Signing 設定 (2026-02-14)
+
+- **macOS Notarization**: `@electron/notarize` + `scripts/notarize.js`（afterSign hook）、`build/entitlements.mac.plist`（JIT/unsigned memory/dyld entitlements）、`hardenedRuntime: true`
+- **Windows 署名**: `signingHashAlgorithms: [sha256]`、`WIN_CSC_LINK`/`WIN_CSC_KEY_PASSWORD` 環境変数対応
+- **CI/CD**: `build.yml` に署名環境変数追加、`create-release` ジョブ新設（ドラフト GitHub Release 自動作成）
+- **ローカルビルド対応**: 環境変数未設定時は notarization をスキップ
+
+---
+
 ## Music画面リデザイン + WorkScreen同期バグ修正 (2026-02-12)
 
 - **バグ修正**: MusicScreenとAudioProviderが別々のuseWorkscreenSelectionsインスタンスを持ち、MusicScreenでのWork/Rest選択がWorkScreenに反映されない問題を解消
@@ -38,32 +47,38 @@
 ## フロントエンドコード品質改善 (2026-02-11)
 
 ### Phase 1: テスト基盤構築
+
 - MockDataService作成（全60メソッドのvi.fn()モック）
 - dataServiceFactory.tsにテストオーバーライド機能追加（setDataServiceForTest/resetDataService）
 - renderWithProviders.tsxに全7プロバイダを含むテストヘルパー追加
 - ベースラインテスト103件作成: timerReducer(28), TimerContext(9), useTags(10), useCalendar(11), ElectronDataService(16), urlValidation(11), validation(10), duration(3), existing(5)
 
 ### Phase 2: セキュリティ修正
+
 - URL検証ユーティリティ追加（urlValidation.ts）: javascript:/data:/file:等を拒否
 - BubbleToolbar: リンクURL検証+エラー表示追加
 - SlashCommandMenu: window.promptをインラインURL入力に置換
 - 入力長制限追加: タグ名50文字、タスクタイトル/ノートタイトル255文字
 
 ### Phase 3: Context/Stateリファクタリング
+
 - TimerContext: useState+14useCallback+4ref同期パターン → useReducer移行（timerReducer.ts新規作成）
 - useMemos/useNotes/useTags: return値をuseMemoでラップ（Context値安定化）
 - AudioContext分割: AudioControlContext（アクション）+AudioStateContext（状態）に分離、後方互換維持
 - entityTagsVersionハック削除: useRef<Map>→useState<Map>に変更、5箇所のvoidハック除去
 
 ### Phase 4: コンポーネント分割
+
 - App.tsx: 527→172行（useAppCommands, useAppKeyboardShortcuts, useElectronMenuActions, useTaskDetailHandlers抽出）
 - TaskTree.tsx: 495→255行（useTaskTreeDnd, useTaskTreeKeyboard抽出）
 
 ### Phase 5: パフォーマンス＆パターン統一
+
 - useDebounceフック作成、TaskSelectorの検索に150msデバウンス適用
 - logServiceErrorユーティリティ作成、全フックのcatchブロックを統一パターンに置換（8ファイル）
 
 ### 新規ファイル
+
 - `frontend/src/test/mockDataService.ts`
 - `frontend/src/utils/urlValidation.ts`, `validation.ts`, `logError.ts`
 - `frontend/src/context/timerReducer.ts`
@@ -118,7 +133,7 @@
 
 - 統合tagsテーブルを廃止、task_tag_definitions / note_tag_definitions に完全分離
 - tagRepository をファクトリパターン（createTagRepository(db, type)）に書換
-- IPC チャンネル: db:taskTags:* / db:noteTags:* に移行
+- IPC チャンネル: db:taskTags:_ / db:noteTags:_ に移行
 - TagManager画面を2セクション（タスクタグ/ノートタグ）に分割
 - DBマイグレーションV6追加、既存データ自動移行
 - 変更ファイル: 20+ファイル（Backend 8, Frontend 12+）
@@ -178,6 +193,7 @@
 ## Electron Shell Foundation (Phase 0)
 
 ### Electron基盤構築
+
 - **electron/main.ts**: BrowserWindow (1200x800, min 800x600)、nodeIntegration:false + contextIsolation:true + sandbox:true
 - **electron/preload.ts**: `contextBridge.exposeInMainWorld('electronAPI', { platform })` プレースホルダー
 - **electron/tsconfig.json**: ES2022 + CommonJS出力
@@ -191,6 +207,7 @@
 ## Bubble Toolbar + Command Palette
 
 ### Floating Bubble Toolbar (Feature A)
+
 - テキスト選択時にNotionスタイルのフローティングツールバーを表示
 - Bold / Italic / Strikethrough / Code / Link / Text Color ボタン
 - Markdown入力ルール（`**`, `*`, `~~`, `` ` ``）を無効化、キーボードショートカットは維持
@@ -199,6 +216,7 @@
 - npm追加: `@tiptap/extension-color`, `@tiptap/extension-text-style`, `@tiptap/extension-link`
 
 ### Command Palette (Feature B)
+
 - `⌘K` でコマンドパレット起動
 - リアルタイム検索フィルタリング（タイトル + カテゴリ）
 - Arrow Up/Down + Enter キーボードナビゲーション
@@ -210,22 +228,27 @@
 ## コードクリーンアップ & ディレクトリ構造整理 (009)
 
 ### Phase 1: ディレクトリ構造整理
+
 - Barrel `index.ts` を5ディレクトリに追加（api, context, hooks, types, utils）
 - `ErrorBoundary.tsx` を `components/shared/` へ移動
 - `navigation.ts`（1行のみ）を `taskTree.ts` に統合・削除
 
 ### Phase 2: Context命名規約統一
+
 - `*ContextValue.ts` 4ファイルをcamelCase→PascalCaseにリネーム
 
 ### Phase 3: エラーハンドリング改善
+
 - `.catch(() => {})` サイレントエラー10箇所に `console.warn` 追加
 - JSON.parse失敗時のログ3箇所追加
 
 ### Phase 4: セキュリティ脆弱性修正
+
 - SlashCommandMenu XSS修正（画像URL検証: http/httpsのみ許可）
 - useCustomSounds MIME検証強化（マジックバイトチェック追加）
 
 ### Phase 5: バックエンド クラッシュ防止
+
 - H2コンソールをdevプロファイルのみに制限
 - TaskService 循環参照防止（visited Setで無限再帰回避）
 - TimerController 型キャスト安全化（instanceofパターンマッチング）
@@ -233,6 +256,7 @@
 - AIService JSON解析をJackson ObjectMapperに置換
 
 ### Phase 6: グローバル例外ハンドラー
+
 - `@ControllerAdvice` で統一エラーレスポンス（400/500）
 
 ---
@@ -240,6 +264,7 @@
 ## サウンド再生エンジン バグ修正
 
 ### AudioEngine 致命的バグ3件修正
+
 - **AudioContext closed状態の未処理修正**: `ensureContext()`で`state === 'closed'`なら新規AudioContextを作成するよう修正（React StrictMode / WorkScreen再マウントで発生）
 - **cleanup後のnull化漏れ修正**: `contextRef.current?.close()`後に`null`代入を追加し、closedなContextの再利用を防止
 - **play/pause競合修正**: `pauseTimeoutsRef`でフェードアウト用setTimeoutのIDを管理し、play前にpendingなpauseをキャンセル
@@ -250,6 +275,7 @@
 ## Timer/Sound API連携 + キーボードショートカット拡張
 
 ### Timer/Sound バックエンドAPI接続 (004残タスク → 001)
+
 - **ddl-auto変更**: `create-drop` → `update` でDB永続化
 - **型修正**: `TimerSession.taskId` を `number` → `string | null` に修正
 - **localStorage キー追加**: `BREAK_DURATION`, `LONG_BREAK_DURATION`, `SESSIONS_BEFORE_LONG_BREAK`
@@ -265,12 +291,14 @@
 - **TimerContextValue 拡張**: `breakDurationMinutes`, `longBreakDurationMinutes`, `setBreakDurationMinutes`, `setLongBreakDurationMinutes`, `setSessionsBeforeLongBreak` 追加
 
 ### キーボードショートカット拡張 (007 Phase 1-4)
+
 - **Phase 1 セクション切替**: `Cmd+1`〜`Cmd+5` で tasks/session/calendar/analytics/settings に切替
 - **Phase 2 タスク操作**: `↑/↓` フォーカス移動、`→/←` フォルダ展開/折りたたみ、`Cmd+Enter` 完了トグル、`Tab/Shift+Tab` インデント/アウトデント
 - **Phase 3 タイマー制御**: `r` リセット、`Cmd+Shift+T` モーダル開閉
 - **Phase 4 カレンダーナビゲーション**: `j/k` 前後移動、`t` 今日、`m` 月/週切替
 
 ### プラン整理
+
 - `006-calendar-enhancement.md` → archive (COMPLETED)
 - `008-tips-and-editor-enhancements.md` → archive (COMPLETED)
 - Backend テスト修正: TaskNodeDTO コンストラクタに `color` パラメータ追加
@@ -280,6 +308,7 @@
 ## Phase 7: Backend再統合 + Calendar & Analytics
 
 ### Backend再統合 (004)
+
 - **Task Entity全面改修**: `Long` ID → `String` ID（フロントエンド `"task-xxxx"` 形式に統一）
 - **TaskNodeDTO**: record型で `TaskNode` と1:1マッピング
 - **TaskRepository**: `findByIsDeletedFalseOrderBySortOrderAsc()`, `findByIsDeletedTrue()` 追加
@@ -290,12 +319,14 @@
 - **TaskServiceTest**: 新API対応にテスト全面更新
 
 ### Frontend API Client & Hooks
+
 - **taskClient.ts**: native fetch による Task API クライアント（CRUD + sync + migration）
 - **useTaskTreeAPI hook**: API起動時にfetch → localStorageフォールバック。Optimistic Update + 500msデバウンスのwrite-through同期
 - **TaskTreeContext切替**: `useTaskTree` → `useTaskTreeAPI` にデータソース切替（接続ポイント1箇所のみ）
 - **useMigration hook**: localStorage→Backend自動マイグレーション（二重実行防止フラグ付き）
 
 ### Calendar & Analytics (005)
+
 - **ナビゲーション拡張**: `SectionId` に `'calendar' | 'analytics'` 追加、LeftSidebar にメニュー追加
 - **CalendarView**: 月/週表示切替、前後ナビゲーション、Todayボタン
 - **MonthlyView**: 6行x7列グリッド、前後月の日付パディング
@@ -314,18 +345,21 @@
 ## Phase 6: バグ修正 + Noise Mixer音声再生 + ポリッシュ
 
 ### バグ修正・技術的負債 (Phase 1)
+
 - **TimerContext stale closure修正**: `advanceSession`の`sessionType`/`completedSessions`/`config`を`useRef`+`useEffect`で保持し、`setInterval`コールバック内のstale値参照を解消
 - **TaskNodeContent 300msクリック遅延修正**: `setTimeout`によるシングル/ダブルクリック区別を廃止、ネイティブ`onClick`/`onDoubleClick`に置き換え
 - **React lint error全件修正**: `react-hooks/exhaustive-deps`警告、`react-refresh/only-export-components`エラー、`react-hooks/refs`エラーを修正。TypeScript build error（test/setup.ts `beforeEach`未定義）を`tsconfig.app.json`のexcludeで解消
 - **バンドルサイズ最適化**: `MemoEditor`（TipTap）を`React.lazy()`+`Suspense`で遅延読み込み化。メインchunk 671KB→298KB（57%削減）
 
 ### Noise Mixer 音声再生 (Phase 2)
+
 - **useAudioEngine hook新規作成**: Web Audio API (`AudioContext` + `HTMLAudioElement` + `MediaElementAudioSourceNode` + `GainNode`)をラップ。ループ再生、リアルタイム音量制御、200msフェードイン/アウト
 - **SoundMixer接続**: `WorkScreen`で`useAudioEngine(mixer)`を呼び出し、`useLocalSoundMixer`の状態変更を自動反映
 - **リソース管理**: アンマウント時の`AudioContext.close()`+全要素解放、タブ非表示時の自動ミュート/復帰
 - **sounds定数にfileパス追加**: `SOUND_TYPES`に`file`フィールド追加（`/sounds/*.mp3`）
 
 ### ポリッシュ (Phase 3)
+
 - **ブラウザ通知**: タイマーセッション完了時に`Notification API`でデスクトップ通知。Settings画面にトグルUI追加
 - **キーボードショートカット**: `Space`（タイマー開始/停止）、`n`（新規タスク）、`Escape`（モーダル閉じ）、`Delete`/`Backspace`（タスク削除）。テキスト入力中は無効化
 
@@ -334,12 +368,14 @@
 ## Phase 5: AI Coaching (Gemini API)
 
 ### AI Coaching Backend
+
 - `AIConfig.java` — RestClient Bean + APIキー管理 (`SONICFLOW_AI_API_KEY` 環境変数)
 - `AIService.java` — Gemini API通信、日本語プロンプト(breakdown/encouragement/review)
 - `AIController.java` — `POST /api/ai/advice` エンドポイント
 - `application.properties` — `sonicflow.ai.api-key`, `sonicflow.ai.model` 設定追加
 
 ### AI Coaching Frontend
+
 - `types/ai.ts` — AIAdviceRequest/Response 型定義
 - `api/aiClient.ts` — native fetch による API通信
 - `hooks/useAICoach.ts` — 状態管理フック (advice/loading/error)
@@ -348,6 +384,7 @@
 - `vite.config.ts` — `/api` プロキシ追加 (→ localhost:8080)
 
 ### AI Coach 429エラー修正 & モデル移行
+
 - モデル `gemini-2.0-flash` → `gemini-2.5-flash-lite` に変更（旧モデル廃止対応）
 - `AIService.java` — `@PostConstruct migrateDeprecatedModel()` でDB自動マイグレーション
 - `AIService.java` — デバッグログ追加（HTTPステータス・モデル名・レスポンスボディ）
@@ -360,6 +397,7 @@
 ## Phase 4: ドキュメント同期 & テスト基盤
 
 ### ドキュメント同期 (Plan 001-documentation-sync)
+
 - `Application_Overview.md` — Java 21→23、フラットTask→TaskNodeツリー、Axios→native fetch、localStorage中心アーキテクチャに全面更新
 - `ADR 0001` — Java 23、React 19、Vite 7、Tailwind v4、native fetch、TipTap、@dnd-kit追記
 - `00-index.md` — Phase実装マトリクス全面更新（タイマー/サウンド/設定 ✅反映、接続状態カラム追加）
@@ -371,16 +409,19 @@
 ## Phase 3: リファクタリング & 改善
 
 ### SubSidebar & WorkScreen 改善 (Plan 003)
+
 - SubSidebar リサイズ対応 (160-400px)
 - WorkScreen モーダルオーバーレイモード
 - TaskTreeInput の UX 改善
 
 ### Subfolder 廃止、Folder 統一型 + 5階層ネスト対応
+
 - `subfolder` タイプを廃止し `folder` に統一
 - フォルダの5階層ネスト対応 (`MAX_FOLDER_DEPTH = 5`)
 - localStorage の自動マイグレーション
 
 ### Frontend リファクタリング (Plan 002)
+
 - Phase 1 バグ修正 (B1-B4): localStorage参照統一、key collision修正
 - Phase 2 重複排除 (D1-D4): 定数・ロジック重複の解消
 - Phase 3 コンポーネント分割 (E1-E3): TaskTreeNode→5分割、useTaskTree→4分割、SlashCommandMenu→hook+component分割
@@ -391,20 +432,24 @@
 ## Phase 2: UI-First Implementation
 
 ### TaskTree - 階層型タスク管理
+
 - フォルダ/サブフォルダ/タスクの3階層構造
 - @dnd-kit によるドラッグ&ドロップ並び替え
 - ソフトデリート + ゴミ箱機能
 
 ### WorkScreen - 統合作業画面
+
 - ポモドーロタイマー + サウンドミキサー統合画面
 - オーバーレイモード（タスクPlay起動）+ メインコンテンツモード（Session）
 
 ### Noise Mixer (Feature B) - UI
+
 - NoiseMixer コンポーネント
 - 音源選択UI (Rain, Thunder, Wind, Ocean, Birds, Fire)
 - 音量スライダー (0-100%)
 
 ### Focus Timer (Feature C)
+
 - FocusTimer コンポーネント
 - WORK/BREAK/LONG_BREAK カウントダウン
 - プログレスバー表示
@@ -413,6 +458,7 @@
 - タイマー設定カスタマイズ
 
 ### Settings & Theme
+
 - ダークモード/ライトモード対応
 - フォントサイズ設定 (S/M/L)
 - Settings画面 (外観設定 + ゴミ箱)
@@ -422,6 +468,7 @@
 ## Phase 1: Foundation
 
 ### Documentation
+
 - プロジェクト仕様書作成 (Application_Overview.md)
 - CLAUDE.md 作成 (開発ガイド)
 - MEMORY.md 作成 (技術仕様)
@@ -430,11 +477,13 @@
 - ADR/0001-tech-stack.md 作成
 
 ### Frontend Setup
+
 - Vite + React + TypeScript プロジェクト作成
 - Tailwind CSS設定 (Notionスタイルカラー)
 - 基本レイアウトコンポーネント (Layout, Sidebar, MainContent)
 
 ### Task Management (Feature A)
+
 - TaskList コンポーネント
 - TaskItem コンポーネント (インライン編集対応)
 - TaskInput コンポーネント (新規タスク追加)
@@ -445,6 +494,7 @@
 - 完了タスク折りたたみ表示
 
 ### Backend Setup
+
 - Spring Boot プロジェクトのスキャフォールディング
 - build.gradle の作成
 - CORS設定 (WebMvcConfigurer)
@@ -452,9 +502,11 @@
 - Task Entity / Repository / Service / Controller (CRUD API)
 
 ### Backend - Timer ドメイン
+
 - TimerSettings / TimerSession Entity
 - TimerRepository / TimerService / TimerController
 
 ### Backend - Sound ドメイン
+
 - SoundSetting / SoundPreset Entity
 - SoundRepository / SoundService / SoundController

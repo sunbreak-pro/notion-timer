@@ -8,6 +8,10 @@ function formatDateKey(d: Date): string {
 }
 
 function isDayApplicable(routine: RoutineNode, date: Date): boolean {
+  const createdDate = routine.createdAt.substring(0, 10);
+  const dateKey = formatDateKey(date);
+  if (dateKey < createdDate) return false;
+
   if (routine.frequencyType === "daily") return true;
   return routine.frequencyDays.includes(date.getDay());
 }
@@ -171,11 +175,13 @@ export function useRoutines() {
         checkDate.setDate(checkDate.getDate() - 1);
       }
       while (true) {
+        const key = formatDateKey(checkDate);
+        if (key < routine.createdAt.substring(0, 10)) break;
+
         if (!isDayApplicable(routine, checkDate)) {
           checkDate.setDate(checkDate.getDate() - 1);
           continue;
         }
-        const key = formatDateKey(checkDate);
         if (dateSet.has(key)) {
           currentStreak++;
           checkDate.setDate(checkDate.getDate() - 1);

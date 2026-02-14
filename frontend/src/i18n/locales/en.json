@@ -430,7 +430,8 @@
     "task": "Task",
     "note": "Note",
     "selectFolder": "Folder",
-    "routineIndicator": "{{completed}}/{{total}}"
+    "routineIndicator": "{{completed}}/{{total}}",
+    "noteItem": "Note"
   },
   "common": {
     "cancel": "Cancel",
@@ -532,7 +533,9 @@
     "allTasks": "All Tasks",
     "rename": "Rename",
     "delete": "Delete",
-    "empty": "No calendars yet. Create one to filter tasks by folder."
+    "empty": "No calendars yet. Create one to filter tasks by folder.",
+    "tasksTab": "Tasks",
+    "memoTab": "Memo"
   },
   "calendarCreate": {
     "title": "New Calendar",

@@ -68,6 +68,25 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 
 ## 開発ジャーナル
 
+### 2026-02-14 - Code Signing 設定（macOS Notarization + Windows署名 + CI/CDリリース）
+
+#### 概要
+
+プロダクション配布に向けて、macOS Notarization と Windows コード署名を設定。CI/CDパイプラインにドラフトGitHub Release自動作成を追加。
+
+#### 変更点
+
+- **macOS Notarization**: `@electron/notarize` v2.x + `scripts/notarize.js`（afterSign hook、CJS形式）、環境変数未設定時は自動スキップ（ローカルビルド対応）
+- **Entitlements**: `build/entitlements.mac.plist`（allow-jit / allow-unsigned-executable-memory / allow-dyld-environment-variables）
+- **electron-builder.yml**: `afterSign`, `hardenedRuntime: true`, `gatekeeperAssess: false`, `entitlements`/`entitlementsInherit`, `win.signingHashAlgorithms: [sha256]`
+- **CI/CD**: `build.yml` の macOS ジョブに `CSC_LINK`/`CSC_KEY_PASSWORD`/`APPLE_*` 環境変数追加、Windows ジョブに `WIN_CSC_LINK`/`WIN_CSC_KEY_PASSWORD` 追加
+- **create-release ジョブ**: 両プラットフォームビルド完了後にドラフト GitHub Release を自動作成（`softprops/action-gh-release@v2`）
+
+#### 新規ファイル（2）
+
+- `build/entitlements.mac.plist` — macOS entitlements
+- `scripts/notarize.js` — Notarization afterSign hook
+
 ### 2026-02-14 - ルーティン（ハビットトラッカー）+ カレンダータスク作成強化
 
 #### 概要

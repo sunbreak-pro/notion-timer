@@ -1,6 +1,6 @@
 # Code Signing Plan
 
-**Status**: PLANNED
+**Status**: COMPLETED
 **Priority**: High (required for production distribution)
 
 ---
@@ -14,11 +14,13 @@ Code signing is required for distributing Sonic Flow to end users without OS sec
 ## macOS: Notarization
 
 ### Prerequisites
+
 1. **Apple Developer Account** ($99/year) — developer.apple.com
 2. **Developer ID Application Certificate** — Keychain Access or Apple Developer portal
 3. **App-Specific Password** — appleid.apple.com (for notarytool)
 
 ### Configuration (electron-builder.yml)
+
 ```yaml
 mac:
   identity: "Developer ID Application: Your Name (TEAM_ID)"
@@ -30,6 +32,7 @@ afterSign: scripts/notarize.js
 ```
 
 ### Entitlements (build/entitlements.mac.plist)
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -43,16 +46,17 @@ afterSign: scripts/notarize.js
 ```
 
 ### Notarization Script (scripts/notarize.js)
+
 ```javascript
-const { notarize } = require('@electron/notarize');
+const { notarize } = require("@electron/notarize");
 
 exports.default = async function notarizing(context) {
   const { electronPlatformName, appOutDir } = context;
-  if (electronPlatformName !== 'darwin') return;
+  if (electronPlatformName !== "darwin") return;
 
   const appName = context.packager.appInfo.productFilename;
   await notarize({
-    appBundleId: 'com.sonicflow.app',
+    appBundleId: "com.sonicflow.app",
     appPath: `${appOutDir}/${appName}.app`,
     appleId: process.env.APPLE_ID,
     appleIdPassword: process.env.APPLE_APP_PASSWORD,
@@ -62,6 +66,7 @@ exports.default = async function notarizing(context) {
 ```
 
 ### Environment Variables (CI/CD)
+
 ```
 APPLE_ID=your@email.com
 APPLE_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
@@ -75,21 +80,24 @@ CSC_KEY_PASSWORD=certificate-password
 ## Windows: Code Signing
 
 ### Prerequisites
+
 1. **Code Signing Certificate** — DigiCert, Sectigo, or similar CA
    - EV Certificate recommended (SmartScreen trust from first install)
    - Standard OV Certificate alternative (builds SmartScreen reputation over time)
 2. **Certificate file** (.pfx / .p12 format)
 
 ### Configuration (electron-builder.yml)
+
 ```yaml
 win:
   certificateFile: ${env.WIN_CSC_LINK}
   certificatePassword: ${env.WIN_CSC_KEY_PASSWORD}
   signingHashAlgorithms: [sha256]
-  sign: null  # use default signtool
+  sign: null # use default signtool
 ```
 
 ### Environment Variables (CI/CD)
+
 ```
 WIN_CSC_LINK=path-to-certificate.pfx
 WIN_CSC_KEY_PASSWORD=certificate-password
@@ -104,6 +112,7 @@ WIN_CSC_KEY_PASSWORD=certificate-password
 Trigger: Push tag `v*` (e.g., `v1.1.0`)
 
 Steps:
+
 1. Checkout + install dependencies
 2. Build frontend + electron
 3. Run electron-builder with platform matrix (macOS + Windows)
@@ -113,6 +122,7 @@ Steps:
 7. Manually publish release after verification
 
 ### GitHub Secrets Required
+
 ```
 APPLE_ID
 APPLE_APP_PASSWORD
@@ -128,11 +138,11 @@ GH_TOKEN (auto-provided by Actions)
 
 ## Cost Estimate
 
-| Item | Cost | Recurrence |
-|------|------|-----------|
-| Apple Developer Account | $99 | Annual |
-| Windows Code Signing (OV) | ~$200-400 | Annual |
-| Windows Code Signing (EV) | ~$400-600 | Annual |
+| Item                      | Cost      | Recurrence |
+| ------------------------- | --------- | ---------- |
+| Apple Developer Account   | $99       | Annual     |
+| Windows Code Signing (OV) | ~$200-400 | Annual     |
+| Windows Code Signing (EV) | ~$400-600 | Annual     |
 
 ---
 
