@@ -118,6 +118,10 @@ function App() {
             onSelectTask={handlers.handleCalendarSelectTask}
             onCreateTask={handlers.handleCalendarCreateTask}
             onSelectMemo={handlers.handleCalendarSelectMemo}
+            onStartTimer={(taskId) => {
+              const task = nodes.find((n) => n.id === taskId);
+              if (task) handlers.handlePlayTask(task);
+            }}
           />
         );
       case "analytics":
@@ -157,9 +161,14 @@ function App() {
           completedSessionType={timer.completedSessionType}
           onExtend={timer.extendWork}
           onStartRest={timer.startRest}
-          onStartWork={() => { timer.dismissCompletionModal(); timer.start(); }}
+          onStartWork={() => {
+            timer.dismissCompletionModal();
+            timer.start();
+          }}
           onDismiss={timer.dismissCompletionModal}
-          onCompleteTask={timer.activeTask ? handlers.handleCompleteTask : undefined}
+          onCompleteTask={
+            timer.activeTask ? handlers.handleCompleteTask : undefined
+          }
           autoStartBreaks={timer.autoStartBreaks}
         />
       )}

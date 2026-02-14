@@ -1,13 +1,18 @@
-import { useCallback } from 'react';
-import type { TaskNode, SectionId } from '../types/taskTree';
-import type { TimerContextValue } from '../context/TimerContextValue';
+import { useCallback } from "react";
+import type { TaskNode, SectionId } from "../types/taskTree";
+import type { TimerContextValue } from "../context/TimerContextValue";
 
 interface UseTaskDetailHandlersParams {
   selectedTaskId: string | null;
   selectedTask: TaskNode | null;
   timer: TimerContextValue;
   updateNode: (id: string, updates: Partial<TaskNode>) => void;
-  addNode: (type: 'task' | 'folder', parentId: string | null, title: string, extra?: Partial<TaskNode>) => TaskNode | undefined;
+  addNode: (
+    type: "task" | "folder",
+    parentId: string | null,
+    title: string,
+    extra?: Partial<TaskNode>,
+  ) => TaskNode | undefined;
   softDelete: (id: string) => void;
   toggleTaskStatus: (id: string) => void;
   setSelectedTaskId: (id: string | null) => void;
@@ -27,15 +32,22 @@ export function useTaskDetailHandlers({
   setActiveSection,
   setMemoDate,
 }: UseTaskDetailHandlersParams) {
-  const handlePlayTask = useCallback((node: TaskNode) => {
-    timer.openForTask(node.id, node.title, node.workDurationMinutes);
-    setActiveSection('work');
-  }, [timer, setActiveSection]);
+  const handlePlayTask = useCallback(
+    (node: TaskNode) => {
+      timer.openForTask(node.id, node.title, node.workDurationMinutes);
+      setActiveSection("work");
+    },
+    [timer, setActiveSection],
+  );
 
   const handlePlaySelectedTask = useCallback(() => {
     if (!selectedTask) return;
-    timer.openForTask(selectedTask.id, selectedTask.title, selectedTask.workDurationMinutes);
-    setActiveSection('work');
+    timer.openForTask(
+      selectedTask.id,
+      selectedTask.title,
+      selectedTask.workDurationMinutes,
+    );
+    setActiveSection("work");
   }, [selectedTask, timer, setActiveSection]);
 
   const handleDeleteSelectedTask = useCallback(() => {
@@ -44,47 +56,77 @@ export function useTaskDetailHandlers({
     setSelectedTaskId(null);
   }, [selectedTask, softDelete, setSelectedTaskId]);
 
-  const handleUpdateContent = useCallback((content: string) => {
-    if (!selectedTaskId) return;
-    updateNode(selectedTaskId, { content });
-  }, [selectedTaskId, updateNode]);
+  const handleUpdateContent = useCallback(
+    (content: string) => {
+      if (!selectedTaskId) return;
+      updateNode(selectedTaskId, { content });
+    },
+    [selectedTaskId, updateNode],
+  );
 
-  const handleDurationChange = useCallback((minutes: number) => {
-    if (!selectedTaskId) return;
-    updateNode(selectedTaskId, { workDurationMinutes: minutes === 0 ? undefined : minutes });
-  }, [selectedTaskId, updateNode]);
+  const handleDurationChange = useCallback(
+    (minutes: number) => {
+      if (!selectedTaskId) return;
+      updateNode(selectedTaskId, {
+        workDurationMinutes: minutes === 0 ? undefined : minutes,
+      });
+    },
+    [selectedTaskId, updateNode],
+  );
 
-  const handleScheduledAtChange = useCallback((scheduledAt: string | undefined) => {
-    if (!selectedTaskId) return;
-    if (scheduledAt === undefined) {
-      updateNode(selectedTaskId, { scheduledAt: undefined, scheduledEndAt: undefined, isAllDay: undefined });
-    } else {
-      updateNode(selectedTaskId, { scheduledAt });
-    }
-  }, [selectedTaskId, updateNode]);
+  const handleScheduledAtChange = useCallback(
+    (scheduledAt: string | undefined) => {
+      if (!selectedTaskId) return;
+      if (scheduledAt === undefined) {
+        updateNode(selectedTaskId, {
+          scheduledAt: undefined,
+          scheduledEndAt: undefined,
+          isAllDay: undefined,
+        });
+      } else {
+        updateNode(selectedTaskId, { scheduledAt });
+      }
+    },
+    [selectedTaskId, updateNode],
+  );
 
-  const handleTitleChange = useCallback((newTitle: string) => {
-    if (!selectedTaskId) return;
-    updateNode(selectedTaskId, { title: newTitle });
-  }, [selectedTaskId, updateNode]);
+  const handleTitleChange = useCallback(
+    (newTitle: string) => {
+      if (!selectedTaskId) return;
+      updateNode(selectedTaskId, { title: newTitle });
+    },
+    [selectedTaskId, updateNode],
+  );
 
-  const handleScheduledEndAtChange = useCallback((scheduledEndAt: string | undefined) => {
-    if (!selectedTaskId) return;
-    updateNode(selectedTaskId, { scheduledEndAt });
-  }, [selectedTaskId, updateNode]);
+  const handleScheduledEndAtChange = useCallback(
+    (scheduledEndAt: string | undefined) => {
+      if (!selectedTaskId) return;
+      updateNode(selectedTaskId, { scheduledEndAt });
+    },
+    [selectedTaskId, updateNode],
+  );
 
-  const handleIsAllDayChange = useCallback((isAllDay: boolean) => {
-    if (!selectedTaskId) return;
-    if (isAllDay) {
-      updateNode(selectedTaskId, { isAllDay: true, scheduledEndAt: undefined });
-    } else {
-      updateNode(selectedTaskId, { isAllDay: undefined });
-    }
-  }, [selectedTaskId, updateNode]);
+  const handleIsAllDayChange = useCallback(
+    (isAllDay: boolean) => {
+      if (!selectedTaskId) return;
+      if (isAllDay) {
+        updateNode(selectedTaskId, {
+          isAllDay: true,
+          scheduledEndAt: undefined,
+        });
+      } else {
+        updateNode(selectedTaskId, { isAllDay: undefined });
+      }
+    },
+    [selectedTaskId, updateNode],
+  );
 
-  const handleFolderColorChange = useCallback((folderId: string, color: string) => {
-    updateNode(folderId, { color });
-  }, [updateNode]);
+  const handleFolderColorChange = useCallback(
+    (folderId: string, color: string) => {
+      updateNode(folderId, { color });
+    },
+    [updateNode],
+  );
 
   const handleCompleteTask = useCallback(() => {
     const taskId = timer.activeTask?.id;
@@ -94,36 +136,51 @@ export function useTaskDetailHandlers({
     timer.reset();
     if (timer.showCompletionModal) timer.dismissCompletionModal();
     timer.clearTask();
-    setActiveSection('tasks');
+    setActiveSection("tasks");
   }, [timer, toggleTaskStatus, setActiveSection]);
 
-  const handleCalendarSelectTask = useCallback((taskId: string) => {
-    setSelectedTaskId(taskId);
-    setActiveSection('tasks');
-  }, [setSelectedTaskId, setActiveSection]);
+  const handleCalendarSelectTask = useCallback(
+    (taskId: string) => {
+      setSelectedTaskId(taskId);
+      setActiveSection("tasks");
+    },
+    [setSelectedTaskId, setActiveSection],
+  );
 
-  const handleCalendarCreateTask = useCallback((date: Date) => {
-    const startDate = new Date(date);
-    const newNode = addNode('task', null, 'Untitled', {
-      scheduledAt: startDate.toISOString(),
-    });
-    if (!newNode) return;
-    timer.openForTask(newNode.id, newNode.title, newNode.workDurationMinutes);
-    setActiveSection('work');
-  }, [addNode, timer, setActiveSection]);
+  const handleCalendarCreateTask = useCallback(
+    (date: Date, title?: string) => {
+      const startDate = new Date(date);
+      const newNode = addNode("task", null, title || "Untitled", {
+        scheduledAt: startDate.toISOString(),
+      });
+      if (!newNode) return;
+      timer.openForTask(newNode.id, newNode.title, newNode.workDurationMinutes);
+      setActiveSection("work");
+    },
+    [addNode, timer, setActiveSection],
+  );
 
-  const handleCalendarSelectMemo = useCallback((date: string) => {
-    setMemoDate(date);
-    setActiveSection('memo');
-  }, [setMemoDate, setActiveSection]);
+  const handleCalendarSelectMemo = useCallback(
+    (date: string) => {
+      setMemoDate(date);
+      setActiveSection("memo");
+    },
+    [setMemoDate, setActiveSection],
+  );
 
-  const handleCreateFolder = useCallback((title: string) => {
-    addNode('folder', null, title);
-  }, [addNode]);
+  const handleCreateFolder = useCallback(
+    (title: string) => {
+      addNode("folder", null, title);
+    },
+    [addNode],
+  );
 
-  const handleCreateTask = useCallback((title: string) => {
-    addNode('task', null, title);
-  }, [addNode]);
+  const handleCreateTask = useCallback(
+    (title: string) => {
+      addNode("task", null, title);
+    },
+    [addNode],
+  );
 
   return {
     handlePlayTask,

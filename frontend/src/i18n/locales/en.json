@@ -398,7 +398,10 @@
     "completed": "Completed",
     "all": "All",
     "inbox": "Inbox",
-    "memo": "Memo"
+    "memo": "Memo",
+    "taskNamePlaceholder": "Task name",
+    "openDetail": "Open detail",
+    "startTimer": "Start timer"
   },
   "common": {
     "cancel": "Cancel",

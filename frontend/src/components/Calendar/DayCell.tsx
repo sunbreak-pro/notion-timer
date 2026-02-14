@@ -10,8 +10,8 @@ interface DayCellProps {
   isCurrentMonth: boolean;
   isToday: boolean;
   tasks: TaskNode[];
-  onSelectTask: (taskId: string) => void;
-  onCreateTask?: (date: Date) => void;
+  onSelectTask: (taskId: string, event: React.MouseEvent) => void;
+  onCreateTask?: (date: Date, event: React.MouseEvent) => void;
   getTaskColor?: (taskId: string) => string | undefined;
   getFolderTag?: (taskId: string) => string;
   memo?: MemoNode;
@@ -64,7 +64,7 @@ export function DayCell({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onCreateTask(date);
+              onCreateTask(date, e);
             }}
             className="opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center rounded hover:bg-notion-hover text-notion-text-secondary transition-opacity"
           >
@@ -90,7 +90,7 @@ export function DayCell({
           <CalendarTaskItem
             key={task.id}
             task={task}
-            onClick={() => onSelectTask(task.id)}
+            onClick={(e) => onSelectTask(task.id, e)}
             color={getTaskColor?.(task.id)}
             tag={getFolderTag?.(task.id)}
           />
@@ -99,7 +99,7 @@ export function DayCell({
           <CalendarTaskItem
             key={hiddenTasks[0].id}
             task={hiddenTasks[0]}
-            onClick={() => onSelectTask(hiddenTasks[0].id)}
+            onClick={(e) => onSelectTask(hiddenTasks[0].id, e)}
             color={getTaskColor?.(hiddenTasks[0].id)}
             tag={getFolderTag?.(hiddenTasks[0].id)}
           />
@@ -121,8 +121,8 @@ export function DayCell({
                   <CalendarTaskItem
                     key={task.id}
                     task={task}
-                    onClick={() => {
-                      onSelectTask(task.id);
+                    onClick={(e) => {
+                      onSelectTask(task.id, e);
                       setShowMore(false);
                     }}
                     color={getTaskColor?.(task.id)}

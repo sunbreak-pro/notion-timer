@@ -6,14 +6,18 @@ import { useCalendarContext } from "../../hooks/useCalendarContext";
 import { useCalendar } from "../../hooks/useCalendar";
 import { getDescendantTasks } from "../../utils/getDescendantTasks";
 import { CalendarHeader } from "./CalendarHeader";
+import { CalendarTagFilter } from "./CalendarTagFilter";
+import { TaskCreatePopover } from "./TaskCreatePopover";
+import { TaskPreviewPopup } from "./TaskPreviewPopup";
 import { MonthlyView } from "./MonthlyView";
 import { WeeklyTimeGrid } from "./WeeklyTimeGrid";
 import type { MemoNode } from "../../types/memo";
 
 interface CalendarViewProps {
   onSelectTask: (taskId: string) => void;
-  onCreateTask?: (date: Date) => void;
+  onCreateTask?: (date: Date, title?: string) => void;
   onSelectMemo?: (date: string) => void;
+  onStartTimer?: (taskId: string) => void;
 }
 
 function getInitialWeekStart(): Date {
@@ -27,6 +31,7 @@ export function CalendarView({
   onSelectTask,
   onCreateTask,
   onSelectMemo,
+  onStartTimer,
 }: CalendarViewProps) {
   const { t } = useTranslation();
   const { nodes, getTaskColor, getFolderTagForTask } = useTaskTreeContext();
@@ -48,6 +53,14 @@ export function CalendarView({
   );
   const [weekStartDate, setWeekStartDate] = useState<Date>(getInitialWeekStart);
   const [tagFilter, setTagFilter] = useState<string>("");
+  const [createPopover, setCreatePopover] = useState<{
+    date: Date;
+    position: { x: number; y: number };
+  } | null>(null);
+  const [previewPopup, setPreviewPopup] = useState<{
+    taskId: string;
+    position: { x: number; y: number };
+  } | null>(null);
 
   const { tasksByDate, calendarDays, weekDays, threeDays } = useCalendar(
     filteredNodes,
@@ -195,6 +208,21 @@ export function CalendarView({
     return new Map<string, MemoNode>();
   }, [tagFilter, memosByDate, t]);
 
+  const handleRequestCreate = (date: Date, e: React.MouseEvent) => {
+    setPreviewPopup(null);
+    setCreatePopover({ date, position: { x: e.clientX, y: e.clientY } });
+  };
+
+  const handleTaskClick = (taskId: string, e: React.MouseEvent) => {
+    setCreatePopover(null);
+    setPreviewPopup({ taskId, position: { x: e.clientX, y: e.clientY } });
+  };
+
+  const previewTask = previewPopup
+    ? (filteredNodes.find((n) => n.id === previewPopup.taskId) ??
+      nodes.find((n) => n.id === previewPopup.taskId))
+    : null;
+
   return (
     <div className="h-full flex flex-col overflow-auto">
       <div className="max-w-5xl mx-auto w-full px-8 py-6 flex-1">
@@ -209,7 +237,7 @@ export function CalendarView({
           onViewModeChange={setViewMode}
         />
 
-        {/* Filter tabs */}
+        {/* Filter tabs + tag filter */}
         <div className="flex items-center gap-2 mb-4">
           <button
             onClick={() => setFilter("incomplete")}
@@ -231,43 +259,24 @@ export function CalendarView({
           >
             {t("calendar.completed")}
           </button>
+          {availableTags.length > 0 && (
+            <>
+              <div className="w-px h-4 bg-notion-border" />
+              <CalendarTagFilter
+                tags={availableTags}
+                value={tagFilter}
+                onChange={setTagFilter}
+              />
+            </>
+          )}
         </div>
-
-        {/* Tag filter chips */}
-        {availableTags.length > 0 && (
-          <div className="flex items-center gap-1.5 mb-4 flex-wrap">
-            <button
-              onClick={() => setTagFilter("")}
-              className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
-                tagFilter === ""
-                  ? "bg-notion-accent/10 text-notion-accent font-medium"
-                  : "bg-notion-bg-secondary text-notion-text-secondary hover:bg-notion-hover"
-              }`}
-            >
-              {t("calendar.all")}
-            </button>
-            {availableTags.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => setTagFilter(tagFilter === tag ? "" : tag)}
-                className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
-                  tagFilter === tag
-                    ? "bg-notion-accent/10 text-notion-accent font-medium"
-                    : "bg-notion-bg-secondary text-notion-text-secondary hover:bg-notion-hover"
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        )}
 
         {viewMode === "month" ? (
           <MonthlyView
             days={calendarDays}
             tasksByDate={filteredTasksByDate}
-            onSelectTask={onSelectTask}
-            onCreateTask={onCreateTask}
+            onSelectTask={handleTaskClick}
+            onCreateTask={onCreateTask ? handleRequestCreate : undefined}
             getTaskColor={getTaskColor}
             getFolderTag={getFolderTagForTask}
             memosByDate={filteredMemosByDate}
@@ -277,8 +286,8 @@ export function CalendarView({
           <WeeklyTimeGrid
             days={viewMode === "3day" ? threeDays : weekDays}
             tasksByDate={filteredTasksByDate}
-            onSelectTask={onSelectTask}
-            onCreateTask={onCreateTask}
+            onSelectTask={handleTaskClick}
+            onCreateTask={onCreateTask ? handleRequestCreate : undefined}
             getTaskColor={getTaskColor}
             getFolderTag={getFolderTagForTask}
             memosByDate={filteredMemosByDate}
@@ -286,6 +295,35 @@ export function CalendarView({
           />
         )}
       </div>
+
+      {createPopover && (
+        <TaskCreatePopover
+          position={createPopover.position}
+          onSubmit={(title) => {
+            onCreateTask?.(createPopover.date, title);
+            setCreatePopover(null);
+          }}
+          onClose={() => setCreatePopover(null)}
+        />
+      )}
+
+      {previewPopup && previewTask && (
+        <TaskPreviewPopup
+          task={previewTask}
+          position={previewPopup.position}
+          color={getTaskColor(previewTask.id)}
+          folderTag={getFolderTagForTask(previewTask.id)}
+          onOpenDetail={() => {
+            onSelectTask(previewTask.id);
+            setPreviewPopup(null);
+          }}
+          onStartTimer={() => {
+            onStartTimer?.(previewTask.id);
+            setPreviewPopup(null);
+          }}
+          onClose={() => setPreviewPopup(null)}
+        />
+      )}
     </div>
   );
 }

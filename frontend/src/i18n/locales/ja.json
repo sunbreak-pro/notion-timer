@@ -398,7 +398,10 @@
     "completed": "完了",
     "all": "すべて",
     "inbox": "インボックス",
-    "memo": "メモ"
+    "memo": "メモ",
+    "taskNamePlaceholder": "タスク名",
+    "openDetail": "詳細を開く",
+    "startTimer": "タイマー開始"
   },
   "common": {
     "cancel": "キャンセル",

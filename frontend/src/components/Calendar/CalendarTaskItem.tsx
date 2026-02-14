@@ -3,7 +3,7 @@ import { getTextColorForBg } from "../../constants/folderColors";
 
 interface CalendarTaskItemProps {
   task: TaskNode;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
   color?: string;
   tag?: string;
 }

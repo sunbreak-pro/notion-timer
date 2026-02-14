@@ -1,30 +1,42 @@
-import type { TaskNode } from '../../types/taskTree';
-import type { MemoNode } from '../../types/memo';
-import { DayCell } from './DayCell';
-import { formatDateKey } from '../../hooks/useCalendar';
+import type { TaskNode } from "../../types/taskTree";
+import type { MemoNode } from "../../types/memo";
+import { DayCell } from "./DayCell";
+import { formatDateKey } from "../../hooks/useCalendar";
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 interface MonthlyViewProps {
   days: { date: Date; isCurrentMonth: boolean }[];
   tasksByDate: Map<string, TaskNode[]>;
-  onSelectTask: (taskId: string) => void;
-  onCreateTask?: (date: Date) => void;
+  onSelectTask: (taskId: string, event: React.MouseEvent) => void;
+  onCreateTask?: (date: Date, event: React.MouseEvent) => void;
   getTaskColor?: (taskId: string) => string | undefined;
   getFolderTag?: (taskId: string) => string;
   memosByDate?: Map<string, MemoNode>;
   onSelectMemo?: (date: string) => void;
 }
 
-export function MonthlyView({ days, tasksByDate, onSelectTask, onCreateTask, getTaskColor, getFolderTag, memosByDate, onSelectMemo }: MonthlyViewProps) {
+export function MonthlyView({
+  days,
+  tasksByDate,
+  onSelectTask,
+  onCreateTask,
+  getTaskColor,
+  getFolderTag,
+  memosByDate,
+  onSelectMemo,
+}: MonthlyViewProps) {
   const today = new Date();
   const todayKey = formatDateKey(today);
 
   return (
     <div>
       <div className="grid grid-cols-7 mb-1">
-        {DAY_NAMES.map(name => (
-          <div key={name} className="text-xs font-medium text-notion-text-secondary text-center py-2">
+        {DAY_NAMES.map((name) => (
+          <div
+            key={name}
+            className="text-xs font-medium text-notion-text-secondary text-center py-2"
+          >
             {name}
           </div>
         ))}
