@@ -1,10 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { SortableContext } from "@dnd-kit/sortable";
 import { GripVertical } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TaskNode } from "../../types/taskTree";
@@ -76,15 +72,9 @@ export function TaskTreeNode({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [completionToast, setCompletionToast] = useState<string | null>(null);
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-    isOver,
-  } = useSortable({ id: node.id });
+  const { attributes, listeners, setNodeRef, isDragging } = useSortable({
+    id: node.id,
+  });
 
   const rawChildren = getChildren(node.id);
   const children = useMemo(
@@ -108,8 +98,6 @@ export function TaskTreeNode({
     : undefined;
 
   const transformStyle = {
-    transform: CSS.Transform.toString(transform),
-    transition,
     opacity: isDragging ? 0 : 1,
   };
 
@@ -166,10 +154,6 @@ export function TaskTreeNode({
   return (
     <div>
       <div ref={setNodeRef} style={transformStyle} {...attributes}>
-        {/* Blue line placeholder for dragged item */}
-        {isDragging && (
-          <div className="h-0.5 bg-notion-accent rounded-full mx-2 my-1" />
-        )}
         {/* "above" drop indicator */}
         {overInfo?.overId === node.id &&
           overInfo.position === "above" &&
@@ -311,10 +295,7 @@ export function TaskTreeNode({
       />
 
       {isFolder && node.isExpanded && (
-        <SortableContext
-          items={childIds}
-          strategy={verticalListSortingStrategy}
-        >
+        <SortableContext items={childIds}>
           <div>
             {children.map((child, index) => (
               <TaskTreeNode

@@ -1,12 +1,13 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import type { TaskNode, NodeType } from '../types/taskTree';
-import { useTaskTreeCRUD } from './useTaskTreeCRUD';
-import { useTaskTreeDeletion } from './useTaskTreeDeletion';
-import { useTaskTreeMovement } from './useTaskTreeMovement';
-import { logServiceError } from '../utils/logError';
-import { resolveTaskColor } from '../utils/folderColor';
-import { getFolderTag } from '../utils/folderTag';
-import { getDataService } from '../services';
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import type { TaskNode, NodeType } from "../types/taskTree";
+import { useTaskTreeCRUD } from "./useTaskTreeCRUD";
+import { useTaskTreeDeletion } from "./useTaskTreeDeletion";
+import { useTaskTreeMovement } from "./useTaskTreeMovement";
+import { useTaskTreeHistory } from "./useTaskTreeHistory";
+import { logServiceError } from "../utils/logError";
+import { resolveTaskColor } from "../utils/folderColor";
+import { getFolderTag } from "../utils/folderTag";
+import { getDataService } from "../services";
 
 let idCounter = Date.now();
 function generateId(type: NodeType): string {
@@ -36,54 +37,111 @@ export function useTaskTreeAPI() {
         }
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load tasks');
+          setError(e instanceof Error ? e.message : "Failed to load tasks");
         }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const persist = useCallback((updated: TaskNode[]) => {
-    if (!loadedRef.current) return;
-    setNodes(updated);
+  const syncToDb = useCallback((updated: TaskNode[]) => {
     setPersistError(null);
-    getDataService().syncTaskTree(updated).catch((e) => {
-      logServiceError('TaskTree', 'sync', e);
-      setPersistError(e instanceof Error ? e.message : 'Failed to save tasks');
-    });
+    getDataService()
+      .syncTaskTree(updated)
+      .catch((e) => {
+        logServiceError("TaskTree", "sync", e);
+        setPersistError(
+          e instanceof Error ? e.message : "Failed to save tasks",
+        );
+      });
   }, []);
 
-  const activeNodes = useMemo(() => nodes.filter(n => !n.isDeleted), [nodes]);
-  const deletedNodes = useMemo(() => nodes.filter(n => n.isDeleted), [nodes]);
+  const {
+    persistWithHistory: rawPersistWithHistory,
+    persistSilent: rawPersistSilent,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    clearHistory,
+  } = useTaskTreeHistory(setNodes, syncToDb);
 
-  const getChildren = useCallback((parentId: string | null) => {
-    return activeNodes
-      .filter(n => n.parentId === parentId)
-      .sort((a, b) => {
-        if (a.type === 'folder' && b.type !== 'folder') return -1;
-        if (a.type !== 'folder' && b.type === 'folder') return 1;
-        return a.order - b.order;
-      });
-  }, [activeNodes]);
+  const guardedPersistWithHistory = useCallback(
+    (currentNodes: TaskNode[], updated: TaskNode[]) => {
+      if (!loadedRef.current) return;
+      rawPersistWithHistory(currentNodes, updated);
+    },
+    [rawPersistWithHistory],
+  );
 
-  const getNodeDepth = useCallback((nodeId: string): number => {
-    let depth = 0;
-    let current = nodes.find(n => n.id === nodeId);
-    while (current?.parentId) {
-      depth++;
-      current = nodes.find(n => n.id === current!.parentId);
-    }
-    return depth;
-  }, [nodes]);
+  const guardedPersistSilent = useCallback(
+    (updated: TaskNode[]) => {
+      if (!loadedRef.current) return;
+      rawPersistSilent(updated);
+    },
+    [rawPersistSilent],
+  );
 
-  const crud = useTaskTreeCRUD(nodes, persist, getNodeDepth, generateId);
-  const deletion = useTaskTreeDeletion(nodes, persist);
-  const movement = useTaskTreeMovement(nodes, persist, getNodeDepth);
+  const activeNodes = useMemo(() => nodes.filter((n) => !n.isDeleted), [nodes]);
+  const deletedNodes = useMemo(() => nodes.filter((n) => n.isDeleted), [nodes]);
 
-  const getTaskColor = useCallback((taskId: string) => resolveTaskColor(taskId, nodes), [nodes]);
-  const getFolderTagForTask = useCallback((taskId: string) => getFolderTag(taskId, nodes), [nodes]);
+  const getChildren = useCallback(
+    (parentId: string | null) => {
+      return activeNodes
+        .filter((n) => n.parentId === parentId)
+        .sort((a, b) => {
+          if (a.type === "folder" && b.type !== "folder") return -1;
+          if (a.type !== "folder" && b.type === "folder") return 1;
+          return a.order - b.order;
+        });
+    },
+    [activeNodes],
+  );
+
+  const getNodeDepth = useCallback(
+    (nodeId: string): number => {
+      let depth = 0;
+      let current = nodes.find((n) => n.id === nodeId);
+      while (current?.parentId) {
+        depth++;
+        current = nodes.find((n) => n.id === current!.parentId);
+      }
+      return depth;
+    },
+    [nodes],
+  );
+
+  const crud = useTaskTreeCRUD(
+    nodes,
+    guardedPersistWithHistory,
+    guardedPersistSilent,
+    getNodeDepth,
+    generateId,
+  );
+  const deletion = useTaskTreeDeletion(
+    nodes,
+    guardedPersistWithHistory,
+    guardedPersistSilent,
+    clearHistory,
+  );
+  const movement = useTaskTreeMovement(
+    nodes,
+    guardedPersistWithHistory,
+    getNodeDepth,
+  );
+
+  const getTaskColor = useCallback(
+    (taskId: string) => resolveTaskColor(taskId, nodes),
+    [nodes],
+  );
+  const getFolderTagForTask = useCallback(
+    (taskId: string) => getFolderTag(taskId, nodes),
+    [nodes],
+  );
 
   return {
     nodes: activeNodes,
@@ -94,6 +152,10 @@ export function useTaskTreeAPI() {
     persistError,
     getTaskColor,
     getFolderTagForTask,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
     ...crud,
     ...deletion,
     ...movement,

@@ -154,7 +154,9 @@
     "sort": "並べ替え",
     "sortManual": "手動",
     "sortStatus": "ステータス",
-    "sortSchedule": "スケジュール日"
+    "sortSchedule": "スケジュール日",
+    "undo": "元に戻す",
+    "redo": "やり直す"
   },
   "memo": {
     "daily": "日記",
@@ -221,6 +223,8 @@
       "indent": "インデント（前のフォルダに移動）",
       "outdent": "アウトデント（親レベルに移動）",
       "deleteSelected": "選択したタスクを削除",
+      "undoTaskTree": "タスクツリー操作を元に戻す",
+      "redoTaskTree": "タスクツリー操作をやり直す",
       "dragDrop": "並べ替えまたはフォルダに移動",
       "togglePlayPause": "再生/一時停止の切り替え",
       "nextMonthWeek": "次の月/週",

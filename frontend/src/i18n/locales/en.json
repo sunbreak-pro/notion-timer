@@ -154,7 +154,9 @@
     "sort": "Sort",
     "sortManual": "Manual",
     "sortStatus": "Status",
-    "sortSchedule": "Scheduled date"
+    "sortSchedule": "Scheduled date",
+    "undo": "Undo",
+    "redo": "Redo"
   },
   "memo": {
     "daily": "Daily",
@@ -221,6 +223,8 @@
       "indent": "Indent (move into previous folder)",
       "outdent": "Outdent (move to parent level)",
       "deleteSelected": "Delete selected task",
+      "undoTaskTree": "Undo task tree action",
+      "redoTaskTree": "Redo task tree action",
       "dragDrop": "Reorder or move into folders",
       "togglePlayPause": "Toggle play / pause",
       "nextMonthWeek": "Next month / week",

@@ -5,10 +5,7 @@ import {
   DragOverlay,
   useDroppable,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { SortableContext } from "@dnd-kit/sortable";
 import {
   ChevronDown,
   ChevronRight,
@@ -69,6 +66,8 @@ export function TaskTree({
     moveToRoot,
     toggleExpanded,
     toggleTaskStatus,
+    undo,
+    redo,
   } = useTaskTreeContext();
 
   const [showCompleted, setShowCompleted] = useState(false);
@@ -176,6 +175,8 @@ export function TaskTree({
     toggleTaskStatus,
     moveNodeInto,
     moveToRoot,
+    undo,
+    redo,
   });
 
   return (
@@ -222,10 +223,7 @@ export function TaskTree({
                   </button>
                 </div>
               </div>
-              <SortableContext
-                items={inboxIds}
-                strategy={verticalListSortingStrategy}
-              >
+              <SortableContext items={inboxIds}>
                 <div className="space-y-0.5">
                   {inboxTasks.map((node) => (
                     <TaskTreeNode
@@ -297,10 +295,7 @@ export function TaskTree({
                   </div>
                 </div>
               </div>
-              <SortableContext
-                items={folderIds}
-                strategy={verticalListSortingStrategy}
-              >
+              <SortableContext items={folderIds}>
                 <div>
                   {folders.map((node) => (
                     <TaskTreeNode
