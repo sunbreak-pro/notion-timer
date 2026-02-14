@@ -31,30 +31,46 @@ interface PositionedTask {
   totalColumns: number;
 }
 
-function getTaskPosition(task: TaskNode): { hour: number; minute: number } {
-  if (!task.scheduledAt) return { hour: 12, minute: 0 };
-  const d = new Date(task.scheduledAt);
-  return { hour: d.getHours(), minute: d.getMinutes() };
+function getClampedStartAndDuration(
+  task: TaskNode,
+  dayDate: Date,
+): { hour: number; minute: number; durationMinutes: number } {
+  const dayStart = new Date(dayDate);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayDate);
+  dayEnd.setHours(24, 0, 0, 0);
+
+  const taskStart = task.scheduledAt ? new Date(task.scheduledAt) : dayStart;
+  const taskEnd = task.scheduledEndAt
+    ? new Date(task.scheduledEndAt)
+    : new Date(taskStart.getTime() + (task.workDurationMinutes ?? 25) * 60000);
+
+  const clampedStart = taskStart < dayStart ? dayStart : taskStart;
+  const clampedEnd = taskEnd > dayEnd ? dayEnd : taskEnd;
+
+  return {
+    hour: clampedStart.getHours(),
+    minute: clampedStart.getMinutes(),
+    durationMinutes: Math.max(
+      (clampedEnd.getTime() - clampedStart.getTime()) / 60000,
+      0,
+    ),
+  };
 }
 
-function getTaskDurationMinutes(task: TaskNode): number {
-  if (task.scheduledAt && task.scheduledEndAt) {
-    const start = new Date(task.scheduledAt);
-    const end = new Date(task.scheduledEndAt);
-    const diff = (end.getTime() - start.getTime()) / 60000;
-    if (diff > 0) return diff;
-  }
-  return task.workDurationMinutes ?? 25;
-}
-
-function layoutOverlappingTasks(tasks: TaskNode[]): PositionedTask[] {
+function layoutOverlappingTasks(
+  tasks: TaskNode[],
+  dayDate: Date,
+): PositionedTask[] {
   const positioned: PositionedTask[] = tasks.map((task) => {
-    const { hour, minute } = getTaskPosition(task);
+    const { hour, minute, durationMinutes } = getClampedStartAndDuration(
+      task,
+      dayDate,
+    );
     const top =
       (hour - TIME_GRID.START_HOUR) * TIME_GRID.SLOT_HEIGHT +
       (minute / 60) * TIME_GRID.SLOT_HEIGHT;
-    const duration = getTaskDurationMinutes(task);
-    const height = Math.max((duration / 60) * TIME_GRID.SLOT_HEIGHT, 20);
+    const height = Math.max((durationMinutes / 60) * TIME_GRID.SLOT_HEIGHT, 20);
     return { task, top, height, column: 0, totalColumns: 1 };
   });
 
@@ -134,10 +150,12 @@ export function WeeklyTimeGrid({
     const adMap = new Map<string, TaskNode[]>();
     for (const day of days) {
       const key = formatDateKey(day.date);
-      const allTasks = (tasksByDate.get(key) ?? []).filter((t) => t.scheduledAt);
+      const allTasks = (tasksByDate.get(key) ?? []).filter(
+        (t) => t.scheduledAt,
+      );
       const timeTasks = allTasks.filter((t) => !t.isAllDay);
       const allDay = allTasks.filter((t) => t.isAllDay);
-      posMap.set(key, layoutOverlappingTasks(timeTasks));
+      posMap.set(key, layoutOverlappingTasks(timeTasks, day.date));
       if (allDay.length > 0) adMap.set(key, allDay);
     }
     return { positionedByDay: posMap, allDayByDay: adMap };
@@ -206,22 +224,30 @@ export function WeeklyTimeGrid({
       {/* All-day banner */}
       {allDayByDay.size > 0 && (
         <div className="flex border-b border-notion-border bg-notion-bg-secondary/50">
-          <div style={{ width: GUTTER_WIDTH }} className="shrink-0 flex items-center justify-end pr-2">
-            <span className="text-[10px] text-notion-text-secondary">All day</span>
+          <div
+            style={{ width: GUTTER_WIDTH }}
+            className="shrink-0 flex items-center justify-end pr-2"
+          >
+            <span className="text-[10px] text-notion-text-secondary">
+              All day
+            </span>
           </div>
           {days.map((day, i) => {
             const key = formatDateKey(day.date);
             const allDayTasks = allDayByDay.get(key) ?? [];
             return (
-              <div key={i} className="flex-1 border-l border-notion-border p-1 min-h-[28px]">
+              <div
+                key={i}
+                className="flex-1 border-l border-notion-border p-1 min-h-[28px] min-w-0 overflow-hidden"
+              >
                 {allDayTasks.map((task) => (
                   <button
                     key={task.id}
                     onClick={() => onSelectTask(task.id)}
                     className="w-full text-left px-1.5 py-0.5 rounded text-[10px] truncate mb-0.5 hover:opacity-80 transition-opacity"
                     style={{
-                      backgroundColor: getTaskColor?.(task.id) ?? '#E0E7FF',
-                      color: getTaskColor?.(task.id) ? '#fff' : '#4338CA',
+                      backgroundColor: getTaskColor?.(task.id) ?? "#E0E7FF",
+                      color: getTaskColor?.(task.id) ? "#fff" : "#4338CA",
                     }}
                   >
                     {task.title}

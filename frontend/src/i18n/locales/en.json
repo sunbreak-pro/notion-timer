@@ -491,7 +491,8 @@
   "calendarHeader": {
     "today": "Today",
     "month": "Month",
-    "week": "Week"
+    "week": "Week",
+    "threeDay": "3 Day"
   },
   "calendarSidebar": {
     "title": "Calendars",

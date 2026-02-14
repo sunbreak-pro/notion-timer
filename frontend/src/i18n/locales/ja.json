@@ -491,7 +491,8 @@
   "calendarHeader": {
     "today": "今日",
     "month": "月表示",
-    "week": "週表示"
+    "week": "週表示",
+    "threeDay": "3日"
   },
   "calendarSidebar": {
     "title": "カレンダー",

@@ -42,14 +42,14 @@ export function CalendarView({
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
-  const [viewMode, setViewMode] = useState<"month" | "week">("month");
+  const [viewMode, setViewMode] = useState<"month" | "week" | "3day">("month");
   const [filter, setFilter] = useState<"incomplete" | "completed">(
     "incomplete",
   );
   const [weekStartDate, setWeekStartDate] = useState<Date>(getInitialWeekStart);
   const [tagFilter, setTagFilter] = useState<string>("");
 
-  const { tasksByDate, calendarDays, weekDays } = useCalendar(
+  const { tasksByDate, calendarDays, weekDays, threeDays } = useCalendar(
     filteredNodes,
     year,
     month,
@@ -74,6 +74,12 @@ export function CalendarView({
         d.setDate(d.getDate() - 7);
         return d;
       });
+    } else if (viewMode === "3day") {
+      setWeekStartDate((prev) => {
+        const d = new Date(prev);
+        d.setDate(d.getDate() - 3);
+        return d;
+      });
     } else {
       if (month === 0) {
         setMonth(11);
@@ -89,6 +95,12 @@ export function CalendarView({
         d.setDate(d.getDate() + 7);
         return d;
       });
+    } else if (viewMode === "3day") {
+      setWeekStartDate((prev) => {
+        const d = new Date(prev);
+        d.setDate(d.getDate() + 3);
+        return d;
+      });
     } else {
       if (month === 11) {
         setMonth(0);
@@ -101,7 +113,13 @@ export function CalendarView({
     const now = new Date();
     setYear(now.getFullYear());
     setMonth(now.getMonth());
-    setWeekStartDate(getInitialWeekStart());
+    if (viewMode === "3day") {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      setWeekStartDate(d);
+    } else {
+      setWeekStartDate(getInitialWeekStart());
+    }
   };
 
   // Collect available tags from visible tasks
@@ -109,11 +127,11 @@ export function CalendarView({
     const tagSet = new Set<string>();
     for (const [, tasks] of tasksByDate) {
       for (const task of tasks) {
-        tagSet.add(getFolderTagForTask(task.id) || t('calendar.inbox'));
+        tagSet.add(getFolderTagForTask(task.id) || t("calendar.inbox"));
       }
     }
     if (memosByDate.size > 0) {
-      tagSet.add(t('calendar.memo'));
+      tagSet.add(t("calendar.memo"));
     }
     return Array.from(tagSet).sort();
   }, [tasksByDate, getFolderTagForTask, memosByDate, t]);
@@ -143,7 +161,9 @@ export function CalendarView({
       }
       if (e.key === "m") {
         e.preventDefault();
-        setViewMode((v) => (v === "month" ? "week" : "month"));
+        setViewMode((v) =>
+          v === "month" ? "week" : v === "week" ? "3day" : "month",
+        );
         return;
       }
     };
@@ -156,11 +176,13 @@ export function CalendarView({
   // Filter tasksByDate by tag
   const filteredTasksByDate = useMemo(() => {
     if (!tagFilter) return tasksByDate;
-    if (tagFilter === t('calendar.memo')) return new Map<string, typeof nodes>();
+    if (tagFilter === t("calendar.memo"))
+      return new Map<string, typeof nodes>();
     const map = new Map<string, typeof nodes>();
     for (const [date, tasks] of tasksByDate) {
       const matching = tasks.filter(
-        (task) => (getFolderTagForTask(task.id) || t('calendar.inbox')) === tagFilter,
+        (task) =>
+          (getFolderTagForTask(task.id) || t("calendar.inbox")) === tagFilter,
       );
       if (matching.length > 0) map.set(date, matching);
     }
@@ -169,7 +191,7 @@ export function CalendarView({
 
   // Filter memosByDate by tag
   const filteredMemosByDate = useMemo(() => {
-    if (!tagFilter || tagFilter === t('calendar.memo')) return memosByDate;
+    if (!tagFilter || tagFilter === t("calendar.memo")) return memosByDate;
     return new Map<string, MemoNode>();
   }, [tagFilter, memosByDate, t]);
 
@@ -197,7 +219,7 @@ export function CalendarView({
                 : "text-notion-text-secondary hover:bg-notion-hover"
             }`}
           >
-            {t('calendar.incomplete')}
+            {t("calendar.incomplete")}
           </button>
           <button
             onClick={() => setFilter("completed")}
@@ -207,7 +229,7 @@ export function CalendarView({
                 : "text-notion-text-secondary hover:bg-notion-hover"
             }`}
           >
-            {t('calendar.completed')}
+            {t("calendar.completed")}
           </button>
         </div>
 
@@ -222,7 +244,7 @@ export function CalendarView({
                   : "bg-notion-bg-secondary text-notion-text-secondary hover:bg-notion-hover"
               }`}
             >
-              {t('calendar.all')}
+              {t("calendar.all")}
             </button>
             {availableTags.map((tag) => (
               <button
@@ -253,7 +275,7 @@ export function CalendarView({
           />
         ) : (
           <WeeklyTimeGrid
-            days={weekDays}
+            days={viewMode === "3day" ? threeDays : weekDays}
             tasksByDate={filteredTasksByDate}
             onSelectTask={onSelectTask}
             onCreateTask={onCreateTask}

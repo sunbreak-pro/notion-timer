@@ -1,9 +1,11 @@
 # Sonic Flow
 
 ## 概要
+
 Notionライクなタスク管理に「環境音ミキサー」と「ポモドーロタイマー」を組み合わせた、没入型個人タスク管理アプリケーション。
 
 ### 主な機能
+
 - **タスク管理**: 階層型タスクツリー（フォルダ/サブフォルダ/タスク）、ドラッグ&ドロップ並び替え（挿入ライン表示）、並び替え機能（手動/ステータス/スケジュール日）、完了タスク自動ソート、削除確認ダイアログ、カラー継承、ソフトデリート+ゴミ箱
 - **プロジェクトナビゲーション**: サブサイドバーでInbox+フォルダ別にタスクを絞り込み表示
 - **グローバルタイマー**: 画面遷移してもタイマーが継続するContextベースのポモドーロタイマー
@@ -36,6 +38,7 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **パフォーマンス監視**: 全IPC応答時間を自動計測、Settings画面でチャネル別メトリクス表示
 
 ### 技術スタック
+
 - **Frontend**: React 19 (TypeScript) + Vite + Tailwind CSS v4 + @dnd-kit + TipTap + react-i18next + Recharts
 - **Desktop**: Electron 35 + better-sqlite3 + electron-builder
 
@@ -45,31 +48,45 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 
 フロントエンドからは `window.electronAPI.invoke(channel, ...args)` 経由でElectronメインプロセスと通信。
 
-| ドメイン | チャンネル | 概要 |
-|---------|-----------|------|
-| Tasks | `tasks:getTree` / `tasks:saveTree` | ツリー一括同期 |
-| Tasks | `tasks:create` / `tasks:update` / `tasks:delete` / `tasks:softDelete` / `tasks:restore` | タスクCRUD |
-| Timer | `timer:getSettings` / `timer:updateSettings` | タイマー設定 |
-| Timer | `timer:createSession` / `timer:updateSession` / `timer:getSessions` | セッション管理 |
-| Sound | `sound:getSettings` / `sound:updateSettings` | サウンド設定 |
-| Sound | `sound:getPresets` / `sound:savePreset` / `sound:deletePreset` | プリセット管理 |
-| Data I/O | `data:export` / `data:import` | JSON Export/Import |
-| Tags | `tags:getAll` / `tags:create` / `tags:update` / `tags:delete` | タグ管理 |
-| Templates | `templates:getAll` / `templates:save` / `templates:delete` | テンプレート管理 |
-| Memos | `memos:get` / `memos:save` | メモ管理 |
-| AI | `ai:getSettings` / `ai:updateSettings` / `ai:getAdvice` | AIコーチング |
-| App | `app:getVersion` | アプリ情報 |
+| ドメイン  | チャンネル                                                                              | 概要               |
+| --------- | --------------------------------------------------------------------------------------- | ------------------ |
+| Tasks     | `tasks:getTree` / `tasks:saveTree`                                                      | ツリー一括同期     |
+| Tasks     | `tasks:create` / `tasks:update` / `tasks:delete` / `tasks:softDelete` / `tasks:restore` | タスクCRUD         |
+| Timer     | `timer:getSettings` / `timer:updateSettings`                                            | タイマー設定       |
+| Timer     | `timer:createSession` / `timer:updateSession` / `timer:getSessions`                     | セッション管理     |
+| Sound     | `sound:getSettings` / `sound:updateSettings`                                            | サウンド設定       |
+| Sound     | `sound:getPresets` / `sound:savePreset` / `sound:deletePreset`                          | プリセット管理     |
+| Data I/O  | `data:export` / `data:import`                                                           | JSON Export/Import |
+| Tags      | `tags:getAll` / `tags:create` / `tags:update` / `tags:delete`                           | タグ管理           |
+| Templates | `templates:getAll` / `templates:save` / `templates:delete`                              | テンプレート管理   |
+| Memos     | `memos:get` / `memos:save`                                                              | メモ管理           |
+| AI        | `ai:getSettings` / `ai:updateSettings` / `ai:getAdvice`                                 | AIコーチング       |
+| App       | `app:getVersion`                                                                        | アプリ情報         |
 
 ---
 
 ## 開発ジャーナル
 
+### 2026-02-14 - カレンダー UI/UX 改善（3件）
+
+#### 概要
+
+カレンダー週表示の3つの問題を修正し、3日表示モードを追加。
+
+#### 変更点
+
+- **終日タスク省略表示**: all-day バナーの flexbox 子要素に `min-w-0 overflow-hidden` を追加し、長いタスク名がカラム幅を崩す問題を修正
+- **日跨ぎタスクはみ出し修正**: `getClampedStartAndDuration()` を導入し、タスクの開始/終了時刻を当日の 0:00-24:00 にクランプ。22:00-02:00 のタスクが 24 時間グリッドからはみ出す問題を解消
+- **3日表示モード追加**: Google Calendar モバイルと同様の 3Day ビューを追加。ヘッダーに「3日」ボタン、前後ナビは ±3 日移動、キーボード `m` で月→週→3日→月のサイクル切り替え
+
 ### 2026-02-13 - TaskTree UI/UX 9項目改善
 
 #### 概要
+
 TaskTreeの日常操作体験を向上させる包括的なUI/UX改修。フォント、操作感、視覚フィードバック、ソート機能など9項目を実装。
 
 #### 変更点
+
 - **フォント**: TaskTree全体のテキストを14px→15pxに拡大（TaskNodeContent/Editor/InlineCreateInput/DragOverlay）
 - **フォルダ間隔**: Projectsセクションのフォルダ間スペースを4px→8pxに拡大
 - **削除確認**: ゴミ箱アイコン・右クリックメニューの削除に確認ダイアログを追加
@@ -81,6 +98,7 @@ TaskTreeの日常操作体験を向上させる包括的なUI/UX改修。フォ�
 - **ドラッグ挿入ライン**: ドラッグ中にタスク間にアクセントカラーのラインを表示、フォルダはring表示に限定
 
 #### 新規ファイル
+
 - `frontend/src/components/common/CompletionToast.tsx`
 - `frontend/src/utils/sortTaskNodes.ts`
 - `frontend/src/components/TaskTree/SortDropdown.tsx`
@@ -88,9 +106,11 @@ TaskTreeの日常操作体験を向上させる包括的なUI/UX改修。フォ�
 ### 2026-02-13 - コードベースリファクタリング（Critical+High優先度）
 
 #### 概要
+
 コードベース全体の品質調査で発見されたCritical+High優先度の約20項目を修正。DB起動安全性、IPCエラーハンドリング、データインポートバリデーション、フロントエンドユーティリティ抽出、型安全性向上。
 
 #### 変更点
+
 - **Phase 1**: DB初期化失敗時にapp.quit()で起動阻止、migrateV9でDROP前にバックアップテーブルへRENAME、customSoundRepository防御的ロック追加
 - **Phase 2**: 全14 IPCハンドラファイルにtry-catch+ログ追加（noteHandlers等の既存対応済みを除く11ファイル修正）、AIサービスに30秒タイムアウト（AbortSignal.timeout）追加
 - **Phase 3**: データインポートにバージョンチェック、validateImportData()追加（配列フィールド型チェック、tasks必須フィールド検証）
@@ -101,9 +121,11 @@ TaskTreeの日常操作体験を向上させる包括的なUI/UX改修。フォ�
 ### 2026-02-13 - Work/Restサウンド分離廃止・WorkScreenモーダルピッカー追加
 
 #### 概要
+
 MusicScreenとWorkScreenの「Work/Rest別サウンド設定」を廃止し、1セットの統一サウンド設定に変更。WorkScreenにサウンドピッカーモーダルを追加し、直接サウンドを追加可能に。
 
 #### 変更点
+
 - **DB Migration V13**: `sound_settings`と`sound_workscreen_selections`テーブルから`session_category`カラムを削除、WORK行のみ保持
 - **Repository/IPC**: `soundRepository.ts`と`soundHandlers.ts`から`sessionCategory`引数を全削除
 - **Types**: `SessionCategory`型削除、`SoundSettings`から`sessionCategory`フィールド削除
@@ -117,9 +139,11 @@ MusicScreenとWorkScreenの「Work/Rest別サウンド設定」を廃止し、1�
 ### 2026-02-12 - Music名前反映バグ修正・カレンダー終日/終了日時改善・ポモドーロUX強化
 
 #### 概要
+
 5つの機能改善/バグ修正。Music画面で変更したサウンド名がWorkScreenに反映されないバグ修正、カレンダーの終日イベント・終了日時の操作性改善、日付+時間表示の統一フォーマット化、ポモドーロタイマーのUX向上（プリセット/自動休憩/時間調整/サマリー）。
 
 #### 変更点
+
 - **バグ修正（Music名前）**: `SoundMixer.tsx`に`getDisplayName`プロップ追加、`useSoundTags`の表示名をWorkScreenのSoundMixerに伝播
 - **終日=1日**: 終日ON時に`scheduledEndAt`を自動クリア、DateTimeRangePickerでも連動
 - **終了日時トグル**: DateTimeRangePickerに「End time」チェックボックス追加、OFF時はstart dateのみの1クリック選択、ON時はstart→end の2クリック選択、カレンダーからのタスク作成はデフォルトで開始時間のみ
@@ -130,6 +154,7 @@ MusicScreenとWorkScreenの「Work/Rest別サウンド設定」を廃止し、1�
 - **今日のセッションサマリー**: WorkScreenのタイマー下に完了セッション数+合計作業時間を表示
 
 #### 新規ファイル
+
 - `frontend/src/utils/formatSchedule.ts` — 日時範囲フォーマットユーティリティ
 - `frontend/src/components/WorkScreen/TodaySessionSummary.tsx` — 今日のサマリーコンポーネント
 - `electron/database/pomodoroPresetRepository.ts` — プリセットDB操作
@@ -138,9 +163,11 @@ MusicScreenとWorkScreenの「Work/Rest別サウンド設定」を廃止し、1�
 ### 2026-02-12 - 6機能追加: Analytics強化・Notes日時・キーボードバグ修正・Music個別再生・i18n完全対応・Tips OS切替
 
 #### 概要
+
 6つの機能追加・バグ修正を一括実施。Analyticsに作業時間グラフ（Recharts）追加、Notes/Memoに日時表示追加、タスク名編集時のキーボードショートカット横取りバグ修正、Music画面に個別試聴ボタン追加、Tips全7タブのi18n完全対応、TipsショートカットにmacOS/Windows切替トグル追加。
 
 #### 変更点
+
 - **バグ修正（キーボード）**: `useAppKeyboardShortcuts`/`useTaskTreeKeyboard`/`CalendarView`の`isInputFocused()`を`document.activeElement`から`e.target`ベースに変更、`closest('[contenteditable="true"]')`で祖先要素も検出、入力コンポーネントに`e.stopPropagation()`追加
 - **i18n完全対応**: Tips全7タブ（Shortcuts/Tasks/Timer/Calendar/Memo/Analytics/Editor）、EmptyState、MusicSlotItem/MusicSoundItemの保存・削除確認ダイアログを`useTranslation()`+`Trans`コンポーネントで多言語化
 - **Notes日時表示**: `formatRelativeDate()`ユーティリティ新規作成（相対日時: "5分前"/"昨日"等）、NoteList/NotesView/MemoDateList/DailyMemoViewに作成日時・更新日時表示追加
@@ -151,9 +178,11 @@ MusicScreenとWorkScreenの「Work/Rest別サウンド設定」を廃止し、1�
 ### 2026-02-12 - UI/UX改善: Font Size・Sidebar・i18n・Settingsタブ化
 
 #### 概要
+
 フォントサイズを3段階から10段階スライダーに変更、左サイドバーをドラッグリサイズ可能に（160〜320px）、react-i18nextによる日英多言語対応、Settings画面を右サイドナビ5タブ構成に刷新。
 
 #### 変更点
+
 - **Font Size**: `FontSize`型を`number`（1〜10）に変更、FONT_SIZE_PXマッピング（12px〜25px）、レガシー値（small/medium/large）からの自動マイグレーション、AppearanceSettingsをスライダーUIに変更
 - **Left Sidebar**: Layout.tsxに左サイドバーリサイズロジック追加（右サイドバーと同パターン）、LeftSidebarに`width` prop追加、`sonic-flow-left-sidebar-width`でlocalStorage永続化
 - **i18n**: `i18next` + `react-i18next`導入、`i18n/locales/en.json`・`ja.json`に全UIテキスト（100+キー）、ThemeContextにlanguage状態管理+`i18n.changeLanguage()`連携、Settings > GeneralにLanguageSettings追加
@@ -163,9 +192,11 @@ MusicScreenとWorkScreenの「Work/Rest別サウンド設定」を廃止し、1�
 ### 2026-02-12 - 複数カレンダー + タスクツリーフォルダフィルタリング
 
 #### 概要
+
 フォルダ増加時のカレンダー・タスクツリーの視覚情報過多を解決。カレンダーをフォルダ単位で分割表示する複数カレンダー機能と、タスクツリーのPROJECTSセクションにフォルダフィルタリングを追加。
 
 #### 変更点
+
 - **DB**: migrateV10追加、calendarsテーブル（id/title/folder_id/order/timestamps、ON DELETE CASCADE）
 - **Backend**: calendarRepository.ts（CRUD）、calendarHandlers.ts（4チャンネル）、preload.ts/registerAll.ts更新
 - **DataService**: CalendarNode型定義、DataService/ElectronDataServiceにcalendar CRUD 4メソッド追加
@@ -182,9 +213,11 @@ MusicScreenとWorkScreenの「Work/Rest別サウンド設定」を廃止し、1�
 ### 2026-02-12 - WorkScreen UI改善 + Sidebar Work Section追加
 
 #### 概要
+
 WorkScreenをモーダルオーバーレイから独立セクションに移行。LeftSidebarに「Work」メニュー追加、ボタン類をヘッダーに横並び配置、SoundMixerのWork/Restタブを削除しsessionType自動切替化、「セッション完了」ボタン追加、SessionCompletionModalをApp.tsxレベルに移動してどの画面からでも表示可能に。Music画面の音楽名インライン編集バグも修正（MusicSlotItemに編集機能追加）。
 
 #### 変更点
+
 - **WorkScreen**: overlay/onClose props削除、ヘッダーにTaskSelector+セッション完了+タスク完了+ポモドーロ設定ボタンを横並び配置
 - **SoundMixer**: Work/Restタブ削除、activeSessionTypeから直接mixer/toggle/volumeを導出
 - **PomodoroSettings**: ドロップダウンをbottom-10からtop-full下向き開きに変更
@@ -196,9 +229,11 @@ WorkScreenをモーダルオーバーレイから独立セクションに移行�
 ### 2026-02-12 - Music画面リデザイン + WorkScreen同期バグ修正
 
 #### 概要
+
 Music画面をWork/Restタブ + 6スロットUIにリデザイン。MusicScreenでのサウンド選択がWorkScreenに反映されないバグを修正（useWorkscreenSelectionsの別インスタンス問題）。
 
 #### 変更点
+
 - **バグ修正**: AudioProviderとMusicScreenが別々のuseWorkscreenSelectionsインスタンスを持っていた問題を解消。AudioProviderを唯一のソースとし、toggleWorkscreenSelection/isWorkscreenSelectedをContext経由で公開
 - **AudioContext拡張**: AudioContextValue/AudioControlContextValue/AudioStateContextValueにworkscreenSelection操作を追加
 - **新UIコンポーネント**: EmptySlot（空スロット）、MusicSlotItem（スロット別サウンドコントロール）、SoundPickerModal（検索・タグフィルタ付きサウンド選択モーダル）
@@ -207,9 +242,11 @@ Music画面をWork/Restタブ + 6スロットUIにリデザイン。MusicScreen�
 ### 2026-02-12 - Task/Noteタグ削除 + Musicタグ管理UI追加
 
 #### 概要
+
 使用されていないTask Tags・Note Tagsシステムを完全削除。DBマイグレーションV9で4テーブルDROP、バックエンド/フロントエンド全レイヤーからtask/noteタグ関連コードを除去。Sound Tags（Music画面）とFolder Name Tags（仮想タグ）のみ残存。Music画面にSoundTagManagerパネルを追加し、タグの名前編集・色変更・削除がMusic画面内で完結するようになった。
 
 #### 変更点
+
 - **DB**: migrateV9追加、task_tags/task_tag_definitions/note_tags/note_tag_definitions削除
 - **Backend**: tagRepository.ts, tagHandlers.ts削除、preload.tsから13チャンネル除去
 - **Frontend**: TagContext/useTags/TagEditor/TagBadge/TagFilter/TagManager/NoteTagBar等10+ファイル削除
@@ -220,9 +257,11 @@ Music画面をWork/Restタブ + 6スロットUIにリデザイン。MusicScreen�
 ### 2026-02-12 - 6件UIUX改善・バグ修正
 
 #### 概要
+
 6つの改善: Notes永続化バグ修正（デバウンス未フラッシュ）、W/Rラベル改善（Work/Rest表記）、サウンド表示名セーブボタン追加、WORKセッション完了音、Music独立再生ボタン、タスク完了紙吹雪アニメーション。
 
 #### 変更点
+
 - **バグ修正**: MemoEditorのデバウンス未フラッシュ修正（アプリ終了/ノート切替時のデータ消失防止）
 - **ラベル改善**: W/R → Work/Rest表記に変更（MusicSoundItem、MusicScreenヘッダー）
 - **セーブボタン**: サウンド表示名編集時にチェックマークボタン+「Saved!」フィードバック追加
@@ -233,9 +272,11 @@ Music画面をWork/Restタブ + 6スロットUIにリデザイン。MusicScreen�
 ### 2026-02-11 - フロントエンドコード品質改善
 
 #### 概要
+
 5フェーズの品質改善: テスト基盤構築（103テスト）、セキュリティ修正（URL検証、入力長制限）、Context/Stateリファクタリング（TimerContext useReducer化、AudioContext分割）、コンポーネント分割（App.tsx 527→172行、TaskTree.tsx 495→255行）、パフォーマンス改善（デバウンス、エラーハンドリング統一）。
 
 #### 変更点
+
 - **テスト**: MockDataService、renderWithProviders、103件のベースラインテスト作成
 - **セキュリティ**: URL検証（javascript:/data:拒否）、BubbleToolbar/SlashCommandMenu修正、入力長制限
 - **リファクタリング**: TimerContext useReducer化、AudioContext分割、entityTagsVersionハック削除、useMemo値安定化
@@ -245,9 +286,11 @@ Music画面をWork/Restタブ + 6スロットUIにリデザイン。MusicScreen�
 ### 2026-02-11 - 5件バグ修正 + WorkScreen UIリデザイン + フェーズ別サウンド選択
 
 #### 概要
+
 5つのバグ修正と2つの新機能: サウンドタグIPC登録失敗修正、ノートデータ永続化修正、フォントサイズ設定修正、WorkScreenコンパクトUIリデザイン、Music画面フェーズ別サウンド選択。
 
 #### 変更点
+
 - **サウンドタグIPC修正**: soundRepositoryのV7テーブル参照をtableExists()で保護。migrateV6のnote_tags参照を防御ガード。registerAll.tsのエラーログ改善+soundRepo共有化
 - **ノート永続化修正**: closeDatabase()にWALチェックポイント追加。noteHandlers全メソッドにtry-catch+エラーログ
 - **フォントサイズ修正**: html要素のfontSizeを直接設定、body font-sizeを1remに、memo-editorをrem化。Tailwind remクラスが自動スケール
@@ -257,9 +300,11 @@ Music画面をWork/Restタブ + 6スロットUIにリデザイン。MusicScreen�
 ### 2026-02-11 - WorkScreen 5要件修正
 
 #### 概要
+
 WorkScreenの5つの問題を修正: React useEffect警告、音楽削除制限、ポモドーロ設定UI、タブ切替連動、シークコントロール。
 
 #### 変更点
+
 - **SessionType型統一**: `'WORK' | 'REST' | 'LONG_REST'` → `'WORK' | 'BREAK' | 'LONG_BREAK'`に修正（TimerContextの実使用値に合わせる）
 - **音楽削除制限**: WorkScreenからのサウンド削除を禁止、Music画面のみ削除可（確認ダイアログ付き）
 - **ポモドーロ設定UI**: DurationSelectorをPomodoroSettingsに置換。Work/Break/Long Break/Sessions数を個別設定可能（折りたたみ式）。DurationPickerをpresets/min/max props対応に汎用化。ドットインジケーター表示（●●○○形式）
@@ -269,9 +314,11 @@ WorkScreenの5つの問題を修正: React useEffect警告、音楽削除制限�
 ### 2026-02-11 - 4機能一括実装（タスクUX強化・タグ分離・Music画面）
 
 #### 概要
+
 タスク管理のUX向上（インライン名前変更、期限管理）、タグシステムの3分離（タスク/ノート/サウンド）、サウンド管理画面の専用化の4機能を実装。DBマイグレーションV5〜V7追加。
 
 #### 変更点
+
 - **タスクヘッダーインライン名前変更**: TaskDetailのh1タイトルをクリックでインライン編集（Enter/Blur保存、Escapeキャンセル）
 - **タスク期限（dueDate）**: tasksテーブルにdue_dateカラム追加（V5）、Flagアイコン+DateTimePickerでトグル設定
 - **タスクタグ・ノートタグ分離**: 統合tagsテーブル廃止、task_tag_definitions/note_tag_definitionsに分離（V6）、tagRepositoryをファクトリパターンに、IPCチャンネルdb:taskTags:*/db:noteTags:*に移行
@@ -280,9 +327,11 @@ WorkScreenの5つの問題を修正: React useEffect警告、音楽削除制限�
 ### 2026-02-11 - ポモドーロタイマー強化
 
 #### 概要
+
 ポモドーロタイマーの4つの課題を解決: セッション完了モーダル、タスク完了ボタン、REST中サウンド再生、Work/Rest別サウンド設定。
 
 #### 変更点
+
 - **セッション完了モーダル**: WORK完了時に延長(5〜30分)/休憩選択モーダルを表示（以前は自動でBREAKに遷移）
 - **タスク完了ボタン**: WorkScreen上とセッション完了モーダルからタスクをDONEにできる機能を追加
 - **REST中サウンド再生**: BREAK/LONG_BREAK中もサウンドが再生されるよう変更（`shouldPlay`からsessionType条件を削除）
@@ -292,9 +341,11 @@ WorkScreenの5つの問題を修正: React useEffect警告、音楽削除制限�
 ### 2026-02-11 - 自由メモ（Notes）機能追加
 
 #### 概要
+
 MemoView内にDaily/Notesタブ切替を追加し、日付に縛られないフリーフォームのノート機能を実装。SQLite V3マイグレーション（notes + note_tagsテーブル）、NoteRepository、IPC 11チャンネル、NoteContext、フロントエンドUI（NoteList/NotesView/NoteTagBar）を一括実装。
 
 #### 変更内容
+
 - **Backend**: `migrations.ts` V3追加（notes, note_tags）、`noteRepository.ts` 新規、`noteHandlers.ts` 新規（11チャンネル）、`preload.ts` チャンネル追加、`registerAll.ts` Notes登録追加、`dataIOHandlers.ts` export/import対応
 - **Frontend サービス層**: `DataService.ts` / `ElectronDataService.ts` に11メソッド追加、`note.ts` 型定義新規
 - **Frontend 状態管理**: `useNotes.ts`（楽観的更新 + fire-and-forget DB同期）、`NoteContext.tsx` / `useNoteContext.ts` 新規、`main.tsx` NoteProvider追加
@@ -305,9 +356,11 @@ MemoView内にDaily/Notesタブ切替を追加し、日付に縛られないフ�
 ### 2026-02-11 - Tips セクション補完
 
 #### 概要
+
 Tips画面のドキュメントを大幅に補完。ShortcutsTabを4カテゴリ/~12件から6カテゴリ/29件に拡充。Memo・Analyticsの新タブを追加（7タブ構成）。既存タブにもコンテキストメニュー、タグ、テンプレート、キーボードショートカット等の欠落情報を追記。
 
 #### 変更内容
+
 - **ShortcutsTab**: 全25+ショートカットを6カテゴリ（Global/Navigation/View/Task Tree/Timer/Calendar）に整理
 - **MemoTab**: 新規作成（Daily Memo/Date Navigation/Rich Text Editor/Calendar Integration/Deleting Memos）
 - **AnalyticsTab**: 新規作成（Overview Metrics/Completion Rates/Accessing Analytics）
@@ -319,9 +372,11 @@ Tips画面のドキュメントを大幅に補完。ShortcutsTabを4カテゴリ
 ### 2026-02-11 - フォルダ手動完了機能
 
 #### 概要
+
 フォルダの完了判定を子タスクの自動判定から手動チェック方式に変更。フォルダにCheckCircle2ボタンを追加し、ユーザーが明示的に完了/未完了を切り替えられるようにした。
 
 #### 変更内容
+
 - **フォルダ完了方式変更**: `isFolderFullyCompleted()`（再帰的自動判定）を削除し、`node.status === 'DONE'`によるシンプルな判定に変更
 - **一括完了**: フォルダ完了時に全子孫（タスク・サブフォルダ）を再帰的にDONEに設定、確認ダイアログ付き
 - **完了解除**: フォルダのみTODOに戻す（子タスクは変更しない）
@@ -333,9 +388,11 @@ Tips画面のドキュメントを大幅に補完。ShortcutsTabを4カテゴリ
 ### 2026-02-11 - Windows 互換性対応
 
 #### 概要
+
 macOS 前提で実装されていたキーボードショートカットと表示テキストを Windows 対応。
 
 #### 変更内容
+
 - **プラットフォーム判定ユーティリティ**: `utils/platform.ts` を新規作成（`isMac`, `modSymbol`, `modKey` エクスポート）
 - **キーボードショートカット修正**: `e.metaKey` → `(e.metaKey || e.ctrlKey)` に変更（App.tsx, Layout.tsx, TaskTree.tsx）
 - **合成イベント廃止**: コマンドパレット・メニューアクションの `window.dispatchEvent(new KeyboardEvent(...))` を `LayoutHandle` ref 経由の直接呼び出しに置換
@@ -345,9 +402,11 @@ macOS 前提で実装されていたキーボードショートカットと表�
 ### 2026-02-11 - Phase 7: 本番環境対応（自動アップデート・ログ・パフォーマンス監視）
 
 #### 概要
+
 本番運用に向けたインフラ整備。構造化ログ、IPCパフォーマンス計測、自動アップデート機能、診断UIを実装。
 
 #### 変更内容
+
 - **electron-log**: ファイルトランスポート（2MB、ローテーション5）、グローバルエラーキャッチ（uncaughtException/unhandledRejection）
 - **console.error→log.error置換**: main.ts、registerAll.ts、dataIOHandlers.tsの全console.errorをelectron-log経由に統一
 - **IPCパフォーマンス計測**: 全IPCハンドラの応答時間を自動計測、100ms超のスロークエリを警告ログ出力
@@ -359,6 +418,7 @@ macOS 前提で実装されていたキーボードショートカットと表�
 - **コード署名計画書**: macOS notarization + Windows署名の手順・CI/CD統合計画
 
 #### 新規ファイル（12）
+
 - `electron/logger.ts` — electron-log初期化
 - `electron/updater.ts` — electron-updater初期化
 - `electron/ipc/ipcMetrics.ts` — IPC計測ミドルウェア
@@ -375,9 +435,11 @@ macOS 前提で実装されていたキーボードショートカットと表�
 ### 2026-02-11 - Export/Import修正 + Electronクリーンアップ
 
 #### 概要
+
 バックエンド（Spring Boot）を完全削除し、Electron + SQLiteアーキテクチャに完全移行。Export/Importの堅牢化、デッドコード削除、ドキュメント更新を実施。
 
 #### 変更内容
+
 - **main.ts**: エラーハンドリング強化（uncaughtException/unhandledRejection捕捉）
 - **registerAll.ts**: IPC登録の個別try/catch + `[IPC]`プレフィックスログ
 - **dataIOHandlers.ts**: Export/Importのエラーハンドリング堅牢化、バックアップ付きインポート
@@ -389,9 +451,11 @@ macOS 前提で実装されていたキーボードショートカットと表�
 ### 2026-02-10 - Electron Shell Foundation (Phase 0)
 
 #### 概要
+
 既存ReactアプリをElectronウィンドウで動作させるデスクトップアプリ化の基盤を構築。React側のコード変更は最小限（`vite.config.ts`の`base`設定のみ）。
 
 #### 変更内容
+
 - **electron/main.ts**: BrowserWindow作成（1200x800）、dev/prod分岐ロード、macOS対応
 - **electron/preload.ts**: contextBridgeプレースホルダー（`window.electronAPI.platform`）
 - **electron/tsconfig.json**: ES2022 + CommonJS出力設定
@@ -400,10 +464,12 @@ macOS 前提で実装されていたキーボードショートカットと表�
 - **vite.config.ts**: `base: './'`追加（file://プロトコル対応、Webモードも互換）
 
 #### 新規ファイル
+
 - `electron/main.ts`, `electron/preload.ts`, `electron/tsconfig.json`
 - `package.json`（ルート）, `electron-builder.yml`, `resources/.gitkeep`
 
 #### 起動方法
+
 ```bash
 npm run dev    # Electron + Vite 同時起動
 ```
@@ -411,9 +477,11 @@ npm run dev    # Electron + Vite 同時起動
 ### 2026-02-10 - Bubble Toolbar + Command Palette
 
 #### 概要
+
 テキスト選択時のNotionスタイルフローティングツールバーと、`⌘K`コマンドパレットを実装。
 
 #### 変更内容
+
 - **BubbleToolbar**: テキスト選択時にBold/Italic/Strikethrough/Code/Link/TextColorのフローティングツールバー表示
 - **Markdown入力ルール無効化**: `**`, `*`, `~~`, `` ` ``の自動変換をOFF（キーボードショートカットは維持）
 - **Link UI**: インラインURL入力、既存リンク編集・解除
@@ -422,15 +490,18 @@ npm run dev    # Electron + Vite 同時起動
 - **`⌘K`競合解決**: エディタ内テキスト選択中はTipTap Linkに委譲
 
 #### 新規ファイル
+
 - `frontend/src/components/TaskDetail/BubbleToolbar.tsx`
 - `frontend/src/components/CommandPalette/CommandPalette.tsx`
 
 ### 2026-02-10 - コードクリーンアップ & ディレクトリ構造整理
 
 #### 概要
+
 コードベース全体の品質改善。ディレクトリ構造整理、命名規約統一、エラーハンドリング改善、セキュリティ脆弱性修正、バックエンドクラッシュ防止を実施。
 
 #### 変更内容
+
 - **Phase 1**: Barrel `index.ts` 5ディレクトリに追加、ErrorBoundary移動、navigation.ts統合
 - **Phase 2**: Context Valueファイル名をPascalCaseに統一（4ファイルリネーム）
 - **Phase 3**: サイレントエラー10箇所+JSON.parseエラー3箇所にconsole.warn追加
@@ -441,23 +512,28 @@ npm run dev    # Electron + Vite 同時起動
 ### 2026-02-10 - サウンド再生エンジン バグ修正
 
 #### 問題
+
 WorkScreenでサウンドカードをクリックしても音声が再生されない不具合。コンソールに以下のエラーが発生:
+
 - `Construction of MediaElementAudioSourceNode is not useful when context is closed.`
 - `Construction of GainNode is not useful when context is closed.`
 - `[AudioEngine] Playback blocked for fire: The play() request was interrupted by a call to pause().`
 
 #### 原因と修正 (`useAudioEngine.ts`)
+
 1. **AudioContext closed状態の未処理（致命的）**: `ensureContext()`が`state === 'closed'`のContextを再利用していた。React StrictModeやWorkScreen再マウント時にcleanupで`close()`された後、再利用不能なContextでノード作成を試行 → `closed`状態なら新しいAudioContextを作成するよう修正
 2. **cleanup後のnull化漏れ（致命的）**: `contextRef.current?.close()`の後に参照を`null`にしていなかったため、closedなContextが残存 → cleanup時に`contextRef.current = null`を追加
 3. **play/pause競合（中）**: フェードアウト後の`setTimeout(pause)`がIDを管理されておらず、素早いON→OFF→ON操作で古いpauseが新しいplayを中断 → `pauseTimeoutsRef`でタイムアウトIDを追跡し、play前にキャンセル
 4. **unmount時のタイムアウトリーク**: cleanup時に残存するpauseタイムアウトをクリアするよう追加
 
 #### 変更ファイル
+
 - `frontend/src/hooks/useAudioEngine.ts` — 上記4修正
 
 ### 2026-02-09 - Timer/Sound API連携 + キーボードショートカット拡張
 
 #### Timer/Sound バックエンドAPI接続
+
 - `ddl-auto` を `create-drop` → `update` に変更（DB永続化）
 - `timerClient.ts` / `soundClient.ts` 新規作成（fetch APIベース）
 - TimerContext: 楽観的更新パターンでバックエンド同期（設定 + セッション記録）
@@ -466,6 +542,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 - バックエンド不可用時は localStorage フォールバック
 
 #### キーボードショートカット拡張 (Phase 1-4)
+
 - `Cmd+1〜5` — セクション切替（tasks/session/calendar/analytics/settings）
 - `↑/↓` — タスクツリー内フォーカス移動
 - `→/←` — フォルダ展開/折りたたみ
@@ -480,11 +557,13 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 ### 2026-02-09 - Tips画面 + TipTapエディタ拡張 (Plan 008)
 
 #### Tips画面
+
 - LeftSidebarに6つ目のセクション「Tips」追加（Lightbulbアイコン）
 - 5タブ構成: Shortcuts / Tasks / Timer / Calendar / Editor
 - 全キーボードショートカット一覧、各画面の操作ガイド、スラッシュコマンド一覧を表示
 
 #### TipTapエディタ拡張（4ブロックタイプ追加）
+
 - **Toggle List**: カスタムNode拡張（HTML `<details>`/`<summary>` ベース、開閉可能）
 - **Table**: 公式 `@tiptap/extension-table` 系（3×3デフォルト、ヘッダー行付き）
 - **Callout**: カスタムNode拡張（💡絵文字 + 背景色付きボックス）
@@ -494,31 +573,37 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 ### 2026-02-09 - Keyboard Shortcuts 追加
 
 #### 新規ショートカット
+
 - `Cmd+.` — Left Sidebar 開閉トグル（Layout.tsx）
 - `Cmd+Shift+.` — Right Sidebar 開閉トグル（Layout.tsx）
 - `Cmd+,` — Settings画面に遷移（App.tsx、入力中でも動作）
 
 #### Feature Plan
+
 - `.claude/feature_plans/007-keyboard-shortcuts.md` 作成（セクション切替、タスク操作、タイマー制御、カレンダー操作、コマンドパレットの将来ショートカット提案）
 
 ### 2026-02-09 - Calendar Enhancement (Plan 006)
 
 #### フォルダカラーシステム
+
 - フォルダ作成時に10色パステルパレットから自動カラー割当
 - タスクは親フォルダのカラーを継承（`resolveTaskColor`）
 - バックエンド: Task entity + DTO に `color` カラム追加
 
 #### フォルダタグ
+
 - 親フォルダ階層パスをタグとして表示（例: `Projects/frontend`）
 - `FolderTag` コンポーネント（パステルカラーpill/badge）
 - TaskDetailHeader + CalendarTaskItem に表示
 
 #### カレンダーからタスク作成
+
 - DayCell hover時に `+` ボタン表示
 - クリック → 無題タスク作成（scheduledAt=クリック日付 12:00）→ WorkScreen モーダル即時表示
 - `addNode` に `options?: { scheduledAt?: string }` 引数追加
 
 #### Weekly表示 時間軸UI
+
 - Google Calendar風 `WeeklyTimeGrid` コンポーネント新規作成
 - 24時間タイムライン + 時刻ラベル + 水平グリッド線
 - フォルダカラー付きタスクブロック（`TimeGridTaskBlock`）
@@ -527,6 +612,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 - 空きスロットクリックで15分刻みスナップ付きタスク作成
 
 #### 新規ファイル
+
 - `frontend/src/constants/folderColors.ts` - カラーパレット
 - `frontend/src/constants/timeGrid.ts` - 時間グリッド定数
 - `frontend/src/utils/folderColor.ts` - カラー解決ユーティリティ
@@ -540,25 +626,30 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 ### 2026-02-08 (3) - バグ修正 + Noise Mixer音声再生 + ポリッシュ
 
 #### バグ修正・技術的負債
+
 - **TimerContext stale closure修正**: `advanceSession`のクロージャ問題を`useRef`+`useEffect`パターンで解消
 - **TaskNodeContent 300msクリック遅延修正**: ネイティブ`onClick`/`onDoubleClick`に置き換え
 - **lint error全件修正**: React Compiler lint error 0件達成
 - **バンドルサイズ57%削減**: `MemoEditor`を`React.lazy()`で遅延読み込み（671KB→298KB）
 
 #### Noise Mixer 音声再生
+
 - `useAudioEngine` hook新規作成（Web Audio API, ループ再生, フェードイン/アウト）
 - `WorkScreen`で`useLocalSoundMixer`状態をオーディオエンジンに自動連携
 - タブ非表示時自動ミュート、アンマウント時リソース解放
 
 #### ポリッシュ
+
 - ブラウザ通知（`Notification API`）+ Settings画面にトグル追加
 - キーボードショートカット4種（Space/n/Escape/Delete）
 
 #### 新規ファイル
+
 - `frontend/src/hooks/useAudioEngine.ts` — Web Audio APIラッパー
 - `frontend/src/components/Settings/NotificationSettings.tsx` — 通知設定UI
 
 #### 変更ファイル
+
 - `context/TimerContext.tsx` — stale closure修正 + 通知ロジック追加
 - `components/TaskTree/TaskNodeContent.tsx` — クリックハンドラ簡素化
 - `components/TaskDetail/TaskDetail.tsx` — MemoEditor遅延読み込み
@@ -571,6 +662,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 - `App.tsx` — キーボードショートカットハンドラ追加
 
 ### 2026-02-08 (2) - AI Coach 429エラー修正 & モデル移行
+
 - **モデル変更**: `gemini-2.0-flash` → `gemini-2.5-flash-lite`（旧モデル廃止対応）
 - **DB自動マイグレーション**: `@PostConstruct migrateDeprecatedModel()` で既存DB内の旧モデル名を自動更新
 - **デバッグログ追加**: `RestClientResponseException` 発生時にHTTPステータス・モデル名・レスポンスボディをログ出力
@@ -579,6 +671,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 - 変更ファイル: `AIService.java`, `AIConfig.java`, `AISettings.java`, `application.properties`, `AISettings.tsx`
 
 ### 2026-02-08 - AI Coaching 実装 (Gemini API)
+
 - Backend: `AIConfig` + `AIService` + `AIController` で Gemini API (gemini-2.5-flash-lite) 連携
 - Frontend: `useAICoach` hook + `AICoachPanel` コンポーネントを TaskDetail に統合
 - 3種のリクエストタイプ: breakdown（ステップ分解）/ encouragement（励まし）/ review（レビュー）
@@ -587,18 +680,21 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 ### 2026-02-07 (3) - Phase 2 重複排除 (D1-D4)
 
 #### 変更内容
+
 - **D2: localStorage定数集約**: 全6キーを`constants/storageKeys.ts`に集約、各ファイルのハードコード文字列を定数参照に置換
 - **D3: 汎用`useLocalStorage`フック**: `hooks/useLocalStorage.ts`を新規作成し、ThemeContext / TimerContext / Layout / useLocalSoundMixer の手動read/write処理を統一
 - **D1: DurationPicker統一**: DurationSelector.tsx と TaskDetailHeader.tsx の完全重複コード（PRESETS定数、formatDuration関数、±ステップロジック、プリセットグリッド）を`components/shared/DurationPicker.tsx`に統合
 - **D4: コンポーネント外定数の整理**: D1で解決済み（PRESETS移動）、SlashCommandMenuのCOMMANDS配列は現状維持
 
 #### 新規ファイル
+
 - `frontend/src/constants/storageKeys.ts` — localStorage キー定数
 - `frontend/src/hooks/useLocalStorage.ts` — 汎用localStorage永続化フック
 - `frontend/src/components/shared/DurationPicker.tsx` — 共通Duration Pickerコンポーネント
 - `frontend/src/utils/duration.ts` — formatDuration ユーティリティ関数
 
 #### 変更ファイル
+
 - `hooks/useTaskTree.ts` — STORAGE_KEYS定数参照に置換
 - `hooks/useLocalSoundMixer.ts` — STORAGE_KEYS + useLocalStorageで書き換え
 - `context/TimerContext.tsx` — STORAGE_KEYS + useLocalStorageで書き換え
@@ -610,17 +706,20 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 ### 2026-02-07 (2) - フロントエンド コード品質分析 & リファクタリングプラン作成
 
 #### 変更内容
+
 - **包括的コード品質調査**: フロントエンド49ファイル・約2,440行を分析し、バグ温床6件・重複4件・効率改善6件を特定
 - **Phase 1 バグ修正プラン**: TimerContext config未メモ化、MemoEditor stale closure、TaskTreeNode click競合、Error Boundary未実装の4件を具体的なBefore/Afterコード例付きで文書化
 - **Phase 2-4 将来対応概要**: 重複排除、コンポーネント分割、パフォーマンス最適化の方針を記載
 - **API移行設計指針**: Repository Patternによるデータアクセス抽象化、非同期化への備えを記載
 
 #### 新規ファイル
+
 - `.claude/current_plans/002-frontend-refactoring.md` — リファクタリングプランドキュメント
 
 ### 2026-02-07 - ドキュメント構造の再編成
 
 #### 変更内容
+
 - **ドキュメント分類体系を導入**: `.claude/` 配下に `current_plans/`（進行中）、`feature_plans/`（将来予定）、`archive/`（完了済み）を新設
 - **ライフサイクル**: `feature_plans/` → `current_plans/` → `archive/` のフローで管理
 - **TODO.md**: 完了タスクを削除し、簡潔なロードマップに書き換え。各項目から `feature_plans/` へリンク
@@ -634,6 +733,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 ### 2026-02-06 (2) - UI拡張: グローバルタイマー + サブサイドバー
 
 #### 実装済み
+
 - **TimerContext**: タイマーをReact Contextに昇格、全コンポーネントから共有可能に
   - `activeTask`状態（タイマーと紐づくタスク情報）
   - `startForTask(id, title)` / `clearTask()` / `setWorkDurationMinutes()`
@@ -647,6 +747,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 - **プログレスバードット**: 現在位置に12pxのドットインジケータ、1秒スムーズトランジション
 
 #### 新規ファイル
+
 - `frontend/src/context/TimerContextValue.ts` — Timer Context型定義
 - `frontend/src/context/TimerContext.tsx` — TimerProvider
 - `frontend/src/hooks/useTimerContext.ts` — Consumerフック
@@ -654,6 +755,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 - `frontend/src/components/WorkScreen/DurationSelector.tsx` — タイマー時間選択UI
 
 #### 変更ファイル
+
 - `main.tsx` — TimerProvider追加
 - `App.tsx` — isTimerModalOpen + selectedFolderId状態、フォルダナビ連携
 - `WorkScreen.tsx` — Context化、モーダルUI、DurationSelector追加
@@ -666,6 +768,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 ### 2026-02-06 - 実装状況まとめ
 
 #### 実装済み
+
 - **Backend全体**: Task/Timer/Sound の3ドメイン（Controller/Service/Repository/Entity）、CORS設定、H2 DB
 - **TaskTree**: 階層型タスク管理（フォルダ/サブフォルダ/タスク）、@dnd-kitによるDnD並び替え、ソフトデリート
 - **WorkScreen**: ポモドーロタイマー + サウンドミキサー統合画面
@@ -674,6 +777,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 - **Settings**: ダークモード/ライトモード、フォントサイズ（S/M/L）、ゴミ箱
 
 #### 以降のバージョンで実装済み
+
 - AIコーチング → 2026-02-08 実装（Gemini API連携）
 - 音声再生 → 2026-02-08 実装（Web Audio API）
 - キーボードショートカット → 2026-02-09 実装
@@ -682,6 +786,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 ### 2025-02-06 - プロジェクト初期化
 
 #### Completed
+
 - プロジェクト仕様書の作成 (Application_Overview.md)
 - 開発ドキュメント構成の策定
   - CLAUDE.md: 開発ガイド・作業指示
@@ -691,6 +796,7 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
   - ADR: アーキテクチャ決定記録
 
 #### Learnings
+
 - Claude Code用のドキュメント構成
   - CLAUDE.md: プロジェクトルートに配置、作業指示・コーディング規約
   - MEMORY.md: ~/.claude/projects/配下、セッション間で保持される技術仕様
@@ -701,15 +807,18 @@ WorkScreenでサウンドカードをクリックしても音声が再生され�
 ## セットアップ
 
 ### 前提条件
+
 - Node.js 18+
 - npm
 
 ### インストール
+
 ```bash
 npm install    # postinstallでfrontend依存 + electron-rebuild自動実行
 ```
 
 ### 起動
+
 ```bash
 npm run dev    # Vite(5173) + tsc --watch + Electron 同時起動
 ```
@@ -717,6 +826,7 @@ npm run dev    # Vite(5173) + tsc --watch + Electron 同時起動
 ---
 
 ## ドキュメント
+
 - [開発ガイド](.claude/CLAUDE.md)
 - [仕様書](.claude/docs/Application_Overview.md)
 - [アーキテクチャ決定記録](.claude/docs/adr/)

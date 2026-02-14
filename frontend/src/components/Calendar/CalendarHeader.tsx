@@ -1,42 +1,64 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
+
+type ViewMode = "month" | "week" | "3day";
 
 interface CalendarHeaderProps {
   year: number;
   month: number;
-  viewMode: 'month' | 'week';
+  viewMode: ViewMode;
   weekStartDate?: Date;
   onPrev: () => void;
   onNext: () => void;
   onToday: () => void;
-  onViewModeChange: (mode: 'month' | 'week') => void;
+  onViewModeChange: (mode: ViewMode) => void;
 }
 
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 const SHORT_MONTH_NAMES = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
-function formatWeekRange(weekStart: Date): string {
-  const end = new Date(weekStart);
-  end.setDate(end.getDate() + 6);
+function formatDateRange(start: Date, offsetDays: number): string {
+  const end = new Date(start);
+  end.setDate(end.getDate() + offsetDays);
 
-  const sMonth = SHORT_MONTH_NAMES[weekStart.getMonth()];
+  const sMonth = SHORT_MONTH_NAMES[start.getMonth()];
   const eMonth = SHORT_MONTH_NAMES[end.getMonth()];
-  const sDay = weekStart.getDate();
+  const sDay = start.getDate();
   const eDay = end.getDate();
-  const sYear = weekStart.getFullYear();
+  const sYear = start.getFullYear();
   const eYear = end.getFullYear();
 
   if (sYear !== eYear) {
     return `${sMonth} ${sDay}, ${sYear} - ${eMonth} ${eDay}, ${eYear}`;
   }
-  if (weekStart.getMonth() !== end.getMonth()) {
+  if (start.getMonth() !== end.getMonth()) {
     return `${sMonth} ${sDay} - ${eMonth} ${eDay}, ${sYear}`;
   }
   return `${sMonth} ${sDay} - ${eDay}, ${sYear}`;
@@ -53,16 +75,18 @@ export function CalendarHeader({
   onViewModeChange,
 }: CalendarHeaderProps) {
   const { t } = useTranslation();
-  const title = viewMode === 'week' && weekStartDate
-    ? formatWeekRange(weekStartDate)
-    : `${MONTH_NAMES[month]} ${year}`;
+  const title = (() => {
+    if (viewMode === "week" && weekStartDate)
+      return formatDateRange(weekStartDate, 6);
+    if (viewMode === "3day" && weekStartDate)
+      return formatDateRange(weekStartDate, 2);
+    return `${MONTH_NAMES[month]} ${year}`;
+  })();
 
   return (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-3">
-        <h2 className="text-xl font-bold text-notion-text">
-          {title}
-        </h2>
+        <h2 className="text-xl font-bold text-notion-text">{title}</h2>
         <div className="flex items-center gap-1">
           <button
             onClick={onPrev}
@@ -81,30 +105,40 @@ export function CalendarHeader({
           onClick={onToday}
           className="px-2 py-1 text-xs rounded-md border border-notion-border text-notion-text-secondary hover:bg-notion-hover transition-colors"
         >
-          {t('calendarHeader.today')}
+          {t("calendarHeader.today")}
         </button>
       </div>
 
       <div className="flex items-center gap-1 bg-notion-bg-secondary rounded-md p-0.5">
         <button
-          onClick={() => onViewModeChange('month')}
+          onClick={() => onViewModeChange("month")}
           className={`px-3 py-1 text-xs rounded-md transition-colors ${
-            viewMode === 'month'
-              ? 'bg-notion-bg text-notion-text shadow-sm'
-              : 'text-notion-text-secondary hover:text-notion-text'
+            viewMode === "month"
+              ? "bg-notion-bg text-notion-text shadow-sm"
+              : "text-notion-text-secondary hover:text-notion-text"
           }`}
         >
-          {t('calendarHeader.month')}
+          {t("calendarHeader.month")}
         </button>
         <button
-          onClick={() => onViewModeChange('week')}
+          onClick={() => onViewModeChange("week")}
           className={`px-3 py-1 text-xs rounded-md transition-colors ${
-            viewMode === 'week'
-              ? 'bg-notion-bg text-notion-text shadow-sm'
-              : 'text-notion-text-secondary hover:text-notion-text'
+            viewMode === "week"
+              ? "bg-notion-bg text-notion-text shadow-sm"
+              : "text-notion-text-secondary hover:text-notion-text"
           }`}
         >
-          {t('calendarHeader.week')}
+          {t("calendarHeader.week")}
+        </button>
+        <button
+          onClick={() => onViewModeChange("3day")}
+          className={`px-3 py-1 text-xs rounded-md transition-colors ${
+            viewMode === "3day"
+              ? "bg-notion-bg text-notion-text shadow-sm"
+              : "text-notion-text-secondary hover:text-notion-text"
+          }`}
+        >
+          {t("calendarHeader.threeDay")}
         </button>
       </div>
     </div>
