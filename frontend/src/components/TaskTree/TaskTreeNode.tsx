@@ -110,7 +110,7 @@ export function TaskTreeNode({
   const transformStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.15 : 1,
+    opacity: isDragging ? 0 : 1,
   };
 
   const bgStyle = {
@@ -166,6 +166,10 @@ export function TaskTreeNode({
   return (
     <div>
       <div ref={setNodeRef} style={transformStyle} {...attributes}>
+        {/* Blue line placeholder for dragged item */}
+        {isDragging && (
+          <div className="h-0.5 bg-notion-accent rounded-full mx-2 my-1" />
+        )}
         {/* "above" drop indicator */}
         {overInfo?.overId === node.id &&
           overInfo.position === "above" &&
@@ -244,9 +248,11 @@ export function TaskTreeNode({
         </div>
       </div>
 
-      {overInfo?.overId === node.id && overInfo.position === "below" && !isDragging && (
-        <div className="h-0.5 bg-notion-accent rounded-full mx-2" />
-      )}
+      {overInfo?.overId === node.id &&
+        overInfo.position === "below" &&
+        !isDragging && (
+          <div className="h-0.5 bg-notion-accent rounded-full mx-2" />
+        )}
 
       {contextMenu && (
         <TaskNodeContextMenu
