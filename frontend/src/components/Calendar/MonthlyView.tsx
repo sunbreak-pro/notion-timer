@@ -14,6 +14,7 @@ interface MonthlyViewProps {
   getFolderTag?: (taskId: string) => string;
   memosByDate?: Map<string, MemoNode>;
   onSelectMemo?: (date: string) => void;
+  getRoutineCompletion?: (date: string) => { completed: number; total: number };
 }
 
 export function MonthlyView({
@@ -25,6 +26,7 @@ export function MonthlyView({
   getFolderTag,
   memosByDate,
   onSelectMemo,
+  getRoutineCompletion,
 }: MonthlyViewProps) {
   const today = new Date();
   const todayKey = formatDateKey(today);
@@ -57,6 +59,7 @@ export function MonthlyView({
               getFolderTag={getFolderTag}
               memo={memosByDate?.get(key)}
               onSelectMemo={onSelectMemo}
+              routineCompletion={getRoutineCompletion?.(key)}
             />
           );
         })}

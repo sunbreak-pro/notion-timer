@@ -1,15 +1,34 @@
-import type { DataService } from './DataService';
-import type { TaskNode } from '../types/taskTree';
-import type { TimerSettings, TimerSession, SessionType, PomodoroPreset } from '../types/timer';
-import type { SoundSettings, SoundPreset, SoundTag, SoundDisplayMeta } from '../types/sound';
-import type { MemoNode } from '../types/memo';
-import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../types/ai';
-import type { CustomSoundMeta } from '../types/customSound';
-import type { NoteNode } from '../types/note';
+import type { DataService } from "./DataService";
+import type { TaskNode } from "../types/taskTree";
+import type {
+  TimerSettings,
+  TimerSession,
+  SessionType,
+  PomodoroPreset,
+} from "../types/timer";
+import type {
+  SoundSettings,
+  SoundPreset,
+  SoundTag,
+  SoundDisplayMeta,
+} from "../types/sound";
+import type { MemoNode } from "../types/memo";
+import type {
+  AIAdviceRequest,
+  AIAdviceResponse,
+  AISettingsResponse,
+} from "../types/ai";
+import type { CustomSoundMeta } from "../types/customSound";
+import type { NoteNode } from "../types/note";
 
-import type { TaskTemplate } from '../types/template';
-import type { CalendarNode } from '../types/calendar';
-import type { LogEntry, IpcChannelMetrics, SystemInfo } from '../types/diagnostics';
+import type { TaskTemplate } from "../types/template";
+import type { CalendarNode } from "../types/calendar";
+import type { RoutineNode, RoutineLog } from "../types/routine";
+import type {
+  LogEntry,
+  IpcChannelMetrics,
+  SystemInfo,
+} from "../types/diagnostics";
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   return window.electronAPI!.invoke<T>(channel, ...args);
@@ -18,177 +37,219 @@ function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
 export class ElectronDataService implements DataService {
   // Tasks
   fetchTaskTree(): Promise<TaskNode[]> {
-    return invoke('db:tasks:fetchTree');
+    return invoke("db:tasks:fetchTree");
   }
   fetchDeletedTasks(): Promise<TaskNode[]> {
-    return invoke('db:tasks:fetchDeleted');
+    return invoke("db:tasks:fetchDeleted");
   }
   createTask(node: TaskNode): Promise<TaskNode> {
-    return invoke('db:tasks:create', node);
+    return invoke("db:tasks:create", node);
   }
   updateTask(id: string, updates: Partial<TaskNode>): Promise<TaskNode> {
-    return invoke('db:tasks:update', id, updates);
+    return invoke("db:tasks:update", id, updates);
   }
   syncTaskTree(nodes: TaskNode[]): Promise<void> {
-    return invoke('db:tasks:syncTree', nodes);
+    return invoke("db:tasks:syncTree", nodes);
   }
   softDeleteTask(id: string): Promise<void> {
-    return invoke('db:tasks:softDelete', id);
+    return invoke("db:tasks:softDelete", id);
   }
   restoreTask(id: string): Promise<void> {
-    return invoke('db:tasks:restore', id);
+    return invoke("db:tasks:restore", id);
   }
   permanentDeleteTask(id: string): Promise<void> {
-    return invoke('db:tasks:permanentDelete', id);
+    return invoke("db:tasks:permanentDelete", id);
   }
   migrateTasksToBackend(nodes: TaskNode[]): Promise<void> {
-    return invoke('app:migrateFromLocalStorage', { tasks: nodes });
+    return invoke("app:migrateFromLocalStorage", { tasks: nodes });
   }
 
   // Timer
   fetchTimerSettings(): Promise<TimerSettings> {
-    return invoke('db:timer:fetchSettings');
+    return invoke("db:timer:fetchSettings");
   }
-  updateTimerSettings(settings: Partial<Pick<TimerSettings, 'workDuration' | 'breakDuration' | 'longBreakDuration' | 'sessionsBeforeLongBreak' | 'autoStartBreaks'>>): Promise<TimerSettings> {
-    return invoke('db:timer:updateSettings', settings);
+  updateTimerSettings(
+    settings: Partial<
+      Pick<
+        TimerSettings,
+        | "workDuration"
+        | "breakDuration"
+        | "longBreakDuration"
+        | "sessionsBeforeLongBreak"
+        | "autoStartBreaks"
+      >
+    >,
+  ): Promise<TimerSettings> {
+    return invoke("db:timer:updateSettings", settings);
   }
-  startTimerSession(sessionType: SessionType, taskId?: string): Promise<TimerSession> {
-    return invoke('db:timer:startSession', sessionType, taskId ?? null);
+  startTimerSession(
+    sessionType: SessionType,
+    taskId?: string,
+  ): Promise<TimerSession> {
+    return invoke("db:timer:startSession", sessionType, taskId ?? null);
   }
-  endTimerSession(id: number, duration: number, completed: boolean): Promise<TimerSession> {
-    return invoke('db:timer:endSession', id, duration, completed);
+  endTimerSession(
+    id: number,
+    duration: number,
+    completed: boolean,
+  ): Promise<TimerSession> {
+    return invoke("db:timer:endSession", id, duration, completed);
   }
   fetchTimerSessions(): Promise<TimerSession[]> {
-    return invoke('db:timer:fetchSessions');
+    return invoke("db:timer:fetchSessions");
   }
   fetchSessionsByTaskId(taskId: string): Promise<TimerSession[]> {
-    return invoke('db:timer:fetchSessionsByTaskId', taskId);
+    return invoke("db:timer:fetchSessionsByTaskId", taskId);
   }
 
   // Pomodoro Presets
   fetchPomodoroPresets(): Promise<PomodoroPreset[]> {
-    return invoke('db:timer:fetchPomodoroPresets');
+    return invoke("db:timer:fetchPomodoroPresets");
   }
-  createPomodoroPreset(preset: Omit<PomodoroPreset, 'id' | 'createdAt'>): Promise<PomodoroPreset> {
-    return invoke('db:timer:createPomodoroPreset', preset);
+  createPomodoroPreset(
+    preset: Omit<PomodoroPreset, "id" | "createdAt">,
+  ): Promise<PomodoroPreset> {
+    return invoke("db:timer:createPomodoroPreset", preset);
   }
-  updatePomodoroPreset(id: number, updates: Partial<Omit<PomodoroPreset, 'id' | 'createdAt'>>): Promise<PomodoroPreset> {
-    return invoke('db:timer:updatePomodoroPreset', id, updates);
+  updatePomodoroPreset(
+    id: number,
+    updates: Partial<Omit<PomodoroPreset, "id" | "createdAt">>,
+  ): Promise<PomodoroPreset> {
+    return invoke("db:timer:updatePomodoroPreset", id, updates);
   }
   deletePomodoroPreset(id: number): Promise<void> {
-    return invoke('db:timer:deletePomodoroPreset', id);
+    return invoke("db:timer:deletePomodoroPreset", id);
   }
 
   // Sound
   fetchSoundSettings(): Promise<SoundSettings[]> {
-    return invoke('db:sound:fetchSettings');
+    return invoke("db:sound:fetchSettings");
   }
-  updateSoundSetting(soundType: string, volume: number, enabled: boolean): Promise<SoundSettings> {
-    return invoke('db:sound:updateSetting', soundType, volume, enabled);
+  updateSoundSetting(
+    soundType: string,
+    volume: number,
+    enabled: boolean,
+  ): Promise<SoundSettings> {
+    return invoke("db:sound:updateSetting", soundType, volume, enabled);
   }
   fetchSoundPresets(): Promise<SoundPreset[]> {
-    return invoke('db:sound:fetchPresets');
+    return invoke("db:sound:fetchPresets");
   }
   createSoundPreset(name: string, settingsJson: string): Promise<SoundPreset> {
-    return invoke('db:sound:createPreset', name, settingsJson);
+    return invoke("db:sound:createPreset", name, settingsJson);
   }
   deleteSoundPreset(id: number): Promise<void> {
-    return invoke('db:sound:deletePreset', id);
+    return invoke("db:sound:deletePreset", id);
   }
 
   // Sound Tags
   fetchAllSoundTags(): Promise<SoundTag[]> {
-    return invoke('db:sound:fetchAllSoundTags');
+    return invoke("db:sound:fetchAllSoundTags");
   }
   createSoundTag(name: string, color: string): Promise<SoundTag> {
-    return invoke('db:sound:createSoundTag', name, color);
+    return invoke("db:sound:createSoundTag", name, color);
   }
-  updateSoundTag(id: number, updates: { name?: string; color?: string }): Promise<SoundTag> {
-    return invoke('db:sound:updateSoundTag', id, updates.name, updates.color);
+  updateSoundTag(
+    id: number,
+    updates: { name?: string; color?: string },
+  ): Promise<SoundTag> {
+    return invoke("db:sound:updateSoundTag", id, updates.name, updates.color);
   }
   deleteSoundTag(id: number): Promise<void> {
-    return invoke('db:sound:deleteSoundTag', id);
+    return invoke("db:sound:deleteSoundTag", id);
   }
   fetchTagsForSound(soundId: string): Promise<SoundTag[]> {
-    return invoke('db:sound:fetchTagsForSound', soundId);
+    return invoke("db:sound:fetchTagsForSound", soundId);
   }
   setTagsForSound(soundId: string, tagIds: number[]): Promise<void> {
-    return invoke('db:sound:setTagsForSound', soundId, tagIds);
+    return invoke("db:sound:setTagsForSound", soundId, tagIds);
   }
-  fetchAllSoundTagAssignments(): Promise<Array<{ sound_id: string; tag_id: number }>> {
-    return invoke('db:sound:fetchAllSoundTagAssignments');
+  fetchAllSoundTagAssignments(): Promise<
+    Array<{ sound_id: string; tag_id: number }>
+  > {
+    return invoke("db:sound:fetchAllSoundTagAssignments");
   }
   fetchAllSoundDisplayMeta(): Promise<SoundDisplayMeta[]> {
-    return invoke('db:sound:fetchAllSoundDisplayMeta');
+    return invoke("db:sound:fetchAllSoundDisplayMeta");
   }
   updateSoundDisplayMeta(soundId: string, displayName: string): Promise<void> {
-    return invoke('db:sound:updateSoundDisplayMeta', soundId, displayName);
+    return invoke("db:sound:updateSoundDisplayMeta", soundId, displayName);
   }
-  fetchWorkscreenSelections(): Promise<Array<{ soundId: string; displayOrder: number }>> {
-    return invoke('db:sound:fetchWorkscreenSelections');
+  fetchWorkscreenSelections(): Promise<
+    Array<{ soundId: string; displayOrder: number }>
+  > {
+    return invoke("db:sound:fetchWorkscreenSelections");
   }
   setWorkscreenSelections(soundIds: string[]): Promise<void> {
-    return invoke('db:sound:setWorkscreenSelections', soundIds);
+    return invoke("db:sound:setWorkscreenSelections", soundIds);
   }
 
   // Memo
   fetchAllMemos(): Promise<MemoNode[]> {
-    return invoke('db:memo:fetchAll');
+    return invoke("db:memo:fetchAll");
   }
   fetchMemoByDate(date: string): Promise<MemoNode | null> {
-    return invoke('db:memo:fetchByDate', date);
+    return invoke("db:memo:fetchByDate", date);
   }
   upsertMemo(date: string, content: string): Promise<MemoNode> {
-    return invoke('db:memo:upsert', date, content);
+    return invoke("db:memo:upsert", date, content);
   }
   deleteMemo(date: string): Promise<void> {
-    return invoke('db:memo:delete', date);
+    return invoke("db:memo:delete", date);
   }
 
   // Notes
   fetchAllNotes(): Promise<NoteNode[]> {
-    return invoke('db:notes:fetchAll');
+    return invoke("db:notes:fetchAll");
   }
   fetchDeletedNotes(): Promise<NoteNode[]> {
-    return invoke('db:notes:fetchDeleted');
+    return invoke("db:notes:fetchDeleted");
   }
   createNote(id: string, title: string): Promise<NoteNode> {
-    return invoke('db:notes:create', id, title);
+    return invoke("db:notes:create", id, title);
   }
-  updateNote(id: string, updates: Partial<Pick<NoteNode, 'title' | 'content' | 'isPinned'>>): Promise<NoteNode> {
-    return invoke('db:notes:update', id, updates);
+  updateNote(
+    id: string,
+    updates: Partial<Pick<NoteNode, "title" | "content" | "isPinned">>,
+  ): Promise<NoteNode> {
+    return invoke("db:notes:update", id, updates);
   }
   softDeleteNote(id: string): Promise<void> {
-    return invoke('db:notes:softDelete', id);
+    return invoke("db:notes:softDelete", id);
   }
   restoreNote(id: string): Promise<void> {
-    return invoke('db:notes:restore', id);
+    return invoke("db:notes:restore", id);
   }
   permanentDeleteNote(id: string): Promise<void> {
-    return invoke('db:notes:permanentDelete', id);
+    return invoke("db:notes:permanentDelete", id);
   }
   searchNotes(query: string): Promise<NoteNode[]> {
-    return invoke('db:notes:search', query);
+    return invoke("db:notes:search", query);
   }
-
 
   // Custom Sounds
-  async saveCustomSound(_id: string, data: ArrayBuffer, meta: CustomSoundMeta): Promise<void> {
-    await invoke('db:customSound:save', meta, data);
+  async saveCustomSound(
+    _id: string,
+    data: ArrayBuffer,
+    meta: CustomSoundMeta,
+  ): Promise<void> {
+    await invoke("db:customSound:save", meta, data);
   }
   loadCustomSound(id: string): Promise<ArrayBuffer | null> {
-    return invoke('db:customSound:load', id);
+    return invoke("db:customSound:load", id);
   }
   deleteCustomSound(id: string): Promise<void> {
-    return invoke('db:customSound:delete', id);
+    return invoke("db:customSound:delete", id);
   }
   fetchCustomSoundMetas(): Promise<CustomSoundMeta[]> {
-    return invoke('db:customSound:fetchMetas');
+    return invoke("db:customSound:fetchMetas");
   }
 
   // AI
   async fetchAIAdvice(request: AIAdviceRequest): Promise<AIAdviceResponse> {
-    const result = await invoke<AIAdviceResponse & { error?: string; errorCode?: string }>('ai:advice', request);
+    const result = await invoke<
+      AIAdviceResponse & { error?: string; errorCode?: string }
+    >("ai:advice", request);
     if (result.error) {
       const err = new Error(result.error) as Error & { errorCode?: string };
       err.errorCode = result.errorCode;
@@ -197,77 +258,131 @@ export class ElectronDataService implements DataService {
     return result;
   }
   fetchAISettings(): Promise<AISettingsResponse> {
-    return invoke('ai:fetchSettings');
+    return invoke("ai:fetchSettings");
   }
-  updateAISettings(settings: { apiKey?: string; model?: string }): Promise<AISettingsResponse> {
-    return invoke('ai:updateSettings', settings);
+  updateAISettings(settings: {
+    apiKey?: string;
+    model?: string;
+  }): Promise<AISettingsResponse> {
+    return invoke("ai:updateSettings", settings);
   }
-
 
   // Templates
   fetchTemplates(): Promise<TaskTemplate[]> {
-    return invoke('db:templates:fetchAll');
+    return invoke("db:templates:fetchAll");
   }
   createTemplate(name: string, nodesJson: string): Promise<TaskTemplate> {
-    return invoke('db:templates:create', name, nodesJson);
+    return invoke("db:templates:create", name, nodesJson);
   }
   getTemplate(id: number): Promise<TaskTemplate | null> {
-    return invoke('db:templates:getById', id);
+    return invoke("db:templates:getById", id);
   }
   deleteTemplate(id: number): Promise<void> {
-    return invoke('db:templates:delete', id);
+    return invoke("db:templates:delete", id);
   }
 
   // Calendars
   fetchCalendars(): Promise<CalendarNode[]> {
-    return invoke('db:calendars:fetchAll');
+    return invoke("db:calendars:fetchAll");
   }
-  createCalendar(id: string, title: string, folderId: string): Promise<CalendarNode> {
-    return invoke('db:calendars:create', id, title, folderId);
+  createCalendar(
+    id: string,
+    title: string,
+    folderId: string,
+  ): Promise<CalendarNode> {
+    return invoke("db:calendars:create", id, title, folderId);
   }
-  updateCalendar(id: string, updates: Partial<Pick<CalendarNode, 'title' | 'folderId' | 'order'>>): Promise<CalendarNode> {
-    return invoke('db:calendars:update', id, updates);
+  updateCalendar(
+    id: string,
+    updates: Partial<Pick<CalendarNode, "title" | "folderId" | "order">>,
+  ): Promise<CalendarNode> {
+    return invoke("db:calendars:update", id, updates);
   }
   deleteCalendar(id: string): Promise<void> {
-    return invoke('db:calendars:delete', id);
+    return invoke("db:calendars:delete", id);
+  }
+
+  // Routines
+  fetchAllRoutines(): Promise<RoutineNode[]> {
+    return invoke("db:routines:fetchAll");
+  }
+  createRoutine(
+    id: string,
+    title: string,
+    frequencyType: string,
+    frequencyDays: number[],
+  ): Promise<RoutineNode> {
+    return invoke(
+      "db:routines:create",
+      id,
+      title,
+      frequencyType,
+      frequencyDays,
+    );
+  }
+  updateRoutine(
+    id: string,
+    updates: Partial<
+      Pick<
+        RoutineNode,
+        "title" | "frequencyType" | "frequencyDays" | "isArchived" | "order"
+      >
+    >,
+  ): Promise<RoutineNode> {
+    return invoke("db:routines:update", id, updates);
+  }
+  deleteRoutine(id: string): Promise<void> {
+    return invoke("db:routines:delete", id);
+  }
+  fetchRoutineLogs(routineId: string): Promise<RoutineLog[]> {
+    return invoke("db:routines:fetchLogs", routineId);
+  }
+  toggleRoutineLog(routineId: string, date: string): Promise<boolean> {
+    return invoke("db:routines:toggleLog", routineId, date);
+  }
+  fetchRoutineLogsByDateRange(
+    startDate: string,
+    endDate: string,
+  ): Promise<RoutineLog[]> {
+    return invoke("db:routines:fetchLogsByDateRange", startDate, endDate);
   }
 
   // Data I/O
   exportData(): Promise<boolean> {
-    return invoke('data:export');
+    return invoke("data:export");
   }
   importData(): Promise<boolean> {
-    return invoke('data:import');
+    return invoke("data:import");
   }
 
   // Diagnostics
   fetchLogs(options?: { level?: string; limit?: number }): Promise<LogEntry[]> {
-    return invoke('diagnostics:fetchLogs', options);
+    return invoke("diagnostics:fetchLogs", options);
   }
   openLogFolder(): Promise<void> {
-    return invoke('diagnostics:openLogFolder');
+    return invoke("diagnostics:openLogFolder");
   }
   exportLogs(): Promise<boolean> {
-    return invoke('diagnostics:exportLogs');
+    return invoke("diagnostics:exportLogs");
   }
   fetchMetrics(): Promise<IpcChannelMetrics[]> {
-    return invoke('diagnostics:fetchMetrics');
+    return invoke("diagnostics:fetchMetrics");
   }
   resetMetrics(): Promise<boolean> {
-    return invoke('diagnostics:resetMetrics');
+    return invoke("diagnostics:resetMetrics");
   }
   fetchSystemInfo(): Promise<SystemInfo> {
-    return invoke('diagnostics:fetchSystemInfo');
+    return invoke("diagnostics:fetchSystemInfo");
   }
 
   // Updater
   checkForUpdates(): Promise<void> {
-    return invoke('updater:checkForUpdates');
+    return invoke("updater:checkForUpdates");
   }
   downloadUpdate(): Promise<void> {
-    return invoke('updater:downloadUpdate');
+    return invoke("updater:downloadUpdate");
   }
   installUpdate(): Promise<void> {
-    return invoke('updater:installUpdate');
+    return invoke("updater:installUpdate");
   }
 }

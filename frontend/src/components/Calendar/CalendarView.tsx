@@ -4,6 +4,7 @@ import { useTaskTreeContext } from "../../hooks/useTaskTreeContext";
 import { useMemoContext } from "../../hooks/useMemoContext";
 import { useCalendarContext } from "../../hooks/useCalendarContext";
 import { useCalendar } from "../../hooks/useCalendar";
+import { useRoutineContext } from "../../hooks/useRoutineContext";
 import { getDescendantTasks } from "../../utils/getDescendantTasks";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarTagFilter } from "./CalendarTagFilter";
@@ -15,7 +16,8 @@ import type { MemoNode } from "../../types/memo";
 
 interface CalendarViewProps {
   onSelectTask: (taskId: string) => void;
-  onCreateTask?: (date: Date, title?: string) => void;
+  onCreateTask?: (date: Date, title?: string, parentId?: string | null) => void;
+  onCreateNote?: (title: string) => void;
   onSelectMemo?: (date: string) => void;
   onStartTimer?: (taskId: string) => void;
 }
@@ -30,6 +32,7 @@ function getInitialWeekStart(): Date {
 export function CalendarView({
   onSelectTask,
   onCreateTask,
+  onCreateNote,
   onSelectMemo,
   onStartTimer,
 }: CalendarViewProps) {
@@ -37,12 +40,18 @@ export function CalendarView({
   const { nodes, getTaskColor, getFolderTagForTask } = useTaskTreeContext();
   const { memos } = useMemoContext();
   const { activeCalendar } = useCalendarContext();
+  const { getRoutineCompletionForDate } = useRoutineContext();
 
   // Filter nodes by active calendar's folder subtree
   const filteredNodes = useMemo(() => {
     if (!activeCalendar) return nodes;
     return getDescendantTasks(activeCalendar.folderId, nodes);
   }, [activeCalendar, nodes]);
+
+  // Folder list for task creation popover
+  const folders = useMemo(() => {
+    return nodes.filter((n) => n.type === "folder" && !n.isDeleted);
+  }, [nodes]);
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -281,6 +290,7 @@ export function CalendarView({
             getFolderTag={getFolderTagForTask}
             memosByDate={filteredMemosByDate}
             onSelectMemo={onSelectMemo}
+            getRoutineCompletion={getRoutineCompletionForDate}
           />
         ) : (
           <WeeklyTimeGrid
@@ -292,6 +302,7 @@ export function CalendarView({
             getFolderTag={getFolderTagForTask}
             memosByDate={filteredMemosByDate}
             onSelectMemo={onSelectMemo}
+            getRoutineCompletion={getRoutineCompletionForDate}
           />
         )}
       </div>
@@ -299,10 +310,19 @@ export function CalendarView({
       {createPopover && (
         <TaskCreatePopover
           position={createPopover.position}
-          onSubmit={(title) => {
-            onCreateTask?.(createPopover.date, title);
+          onSubmitTask={(title, parentId) => {
+            onCreateTask?.(createPopover.date, title, parentId);
             setCreatePopover(null);
           }}
+          onSubmitNote={
+            onCreateNote
+              ? (title) => {
+                  onCreateNote(title);
+                  setCreatePopover(null);
+                }
+              : undefined
+          }
+          folders={folders}
           onClose={() => setCreatePopover(null)}
         />
       )}

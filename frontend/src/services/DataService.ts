@@ -1,14 +1,33 @@
-import type { TaskNode } from '../types/taskTree';
-import type { TimerSettings, TimerSession, SessionType, PomodoroPreset } from '../types/timer';
-import type { SoundSettings, SoundPreset, SoundTag, SoundDisplayMeta } from '../types/sound';
-import type { MemoNode } from '../types/memo';
-import type { AIAdviceRequest, AIAdviceResponse, AISettingsResponse } from '../types/ai';
-import type { CustomSoundMeta } from '../types/customSound';
-import type { NoteNode } from '../types/note';
+import type { TaskNode } from "../types/taskTree";
+import type {
+  TimerSettings,
+  TimerSession,
+  SessionType,
+  PomodoroPreset,
+} from "../types/timer";
+import type {
+  SoundSettings,
+  SoundPreset,
+  SoundTag,
+  SoundDisplayMeta,
+} from "../types/sound";
+import type { MemoNode } from "../types/memo";
+import type {
+  AIAdviceRequest,
+  AIAdviceResponse,
+  AISettingsResponse,
+} from "../types/ai";
+import type { CustomSoundMeta } from "../types/customSound";
+import type { NoteNode } from "../types/note";
 
-import type { TaskTemplate } from '../types/template';
-import type { CalendarNode } from '../types/calendar';
-import type { LogEntry, IpcChannelMetrics, SystemInfo } from '../types/diagnostics';
+import type { TaskTemplate } from "../types/template";
+import type { CalendarNode } from "../types/calendar";
+import type { RoutineNode, RoutineLog } from "../types/routine";
+import type {
+  LogEntry,
+  IpcChannelMetrics,
+  SystemInfo,
+} from "../types/diagnostics";
 
 export interface DataService {
   // Tasks
@@ -24,21 +43,48 @@ export interface DataService {
 
   // Timer
   fetchTimerSettings(): Promise<TimerSettings>;
-  updateTimerSettings(settings: Partial<Pick<TimerSettings, 'workDuration' | 'breakDuration' | 'longBreakDuration' | 'sessionsBeforeLongBreak' | 'autoStartBreaks'>>): Promise<TimerSettings>;
-  startTimerSession(sessionType: SessionType, taskId?: string): Promise<TimerSession>;
-  endTimerSession(id: number, duration: number, completed: boolean): Promise<TimerSession>;
+  updateTimerSettings(
+    settings: Partial<
+      Pick<
+        TimerSettings,
+        | "workDuration"
+        | "breakDuration"
+        | "longBreakDuration"
+        | "sessionsBeforeLongBreak"
+        | "autoStartBreaks"
+      >
+    >,
+  ): Promise<TimerSettings>;
+  startTimerSession(
+    sessionType: SessionType,
+    taskId?: string,
+  ): Promise<TimerSession>;
+  endTimerSession(
+    id: number,
+    duration: number,
+    completed: boolean,
+  ): Promise<TimerSession>;
   fetchTimerSessions(): Promise<TimerSession[]>;
   fetchSessionsByTaskId(taskId: string): Promise<TimerSession[]>;
 
   // Pomodoro Presets
   fetchPomodoroPresets(): Promise<PomodoroPreset[]>;
-  createPomodoroPreset(preset: Omit<PomodoroPreset, 'id' | 'createdAt'>): Promise<PomodoroPreset>;
-  updatePomodoroPreset(id: number, updates: Partial<Omit<PomodoroPreset, 'id' | 'createdAt'>>): Promise<PomodoroPreset>;
+  createPomodoroPreset(
+    preset: Omit<PomodoroPreset, "id" | "createdAt">,
+  ): Promise<PomodoroPreset>;
+  updatePomodoroPreset(
+    id: number,
+    updates: Partial<Omit<PomodoroPreset, "id" | "createdAt">>,
+  ): Promise<PomodoroPreset>;
   deletePomodoroPreset(id: number): Promise<void>;
 
   // Sound
   fetchSoundSettings(): Promise<SoundSettings[]>;
-  updateSoundSetting(soundType: string, volume: number, enabled: boolean): Promise<SoundSettings>;
+  updateSoundSetting(
+    soundType: string,
+    volume: number,
+    enabled: boolean,
+  ): Promise<SoundSettings>;
   fetchSoundPresets(): Promise<SoundPreset[]>;
   createSoundPreset(name: string, settingsJson: string): Promise<SoundPreset>;
   deleteSoundPreset(id: number): Promise<void>;
@@ -46,14 +92,21 @@ export interface DataService {
   // Sound Tags
   fetchAllSoundTags(): Promise<SoundTag[]>;
   createSoundTag(name: string, color: string): Promise<SoundTag>;
-  updateSoundTag(id: number, updates: { name?: string; color?: string }): Promise<SoundTag>;
+  updateSoundTag(
+    id: number,
+    updates: { name?: string; color?: string },
+  ): Promise<SoundTag>;
   deleteSoundTag(id: number): Promise<void>;
   fetchTagsForSound(soundId: string): Promise<SoundTag[]>;
   setTagsForSound(soundId: string, tagIds: number[]): Promise<void>;
-  fetchAllSoundTagAssignments(): Promise<Array<{ sound_id: string; tag_id: number }>>;
+  fetchAllSoundTagAssignments(): Promise<
+    Array<{ sound_id: string; tag_id: number }>
+  >;
   fetchAllSoundDisplayMeta(): Promise<SoundDisplayMeta[]>;
   updateSoundDisplayMeta(soundId: string, displayName: string): Promise<void>;
-  fetchWorkscreenSelections(): Promise<Array<{ soundId: string; displayOrder: number }>>;
+  fetchWorkscreenSelections(): Promise<
+    Array<{ soundId: string; displayOrder: number }>
+  >;
   setWorkscreenSelections(soundIds: string[]): Promise<void>;
 
   // Memo
@@ -66,14 +119,21 @@ export interface DataService {
   fetchAllNotes(): Promise<NoteNode[]>;
   fetchDeletedNotes(): Promise<NoteNode[]>;
   createNote(id: string, title: string): Promise<NoteNode>;
-  updateNote(id: string, updates: Partial<Pick<NoteNode, 'title' | 'content' | 'isPinned'>>): Promise<NoteNode>;
+  updateNote(
+    id: string,
+    updates: Partial<Pick<NoteNode, "title" | "content" | "isPinned">>,
+  ): Promise<NoteNode>;
   softDeleteNote(id: string): Promise<void>;
   restoreNote(id: string): Promise<void>;
   permanentDeleteNote(id: string): Promise<void>;
   searchNotes(query: string): Promise<NoteNode[]>;
 
   // Custom Sounds
-  saveCustomSound(id: string, data: ArrayBuffer, meta: CustomSoundMeta): Promise<void>;
+  saveCustomSound(
+    id: string,
+    data: ArrayBuffer,
+    meta: CustomSoundMeta,
+  ): Promise<void>;
   loadCustomSound(id: string): Promise<ArrayBuffer | null>;
   deleteCustomSound(id: string): Promise<void>;
   fetchCustomSoundMetas(): Promise<CustomSoundMeta[]>;
@@ -81,8 +141,10 @@ export interface DataService {
   // AI
   fetchAIAdvice(request: AIAdviceRequest): Promise<AIAdviceResponse>;
   fetchAISettings(): Promise<AISettingsResponse>;
-  updateAISettings(settings: { apiKey?: string; model?: string }): Promise<AISettingsResponse>;
-
+  updateAISettings(settings: {
+    apiKey?: string;
+    model?: string;
+  }): Promise<AISettingsResponse>;
 
   // Templates
   fetchTemplates(): Promise<TaskTemplate[]>;
@@ -92,9 +154,41 @@ export interface DataService {
 
   // Calendars
   fetchCalendars(): Promise<CalendarNode[]>;
-  createCalendar(id: string, title: string, folderId: string): Promise<CalendarNode>;
-  updateCalendar(id: string, updates: Partial<Pick<CalendarNode, 'title' | 'folderId' | 'order'>>): Promise<CalendarNode>;
+  createCalendar(
+    id: string,
+    title: string,
+    folderId: string,
+  ): Promise<CalendarNode>;
+  updateCalendar(
+    id: string,
+    updates: Partial<Pick<CalendarNode, "title" | "folderId" | "order">>,
+  ): Promise<CalendarNode>;
   deleteCalendar(id: string): Promise<void>;
+
+  // Routines
+  fetchAllRoutines(): Promise<RoutineNode[]>;
+  createRoutine(
+    id: string,
+    title: string,
+    frequencyType: string,
+    frequencyDays: number[],
+  ): Promise<RoutineNode>;
+  updateRoutine(
+    id: string,
+    updates: Partial<
+      Pick<
+        RoutineNode,
+        "title" | "frequencyType" | "frequencyDays" | "isArchived" | "order"
+      >
+    >,
+  ): Promise<RoutineNode>;
+  deleteRoutine(id: string): Promise<void>;
+  fetchRoutineLogs(routineId: string): Promise<RoutineLog[]>;
+  toggleRoutineLog(routineId: string, date: string): Promise<boolean>;
+  fetchRoutineLogsByDateRange(
+    startDate: string,
+    endDate: string,
+  ): Promise<RoutineLog[]>;
 
   // Data I/O
   exportData(): Promise<boolean>;

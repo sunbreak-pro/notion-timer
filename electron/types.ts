@@ -1,8 +1,8 @@
 // Duplicated from frontend/src/types/* because electron/tsconfig rootDir constraint
 // prevents cross-importing from ../frontend/
 
-export type NodeType = 'folder' | 'task';
-export type TaskStatus = 'TODO' | 'DONE';
+export type NodeType = "folder" | "task";
+export type TaskStatus = "TODO" | "DONE";
 
 export interface TaskNode {
   id: string;
@@ -24,7 +24,7 @@ export interface TaskNode {
   color?: string;
 }
 
-export type SessionType = 'WORK' | 'BREAK' | 'LONG_BREAK';
+export type SessionType = "WORK" | "BREAK" | "LONG_BREAK";
 
 export interface TimerSettings {
   id: number;
@@ -69,7 +69,7 @@ export interface MemoNode {
   updatedAt: string;
 }
 
-export type AIRequestType = 'breakdown' | 'encouragement' | 'review';
+export type AIRequestType = "breakdown" | "encouragement" | "review";
 
 export interface AIAdviceRequest {
   taskTitle: string;
@@ -145,9 +145,32 @@ export interface PomodoroPreset {
   createdAt: string;
 }
 
+export interface RoutineNode {
+  id: string;
+  title: string;
+  frequencyType: "daily" | "custom";
+  frequencyDays: number[];
+  isArchived: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RoutineLog {
+  id: number;
+  routineId: string;
+  date: string;
+  completed: boolean;
+  createdAt: string;
+}
+
 export interface MigrationPayload {
   tasks?: TaskNode[];
   timerSettings?: Partial<TimerSettings>;
-  soundSettings?: Array<{ soundType: string; volume: number; enabled: boolean }>;
+  soundSettings?: Array<{
+    soundType: string;
+    volume: number;
+    enabled: boolean;
+  }>;
   memos?: MemoNode[];
 }

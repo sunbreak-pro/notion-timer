@@ -1,33 +1,35 @@
-import log from '../logger';
-import { ipcMain } from 'electron';
-import type Database from 'better-sqlite3';
-import { createTaskRepository } from '../database/taskRepository';
-import { createTimerRepository } from '../database/timerRepository';
-import { createSoundRepository } from '../database/soundRepository';
-import { createMemoRepository } from '../database/memoRepository';
-import { createAIRepository } from '../database/aiRepository';
+import log from "../logger";
+import { ipcMain } from "electron";
+import type Database from "better-sqlite3";
+import { createTaskRepository } from "../database/taskRepository";
+import { createTimerRepository } from "../database/timerRepository";
+import { createSoundRepository } from "../database/soundRepository";
+import { createMemoRepository } from "../database/memoRepository";
+import { createAIRepository } from "../database/aiRepository";
 
-import { createTemplateRepository } from '../database/templateRepository';
-import { registerTaskHandlers } from './taskHandlers';
-import { registerTimerHandlers } from './timerHandlers';
-import { registerSoundHandlers } from './soundHandlers';
-import { registerMemoHandlers } from './memoHandlers';
-import { registerAIHandlers } from './aiHandlers';
-import { registerAppHandlers } from './appHandlers';
-import { createNoteRepository } from '../database/noteRepository';
-import { createCustomSoundRepository } from '../database/customSoundRepository';
-import { registerCustomSoundHandlers } from './customSoundHandlers';
-import { registerNoteHandlers } from './noteHandlers';
+import { createTemplateRepository } from "../database/templateRepository";
+import { registerTaskHandlers } from "./taskHandlers";
+import { registerTimerHandlers } from "./timerHandlers";
+import { registerSoundHandlers } from "./soundHandlers";
+import { registerMemoHandlers } from "./memoHandlers";
+import { registerAIHandlers } from "./aiHandlers";
+import { registerAppHandlers } from "./appHandlers";
+import { createNoteRepository } from "../database/noteRepository";
+import { createCustomSoundRepository } from "../database/customSoundRepository";
+import { registerCustomSoundHandlers } from "./customSoundHandlers";
+import { registerNoteHandlers } from "./noteHandlers";
 
-import { registerTemplateHandlers } from './templateHandlers';
-import { createCalendarRepository } from '../database/calendarRepository';
-import { registerCalendarHandlers } from './calendarHandlers';
-import { registerDataIOHandlers } from './dataIOHandlers';
-import { registerDiagnosticsHandlers } from './diagnosticsHandlers';
-import { registerUpdaterHandlers } from './updaterHandlers';
-import { createPomodoroPresetRepository } from '../database/pomodoroPresetRepository';
-import { registerPomodoroPresetHandlers } from './pomodoroPresetHandlers';
-import { wrapHandler } from './ipcMetrics';
+import { registerTemplateHandlers } from "./templateHandlers";
+import { createCalendarRepository } from "../database/calendarRepository";
+import { registerCalendarHandlers } from "./calendarHandlers";
+import { registerDataIOHandlers } from "./dataIOHandlers";
+import { registerDiagnosticsHandlers } from "./diagnosticsHandlers";
+import { registerUpdaterHandlers } from "./updaterHandlers";
+import { createPomodoroPresetRepository } from "../database/pomodoroPresetRepository";
+import { registerPomodoroPresetHandlers } from "./pomodoroPresetHandlers";
+import { createRoutineRepository } from "../database/routineRepository";
+import { registerRoutineHandlers } from "./routineHandlers";
+import { wrapHandler } from "./ipcMetrics";
 
 export function registerAllHandlers(db: Database.Database): void {
   // Stable repos (V1-V5 tables) — safe to create eagerly
@@ -38,7 +40,11 @@ export function registerAllHandlers(db: Database.Database): void {
   const notes = createNoteRepository(db);
   const templates = createTemplateRepository(db);
 
-  try { ai.migrateDeprecatedModel(); } catch (e) { log.error('[IPC] AI migration failed:', e); }
+  try {
+    ai.migrateDeprecatedModel();
+  } catch (e) {
+    log.error("[IPC] AI migration failed:", e);
+  }
 
   // Wrap ipcMain.handle to auto-instrument all handlers with metrics
   const originalHandle = ipcMain.handle.bind(ipcMain);
@@ -57,21 +63,31 @@ export function registerAllHandlers(db: Database.Database): void {
   // sound (V7) repo is created inside closure
   // so that db.prepare() failures are caught per-module, not globally
   const registrations: [string, () => void][] = [
-    ['Tasks', () => registerTaskHandlers(tasks)],
-    ['Timer', () => registerTimerHandlers(timer)],
-    ['Sound', () => registerSoundHandlers(getSoundRepo())],
-    ['Memo', () => registerMemoHandlers(memo)],
-    ['Notes', () => registerNoteHandlers(notes)],
-    ['AI', () => registerAIHandlers(ai)],
-    ['CustomSound', () => registerCustomSoundHandlers(createCustomSoundRepository())],
+    ["Tasks", () => registerTaskHandlers(tasks)],
+    ["Timer", () => registerTimerHandlers(timer)],
+    ["Sound", () => registerSoundHandlers(getSoundRepo())],
+    ["Memo", () => registerMemoHandlers(memo)],
+    ["Notes", () => registerNoteHandlers(notes)],
+    ["AI", () => registerAIHandlers(ai)],
+    [
+      "CustomSound",
+      () => registerCustomSoundHandlers(createCustomSoundRepository()),
+    ],
 
-    ['Templates', () => registerTemplateHandlers(templates)],
-    ['Calendars', () => registerCalendarHandlers(createCalendarRepository(db))],
-    ['App', () => registerAppHandlers({ tasks, timer, sound: getSoundRepo(), memo })],
-    ['DataIO', () => registerDataIOHandlers(db)],
-    ['Diagnostics', () => registerDiagnosticsHandlers(db)],
-    ['Updater', () => registerUpdaterHandlers()],
-    ['PomodoroPresets', () => registerPomodoroPresetHandlers(createPomodoroPresetRepository(db))],
+    ["Templates", () => registerTemplateHandlers(templates)],
+    ["Calendars", () => registerCalendarHandlers(createCalendarRepository(db))],
+    [
+      "App",
+      () => registerAppHandlers({ tasks, timer, sound: getSoundRepo(), memo }),
+    ],
+    ["DataIO", () => registerDataIOHandlers(db)],
+    ["Diagnostics", () => registerDiagnosticsHandlers(db)],
+    ["Updater", () => registerUpdaterHandlers()],
+    [
+      "PomodoroPresets",
+      () => registerPomodoroPresetHandlers(createPomodoroPresetRepository(db)),
+    ],
+    ["Routines", () => registerRoutineHandlers(createRoutineRepository(db))],
   ];
 
   for (const [name, register] of registrations) {
@@ -79,7 +95,9 @@ export function registerAllHandlers(db: Database.Database): void {
       register();
     } catch (e: unknown) {
       const err = e instanceof Error ? e : new Error(String(e));
-      log.error(`[IPC] Failed to register ${name} handlers: ${err.message}\n${err.stack}`);
+      log.error(
+        `[IPC] Failed to register ${name} handlers: ${err.message}\n${err.stack}`,
+      );
     }
   }
 

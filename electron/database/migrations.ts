@@ -1,7 +1,7 @@
-import type Database from 'better-sqlite3';
+import type Database from "better-sqlite3";
 
 export function runMigrations(db: Database.Database): void {
-  const currentVersion = db.pragma('user_version', { simple: true }) as number;
+  const currentVersion = db.pragma("user_version", { simple: true }) as number;
 
   if (currentVersion < 1) {
     migrateV1(db);
@@ -41,6 +41,9 @@ export function runMigrations(db: Database.Database): void {
   }
   if (currentVersion < 13) {
     migrateV13(db);
+  }
+  if (currentVersion < 14) {
+    migrateV14(db);
   }
 }
 
@@ -234,8 +237,14 @@ function migrateV8(db: Database.Database): void {
 
 function migrateV6(db: Database.Database): void {
   // Check if note_tags table exists before migrating (V3 may have created it)
-  const hasNoteTags = !!(db.prepare(`SELECT 1 FROM sqlite_master WHERE type='table' AND name='note_tags'`).get());
-  const hasOldTags = !!(db.prepare(`SELECT 1 FROM sqlite_master WHERE type='table' AND name='tags'`).get());
+  const hasNoteTags = !!db
+    .prepare(
+      `SELECT 1 FROM sqlite_master WHERE type='table' AND name='note_tags'`,
+    )
+    .get();
+  const hasOldTags = !!db
+    .prepare(`SELECT 1 FROM sqlite_master WHERE type='table' AND name='tags'`)
+    .get();
 
   const migrate = db.transaction(() => {
     // Create separate tag definition tables
@@ -346,7 +355,7 @@ function migrateV6(db: Database.Database): void {
 
   migrate();
   // PRAGMA doesn't participate in transactions, set it after success
-  db.pragma('user_version = 6');
+  db.pragma("user_version = 6");
 }
 
 function migrateV5(db: Database.Database): void {
@@ -356,10 +365,14 @@ function migrateV5(db: Database.Database): void {
   `);
 }
 
-function backupTableIfExists(db: Database.Database, table: string, suffix: string): void {
-  const exists = db.prepare(
-    `SELECT 1 FROM sqlite_master WHERE type='table' AND name=?`
-  ).get(table);
+function backupTableIfExists(
+  db: Database.Database,
+  table: string,
+  suffix: string,
+): void {
+  const exists = db
+    .prepare(`SELECT 1 FROM sqlite_master WHERE type='table' AND name=?`)
+    .get(table);
   if (exists) {
     db.exec(`ALTER TABLE "${table}" RENAME TO "${table}_backup_${suffix}"`);
   }
@@ -367,13 +380,13 @@ function backupTableIfExists(db: Database.Database, table: string, suffix: strin
 
 function migrateV9(db: Database.Database): void {
   const migrate = db.transaction(() => {
-    backupTableIfExists(db, 'task_tags', 'v9');
-    backupTableIfExists(db, 'task_tag_definitions', 'v9');
-    backupTableIfExists(db, 'note_tags', 'v9');
-    backupTableIfExists(db, 'note_tag_definitions', 'v9');
+    backupTableIfExists(db, "task_tags", "v9");
+    backupTableIfExists(db, "task_tag_definitions", "v9");
+    backupTableIfExists(db, "note_tags", "v9");
+    backupTableIfExists(db, "note_tag_definitions", "v9");
   });
   migrate();
-  db.pragma('user_version = 9');
+  db.pragma("user_version = 9");
 }
 
 function migrateV10(db: Database.Database): void {
@@ -483,5 +496,36 @@ function migrateV13(db: Database.Database): void {
     ALTER TABLE sound_workscreen_selections_new RENAME TO sound_workscreen_selections;
 
     PRAGMA user_version = 13;
+  `);
+}
+
+function migrateV14(db: Database.Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS routines (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      frequency_type TEXT NOT NULL DEFAULT 'daily',
+      frequency_days TEXT NOT NULL DEFAULT '[]',
+      is_archived INTEGER NOT NULL DEFAULT 0,
+      "order" INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS routine_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      routine_id TEXT NOT NULL,
+      date TEXT NOT NULL,
+      completed INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      UNIQUE(routine_id, date),
+      FOREIGN KEY (routine_id) REFERENCES routines(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_routine_logs_routine ON routine_logs(routine_id);
+    CREATE INDEX IF NOT EXISTS idx_routine_logs_date ON routine_logs(date);
+    CREATE INDEX IF NOT EXISTS idx_routine_logs_routine_date ON routine_logs(routine_id, date);
+
+    PRAGMA user_version = 14;
   `);
 }

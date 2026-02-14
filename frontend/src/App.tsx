@@ -19,6 +19,7 @@ import { useAppCommands } from "./hooks/useAppCommands";
 import { useAppKeyboardShortcuts } from "./hooks/useAppKeyboardShortcuts";
 import { useElectronMenuActions } from "./hooks/useElectronMenuActions";
 import { useTaskDetailHandlers } from "./hooks/useTaskDetailHandlers";
+import { useNoteContext } from "./hooks/useNoteContext";
 
 import type { SectionId } from "./types/taskTree";
 
@@ -39,6 +40,7 @@ function App() {
     persistError,
   } = useTaskTreeContext();
   const { setSelectedDate: setMemoDate } = useMemoContext();
+  const { createNote } = useNoteContext();
 
   const selectedTask = selectedTaskId
     ? (nodes.find((n) => n.id === selectedTaskId && n.type === "task") ?? null)
@@ -55,6 +57,7 @@ function App() {
     setSelectedTaskId,
     setActiveSection,
     setMemoDate,
+    createNote,
   });
 
   const commands = useAppCommands({
@@ -117,6 +120,7 @@ function App() {
           <CalendarView
             onSelectTask={handlers.handleCalendarSelectTask}
             onCreateTask={handlers.handleCalendarCreateTask}
+            onCreateNote={handlers.handleCalendarCreateNote}
             onSelectMemo={handlers.handleCalendarSelectMemo}
             onStartTimer={(taskId) => {
               const task = nodes.find((n) => n.id === taskId);

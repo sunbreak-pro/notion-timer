@@ -160,7 +160,31 @@
   },
   "memo": {
     "daily": "日記",
-    "notes": "ノート"
+    "notes": "ノート",
+    "routine": "ルーティン"
+  },
+  "routine": {
+    "title": "ルーティン",
+    "addRoutine": "ルーティンを追加",
+    "titlePlaceholder": "ルーティン名",
+    "frequency": "頻度",
+    "daily": "毎日",
+    "custom": "カスタム曜日",
+    "sun": "日",
+    "mon": "月",
+    "tue": "火",
+    "wed": "水",
+    "thu": "木",
+    "fri": "金",
+    "sat": "土",
+    "streak": "連続",
+    "noRoutines": "ルーティンがまだありません。習慣を追跡するために追加しましょう。",
+    "edit": "編集",
+    "delete": "削除",
+    "deleteConfirm": "「{{name}}」を削除しますか？すべてのログが失われます。",
+    "create": "作成",
+    "cancel": "キャンセル",
+    "notApplicable": "-"
   },
   "analytics": {
     "title": "分析",
@@ -400,8 +424,13 @@
     "inbox": "インボックス",
     "memo": "メモ",
     "taskNamePlaceholder": "タスク名",
+    "noteNamePlaceholder": "ノートタイトル",
     "openDetail": "詳細を開く",
-    "startTimer": "タイマー開始"
+    "startTimer": "タイマー開始",
+    "task": "タスク",
+    "note": "ノート",
+    "selectFolder": "フォルダ",
+    "routineIndicator": "{{completed}}/{{total}}"
   },
   "common": {
     "cancel": "キャンセル",

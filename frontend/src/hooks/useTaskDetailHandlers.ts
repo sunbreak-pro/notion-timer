@@ -18,6 +18,7 @@ interface UseTaskDetailHandlersParams {
   setSelectedTaskId: (id: string | null) => void;
   setActiveSection: (section: SectionId) => void;
   setMemoDate: (date: string) => void;
+  createNote?: (title?: string) => string;
 }
 
 export function useTaskDetailHandlers({
@@ -31,6 +32,7 @@ export function useTaskDetailHandlers({
   setSelectedTaskId,
   setActiveSection,
   setMemoDate,
+  createNote,
 }: UseTaskDetailHandlersParams) {
   const handlePlayTask = useCallback(
     (node: TaskNode) => {
@@ -148,16 +150,20 @@ export function useTaskDetailHandlers({
   );
 
   const handleCalendarCreateTask = useCallback(
-    (date: Date, title?: string) => {
+    (date: Date, title?: string, parentId?: string | null) => {
       const startDate = new Date(date);
-      const newNode = addNode("task", null, title || "Untitled", {
+      addNode("task", parentId ?? null, title || "Untitled", {
         scheduledAt: startDate.toISOString(),
       });
-      if (!newNode) return;
-      timer.openForTask(newNode.id, newNode.title, newNode.workDurationMinutes);
-      setActiveSection("work");
     },
-    [addNode, timer, setActiveSection],
+    [addNode],
+  );
+
+  const handleCalendarCreateNote = useCallback(
+    (title: string) => {
+      createNote?.(title);
+    },
+    [createNote],
   );
 
   const handleCalendarSelectMemo = useCallback(
@@ -196,6 +202,7 @@ export function useTaskDetailHandlers({
     handleCompleteTask,
     handleCalendarSelectTask,
     handleCalendarCreateTask,
+    handleCalendarCreateNote,
     handleCalendarSelectMemo,
     handleCreateFolder,
     handleCreateTask,

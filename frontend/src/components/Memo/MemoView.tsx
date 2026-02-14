@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { BookOpen, StickyNote } from "lucide-react";
+import { BookOpen, StickyNote, Repeat } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { STORAGE_KEYS } from "../../constants/storageKeys";
 import { DailyMemoView } from "./DailyMemoView";
 import { NotesView } from "./NotesView";
+import { RoutineView } from "./RoutineView";
 
-type MemoTab = "daily" | "notes";
+type MemoTab = "daily" | "notes" | "routine";
 
 function getInitialTab(): MemoTab {
   const saved = localStorage.getItem(STORAGE_KEYS.MEMO_TAB);
-  return saved === "notes" ? "notes" : "daily";
+  if (saved === "notes" || saved === "routine") return saved;
+  return "daily";
 }
 
 export function MemoView() {
@@ -33,7 +35,7 @@ export function MemoView() {
           }`}
         >
           <BookOpen size={15} />
-          {t('memo.daily')}
+          {t("memo.daily")}
         </button>
         <button
           onClick={() => handleTabChange("notes")}
@@ -44,12 +46,25 @@ export function MemoView() {
           }`}
         >
           <StickyNote size={15} />
-          {t('memo.notes')}
+          {t("memo.notes")}
+        </button>
+        <button
+          onClick={() => handleTabChange("routine")}
+          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
+            activeTab === "routine"
+              ? "border-notion-primary text-notion-text"
+              : "border-transparent text-notion-text-secondary hover:text-notion-text"
+          }`}
+        >
+          <Repeat size={15} />
+          {t("memo.routine")}
         </button>
       </div>
 
       <div className="flex-1 min-h-0">
-        {activeTab === "daily" ? <DailyMemoView /> : <NotesView />}
+        {activeTab === "daily" && <DailyMemoView />}
+        {activeTab === "notes" && <NotesView />}
+        {activeTab === "routine" && <RoutineView />}
       </div>
     </div>
   );

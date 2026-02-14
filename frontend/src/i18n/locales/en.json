@@ -160,7 +160,31 @@
   },
   "memo": {
     "daily": "Daily",
-    "notes": "Notes"
+    "notes": "Notes",
+    "routine": "Routine"
+  },
+  "routine": {
+    "title": "Routine",
+    "addRoutine": "Add routine",
+    "titlePlaceholder": "Routine name",
+    "frequency": "Frequency",
+    "daily": "Daily",
+    "custom": "Custom days",
+    "sun": "Sun",
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "streak": "streak",
+    "noRoutines": "No routines yet. Add one to start tracking habits.",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete \"{{name}}\"? All logs will be lost.",
+    "create": "Create",
+    "cancel": "Cancel",
+    "notApplicable": "-"
   },
   "analytics": {
     "title": "Analytics",
@@ -400,8 +424,13 @@
     "inbox": "Inbox",
     "memo": "Memo",
     "taskNamePlaceholder": "Task name",
+    "noteNamePlaceholder": "Note title",
     "openDetail": "Open detail",
-    "startTimer": "Start timer"
+    "startTimer": "Start timer",
+    "task": "Task",
+    "note": "Note",
+    "selectFolder": "Folder",
+    "routineIndicator": "{{completed}}/{{total}}"
   },
   "common": {
     "cancel": "Cancel",

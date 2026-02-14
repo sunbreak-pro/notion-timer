@@ -26,7 +26,8 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **Tips画面**: ショートカット一覧（6カテゴリ/29件）、タスク/タイマー/カレンダー/メモ/アナリティクス/エディタの操作ガイド（7タブ構成）
 - **リッチテキストエディタ**: TipTap拡張（Toggle List/Table/Callout/Image）、スラッシュコマンド対応、テキスト選択時Bubbleツールバー（Bold/Italic/Strikethrough/Code/Link/TextColor）
 - **コマンドパレット**: ⌘Kで起動、16コマンド（Navigation/Task/Timer/View）をリアルタイム検索・実行
-- **カレンダー**: 月/週表示切替、タスクを日付別に表示、フィルタリング（incomplete/completed）、複数カレンダー対応（フォルダ別ビュー）、カレンダーサイドバーで切替
+- **カレンダー**: 月/週表示切替、タスクを日付別に表示、フィルタリング（incomplete/completed）、複数カレンダー対応（フォルダ別ビュー）、カレンダーサイドバーで切替、タスク/ノート作成切替+フォルダ選択、ルーティン達成インジケーター
+- **ルーティン（ハビットトラッカー）**: MemoView内Routineタブ、毎日/カスタム曜日頻度設定、日々のチェック記録、直近7日○×履歴、連続ストリーク表示、月別達成サマリー
 - **タスクツリーフォルダフィルタ**: PROJECTSセクションにドロップダウンフィルター、フォルダ単位で表示絞り込み
 - **アナリティクス**: 基本統計（総タスク数、完了率、フォルダ数）、作業時間グラフ（日/週/月別BarChart + タスク別横棒グラフ、Recharts）、総作業時間・セッション数・日平均サマリー
 - **データ管理**: SQLite永続化（better-sqlite3）、JSON Export/Import、バックアップ付きインポート
@@ -66,6 +67,41 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-14 - ルーティン（ハビットトラッカー）+ カレンダータスク作成強化
+
+#### 概要
+
+MemoView内にRoutineタブを追加し、日々の習慣を追跡・記録できるハビットトラッカー機能を実装。カレンダーからのタスク作成時にTask/Notes切替とフォルダ選択を可能にする改善も同時実施。
+
+#### Feature 2: Routine（ハビットトラッカー）
+
+- **バックエンド**: `routines`/`routine_logs`テーブル追加（migrateV14）、`routineRepository.ts`（CRUD + toggleLog）、`routineHandlers.ts`（7チャンネル）
+- **DataService層**: DataService/ElectronDataServiceに7メソッド追加
+- **状態管理**: `useRoutines`フック（楽観的更新、統計計算）、`RoutineContext`/`RoutineProvider`、`useRoutineContext`
+- **UI**: `RoutineView`（メインコンテナ）、`RoutineList`（一覧）、`RoutineItem`（今日チェック、7日履歴○×、ストリーク、月別サマリー）、`RoutineCreateDialog`（タイトル+頻度設定モーダル）
+- **MemoView**: 3番目のタブ「Routine」追加（Repeatアイコン）
+- **カレンダー統合**: MonthlyView/WeeklyTimeGridにルーティン達成インジケーター表示（緑=全完了、灰=未完了）
+- **Data I/O**: Export/Importにroutines/routineLogs対応追加
+
+#### Feature 1: カレンダータスク作成強化
+
+- **TaskCreatePopover**: Task/Notesモード切替ボタン追加、Taskモード時にツリー形式フォルダセレクター表示（インデント付き）、Notesモード時はフォルダ非表示
+- **ハンドラ更新**: `handleCalendarCreateTask`にparentId引数追加、`handleCalendarCreateNote`新規追加
+- **App.tsx**: useNoteContextのcreateNoteをCalendarViewに配線
+
+#### 新規ファイル（10）
+
+- `frontend/src/types/routine.ts` — ルーティン型定義
+- `electron/database/routineRepository.ts` — ルーティンDBリポジトリ
+- `electron/ipc/routineHandlers.ts` — ルーティンIPCハンドラ
+- `frontend/src/hooks/useRoutines.ts` — ルーティン状態管理フック
+- `frontend/src/context/RoutineContext.tsx` — ルーティンContext Provider
+- `frontend/src/hooks/useRoutineContext.ts` — ルーティンContext消費フック
+- `frontend/src/components/Memo/RoutineView.tsx` — ルーティンメインビュー
+- `frontend/src/components/Memo/RoutineList.tsx` — ルーティン一覧
+- `frontend/src/components/Memo/RoutineItem.tsx` — ルーティンアイテム
+- `frontend/src/components/Memo/RoutineCreateDialog.tsx` — ルーティン作成ダイアログ
 
 ### 2026-02-14 - カレンダー UX 改善（フィルター・作成・プレビュー）
 

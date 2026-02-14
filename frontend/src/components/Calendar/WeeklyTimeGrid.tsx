@@ -21,6 +21,9 @@ interface WeeklyTimeGridProps {
   getFolderTag?: (taskId: string) => string;
   memosByDate?: Map<string, MemoNode>;
   onSelectMemo?: (date: string) => void;
+  getRoutineCompletion?: (
+    date: string,
+  ) => { completed: number; total: number } | undefined;
 }
 
 interface PositionedTask {
@@ -122,6 +125,7 @@ export function WeeklyTimeGrid({
   getFolderTag,
   memosByDate,
   onSelectMemo,
+  getRoutineCompletion,
 }: WeeklyTimeGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -207,6 +211,19 @@ export function WeeklyTimeGrid({
                 >
                   {day.date.getDate()}
                 </div>
+                {(() => {
+                  const rc = getRoutineCompletion?.(key);
+                  return rc && rc.total > 0 ? (
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{
+                        backgroundColor:
+                          rc.completed === rc.total ? "#16A34A" : "#9CA3AF",
+                      }}
+                      title={`${rc.completed}/${rc.total}`}
+                    />
+                  ) : null;
+                })()}
                 {memosByDate?.has(key) && (
                   <button
                     onClick={() => onSelectMemo?.(key)}

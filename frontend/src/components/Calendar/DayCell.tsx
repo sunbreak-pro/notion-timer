@@ -16,6 +16,7 @@ interface DayCellProps {
   getFolderTag?: (taskId: string) => string;
   memo?: MemoNode;
   onSelectMemo?: (date: string) => void;
+  routineCompletion?: { completed: number; total: number };
 }
 
 const MAX_VISIBLE_TASKS = 2;
@@ -31,6 +32,7 @@ export function DayCell({
   getFolderTag,
   memo,
   onSelectMemo,
+  routineCompletion,
 }: DayCellProps) {
   const visibleTasks = tasks.slice(0, MAX_VISIBLE_TASKS);
   const hiddenTasks = tasks.slice(MAX_VISIBLE_TASKS);
@@ -73,6 +75,32 @@ export function DayCell({
         )}
       </div>
       <div className="space-y-0.5">
+        {routineCompletion && routineCompletion.total > 0 && (
+          <div
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] truncate"
+            style={{
+              backgroundColor:
+                routineCompletion.completed === routineCompletion.total
+                  ? "#DCFCE7"
+                  : "#F3F4F6",
+              color:
+                routineCompletion.completed === routineCompletion.total
+                  ? "#16A34A"
+                  : "#6B7280",
+            }}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                routineCompletion.completed === routineCompletion.total
+                  ? "bg-green-500"
+                  : "bg-gray-400"
+              }`}
+            />
+            <span className="truncate font-medium">
+              {routineCompletion.completed}/{routineCompletion.total}
+            </span>
+          </div>
+        )}
         {memo && (
           <button
             onClick={(e) => {
