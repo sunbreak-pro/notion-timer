@@ -24,6 +24,7 @@ import type { NoteNode } from "../types/note";
 import type { TaskTemplate } from "../types/template";
 import type { CalendarNode } from "../types/calendar";
 import type { RoutineNode, RoutineLog } from "../types/routine";
+import type { Playlist, PlaylistItem } from "../types/playlist";
 import type {
   LogEntry,
   IpcChannelMetrics,
@@ -345,6 +346,44 @@ export class ElectronDataService implements DataService {
     endDate: string,
   ): Promise<RoutineLog[]> {
     return invoke("db:routines:fetchLogsByDateRange", startDate, endDate);
+  }
+
+  // Playlists
+  fetchPlaylists(): Promise<Playlist[]> {
+    return invoke("db:playlists:fetchAll");
+  }
+  createPlaylist(id: string, name: string): Promise<Playlist> {
+    return invoke("db:playlists:create", id, name);
+  }
+  updatePlaylist(
+    id: string,
+    updates: Partial<
+      Pick<Playlist, "name" | "sortOrder" | "repeatMode" | "isShuffle">
+    >,
+  ): Promise<Playlist> {
+    return invoke("db:playlists:update", id, updates);
+  }
+  deletePlaylist(id: string): Promise<void> {
+    return invoke("db:playlists:delete", id);
+  }
+  fetchPlaylistItems(playlistId: string): Promise<PlaylistItem[]> {
+    return invoke("db:playlists:fetchItems", playlistId);
+  }
+  fetchAllPlaylistItems(): Promise<PlaylistItem[]> {
+    return invoke("db:playlists:fetchAllItems");
+  }
+  addPlaylistItem(
+    id: string,
+    playlistId: string,
+    soundId: string,
+  ): Promise<PlaylistItem> {
+    return invoke("db:playlists:addItem", id, playlistId, soundId);
+  }
+  removePlaylistItem(itemId: string): Promise<void> {
+    return invoke("db:playlists:removeItem", itemId);
+  }
+  reorderPlaylistItems(playlistId: string, itemIds: string[]): Promise<void> {
+    return invoke("db:playlists:reorderItems", playlistId, itemIds);
   }
 
   // Data I/O

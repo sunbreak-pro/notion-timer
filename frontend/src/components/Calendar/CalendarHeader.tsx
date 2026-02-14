@@ -12,6 +12,7 @@ interface CalendarHeaderProps {
   onNext: () => void;
   onToday: () => void;
   onViewModeChange: (mode: ViewMode) => void;
+  calendarMode?: "tasks" | "memo";
 }
 
 const MONTH_NAMES = [
@@ -73,6 +74,7 @@ export function CalendarHeader({
   onNext,
   onToday,
   onViewModeChange,
+  calendarMode,
 }: CalendarHeaderProps) {
   const { t } = useTranslation();
   const title = (() => {
@@ -109,38 +111,40 @@ export function CalendarHeader({
         </button>
       </div>
 
-      <div className="flex items-center gap-1 bg-notion-bg-secondary rounded-md p-0.5">
-        <button
-          onClick={() => onViewModeChange("month")}
-          className={`px-3 py-1 text-xs rounded-md transition-colors ${
-            viewMode === "month"
-              ? "bg-notion-bg text-notion-text shadow-sm"
-              : "text-notion-text-secondary hover:text-notion-text"
-          }`}
-        >
-          {t("calendarHeader.month")}
-        </button>
-        <button
-          onClick={() => onViewModeChange("week")}
-          className={`px-3 py-1 text-xs rounded-md transition-colors ${
-            viewMode === "week"
-              ? "bg-notion-bg text-notion-text shadow-sm"
-              : "text-notion-text-secondary hover:text-notion-text"
-          }`}
-        >
-          {t("calendarHeader.week")}
-        </button>
-        <button
-          onClick={() => onViewModeChange("3day")}
-          className={`px-3 py-1 text-xs rounded-md transition-colors ${
-            viewMode === "3day"
-              ? "bg-notion-bg text-notion-text shadow-sm"
-              : "text-notion-text-secondary hover:text-notion-text"
-          }`}
-        >
-          {t("calendarHeader.threeDay")}
-        </button>
-      </div>
+      {calendarMode !== "memo" && (
+        <div className="flex items-center gap-1 bg-notion-bg-secondary rounded-md p-0.5">
+          <button
+            onClick={() => onViewModeChange("month")}
+            className={`px-3 py-1 text-xs rounded-md transition-colors ${
+              viewMode === "month"
+                ? "bg-notion-bg text-notion-text shadow-sm"
+                : "text-notion-text-secondary hover:text-notion-text"
+            }`}
+          >
+            {t("calendarHeader.month")}
+          </button>
+          <button
+            onClick={() => onViewModeChange("week")}
+            className={`px-3 py-1 text-xs rounded-md transition-colors ${
+              viewMode === "week"
+                ? "bg-notion-bg text-notion-text shadow-sm"
+                : "text-notion-text-secondary hover:text-notion-text"
+            }`}
+          >
+            {t("calendarHeader.week")}
+          </button>
+          <button
+            onClick={() => onViewModeChange("3day")}
+            className={`px-3 py-1 text-xs rounded-md transition-colors ${
+              viewMode === "3day"
+                ? "bg-notion-bg text-notion-text shadow-sm"
+                : "text-notion-text-secondary hover:text-notion-text"
+            }`}
+          >
+            {t("calendarHeader.threeDay")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

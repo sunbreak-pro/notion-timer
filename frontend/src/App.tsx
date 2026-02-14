@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Layout } from "./components/Layout";
 import type { LayoutHandle } from "./components/Layout";
 import { TaskDetail } from "./components/TaskDetail";
@@ -22,11 +22,16 @@ import { useTaskDetailHandlers } from "./hooks/useTaskDetailHandlers";
 import { useNoteContext } from "./hooks/useNoteContext";
 
 import type { SectionId } from "./types/taskTree";
+import { STORAGE_KEYS } from "./constants/storageKeys";
 
 function App() {
   const [activeSection, setActiveSection] = useState<SectionId>("tasks");
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [calendarMode, setCalendarMode] = useState<"tasks" | "memo">(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.CALENDAR_MODE);
+    return stored === "memo" ? "memo" : "tasks";
+  });
   const layoutRef = useRef<LayoutHandle | null>(null);
   const timer = useTimerContext();
   const {
@@ -41,6 +46,11 @@ function App() {
   } = useTaskTreeContext();
   const { setSelectedDate: setMemoDate } = useMemoContext();
   const { createNote } = useNoteContext();
+
+  const handleCalendarModeChange = useCallback((mode: "tasks" | "memo") => {
+    setCalendarMode(mode);
+    localStorage.setItem(STORAGE_KEYS.CALENDAR_MODE, mode);
+  }, []);
 
   const selectedTask = selectedTaskId
     ? (nodes.find((n) => n.id === selectedTaskId && n.type === "task") ?? null)
@@ -118,10 +128,12 @@ function App() {
       case "calendar":
         return (
           <CalendarView
+            calendarMode={calendarMode}
             onSelectTask={handlers.handleCalendarSelectTask}
             onCreateTask={handlers.handleCalendarCreateTask}
             onCreateNote={handlers.handleCalendarCreateNote}
             onSelectMemo={handlers.handleCalendarSelectMemo}
+            onSelectNote={handlers.handleCalendarSelectNote}
             onStartTimer={(taskId) => {
               const task = nodes.find((n) => n.id === taskId);
               if (task) handlers.handlePlayTask(task);
@@ -156,6 +168,8 @@ function App() {
         onPlayTask={handlers.handlePlayTask}
         selectedTaskId={selectedTaskId}
         handleRef={layoutRef}
+        calendarMode={calendarMode}
+        onCalendarModeChange={handleCalendarModeChange}
       >
         {renderContent()}
       </Layout>

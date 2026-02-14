@@ -431,7 +431,8 @@
     "note": "ノート",
     "selectFolder": "フォルダ",
     "routineIndicator": "{{completed}}/{{total}}",
-    "noteItem": "ノート"
+    "noteItem": "ノート",
+    "memoPreviewEmpty": "内容なし"
   },
   "common": {
     "cancel": "キャンセル",
@@ -474,6 +475,25 @@
     "enable": "有効化",
     "editName": "名前を編集",
     "removeFromSlot": "削除"
+  },
+  "playlist": {
+    "modeMixer": "ミキサー",
+    "modePlaylist": "プレイリスト",
+    "tabSounds": "サウンド",
+    "tabPlaylists": "プレイリスト",
+    "playlists": "プレイリスト",
+    "create": "新規",
+    "defaultName": "無題のプレイリスト",
+    "empty": "プレイリストがありません。作成して始めましょう。",
+    "tracks": "曲",
+    "addTrack": "サウンドを追加",
+    "noTracks": "トラックがありません。サウンドを追加してください。",
+    "noTrack": "トラックなし",
+    "selectPlaylist": "プレイリストを選択してください。",
+    "shuffle": "シャッフル",
+    "repeat": "リピート",
+    "playManual": "再生",
+    "stopManual": "停止"
   },
   "notes": {
     "title": "ノート",

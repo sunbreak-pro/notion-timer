@@ -44,6 +44,8 @@ interface LayoutProps {
   onPlayTask?: (node: TaskNode) => void;
   selectedTaskId?: string | null;
   handleRef?: React.MutableRefObject<LayoutHandle | null>;
+  calendarMode?: "tasks" | "memo";
+  onCalendarModeChange?: (mode: "tasks" | "memo") => void;
 }
 
 export function Layout({
@@ -56,12 +58,21 @@ export function Layout({
   onPlayTask,
   selectedTaskId,
   handleRef,
+  calendarMode,
+  onCalendarModeChange,
 }: LayoutProps) {
   // Right sidebar
   const [rightSidebarWidth, setRightSidebarWidth] = useLocalStorage<number>(
     STORAGE_KEYS.RIGHT_SIDEBAR_WIDTH,
     RIGHT_DEFAULT_WIDTH,
-    { serialize: String, deserialize: deserializeWidth(RIGHT_MIN_WIDTH, RIGHT_MAX_WIDTH, RIGHT_DEFAULT_WIDTH) },
+    {
+      serialize: String,
+      deserialize: deserializeWidth(
+        RIGHT_MIN_WIDTH,
+        RIGHT_MAX_WIDTH,
+        RIGHT_DEFAULT_WIDTH,
+      ),
+    },
   );
   const [leftSidebarOpen, setLeftSidebarOpen] = useLocalStorage<boolean>(
     STORAGE_KEYS.LEFT_SIDEBAR_OPEN,
@@ -80,7 +91,14 @@ export function Layout({
   const [leftSidebarWidth, setLeftSidebarWidth] = useLocalStorage<number>(
     STORAGE_KEYS.LEFT_SIDEBAR_WIDTH,
     LEFT_DEFAULT_WIDTH,
-    { serialize: String, deserialize: deserializeWidth(LEFT_MIN_WIDTH, LEFT_MAX_WIDTH, LEFT_DEFAULT_WIDTH) },
+    {
+      serialize: String,
+      deserialize: deserializeWidth(
+        LEFT_MIN_WIDTH,
+        LEFT_MAX_WIDTH,
+        LEFT_DEFAULT_WIDTH,
+      ),
+    },
   );
   const isResizingLeft = useRef(false);
   const [dragLeftWidth, setDragLeftWidth] = useState<number | null>(null);
@@ -88,25 +106,25 @@ export function Layout({
   useEffect(() => {
     if (handleRef) {
       handleRef.current = {
-        toggleLeftSidebar: () => setLeftSidebarOpen(prev => !prev),
-        toggleRightSidebar: () => setRightSidebarOpen(prev => !prev),
+        toggleLeftSidebar: () => setLeftSidebarOpen((prev) => !prev),
+        toggleRightSidebar: () => setRightSidebarOpen((prev) => !prev),
       };
     }
   }, [handleRef, setLeftSidebarOpen, setRightSidebarOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.code === 'Period') {
+      if ((e.metaKey || e.ctrlKey) && e.code === "Period") {
         e.preventDefault();
         if (e.shiftKey) {
-          setRightSidebarOpen(prev => !prev);
+          setRightSidebarOpen((prev) => !prev);
         } else {
-          setLeftSidebarOpen(prev => !prev);
+          setLeftSidebarOpen((prev) => !prev);
         }
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [setLeftSidebarOpen, setRightSidebarOpen]);
 
   // Right sidebar resize
@@ -129,11 +147,17 @@ export function Layout({
     const handleMouseMove = (e: MouseEvent) => {
       if (isResizingRight.current) {
         const newWidth = document.documentElement.clientWidth - e.clientX;
-        const clamped = Math.max(RIGHT_MIN_WIDTH, Math.min(RIGHT_MAX_WIDTH, newWidth));
+        const clamped = Math.max(
+          RIGHT_MIN_WIDTH,
+          Math.min(RIGHT_MAX_WIDTH, newWidth),
+        );
         setDragRightWidth(clamped);
       }
       if (isResizingLeft.current) {
-        const clamped = Math.max(LEFT_MIN_WIDTH, Math.min(LEFT_MAX_WIDTH, e.clientX));
+        const clamped = Math.max(
+          LEFT_MIN_WIDTH,
+          Math.min(LEFT_MAX_WIDTH, e.clientX),
+        );
         setDragLeftWidth(clamped);
       }
     };
@@ -223,6 +247,8 @@ export function Layout({
               <CalendarSidebar
                 width={dragRightWidth ?? rightSidebarWidth}
                 onToggle={() => setRightSidebarOpen(false)}
+                calendarMode={calendarMode ?? "tasks"}
+                onCalendarModeChange={onCalendarModeChange}
               />
             )}
           </div>

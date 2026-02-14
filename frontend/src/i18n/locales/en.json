@@ -431,7 +431,8 @@
     "note": "Note",
     "selectFolder": "Folder",
     "routineIndicator": "{{completed}}/{{total}}",
-    "noteItem": "Note"
+    "noteItem": "Note",
+    "memoPreviewEmpty": "No content"
   },
   "common": {
     "cancel": "Cancel",
@@ -474,6 +475,25 @@
     "enable": "Enable",
     "editName": "Edit Name",
     "removeFromSlot": "Remove"
+  },
+  "playlist": {
+    "modeMixer": "Mixer",
+    "modePlaylist": "Playlist",
+    "tabSounds": "Sounds",
+    "tabPlaylists": "Playlists",
+    "playlists": "Playlists",
+    "create": "New",
+    "defaultName": "Untitled Playlist",
+    "empty": "No playlists yet. Create one to get started.",
+    "tracks": "tracks",
+    "addTrack": "Add Sound",
+    "noTracks": "No tracks. Add sounds to this playlist.",
+    "noTrack": "No track",
+    "selectPlaylist": "Select a playlist to start.",
+    "shuffle": "Shuffle",
+    "repeat": "Repeat",
+    "playManual": "Play",
+    "stopManual": "Stop"
   },
   "notes": {
     "title": "Notes",

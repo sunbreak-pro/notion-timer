@@ -4,6 +4,29 @@
 
 ---
 
+## Music Library (Playlist) 機能追加 (2026-02-14)
+
+- **プレイリスト管理**: Music画面にPlaylistsタブ追加、プレイリストの作成・名前変更・削除
+- **トラック管理**: DnDでの並び替え、SoundPickerModalからサウンド追加、トラック削除
+- **シーケンシャル再生エンジン**: 1曲ずつ順番に再生、曲終了時に次曲自動遷移
+- **フルコントロール**: 再生/停止、次/前スキップ、シークバー、シャッフル、リピート（off/one/all）、ボリューム
+- **ミキサーとの排他制御**: AudioModeSwitch（Mixer/Playlist切替タブ）をWorkScreenに配置
+- **DB**: V15マイグレーション（playlists, playlist_items テーブル）、9 IPCチャンネル追加
+- **フック**: usePlaylistData、usePlaylistEngine、usePlaylistPlayer
+- **UI**: AudioModeSwitch、PlaylistPlayerBar、PlaylistManager、PlaylistDetail
+
+---
+
+## Calendar Split: Tasks / Memo 切り替え + Routine 日付フィルタ (2026-02-14)
+
+- **カレンダーモード切替**: CalendarSidebarにTasks/Memoタブ追加、localStorageで永続化
+- **Memoモード**: 月表示固定、タスクフィルター非表示、DayCellにDaily memo（黄色チップ）+ Notes（青チップ）+ Routine達成状況を統合表示
+- **Tasksモード**: 既存動作を完全維持（フォルダフィルター、タスク作成、incomplete/completedフィルター、Week/3day切替）
+- **Routine createdAtフィルタ**: `isDayApplicable`にcreatedAt以前の除外ロジック追加、ストリーク計算でも作成日以前に遡らない
+- **ノート表示**: NoteNodeのcreatedAtで日付マッピング、クリック→MemoセクションのNotesタブに遷移
+
+---
+
 ## Code Signing 設定 (2026-02-14)
 
 - **macOS Notarization**: `@electron/notarize` + `scripts/notarize.js`（afterSign hook）、`build/entitlements.mac.plist`（JIT/unsigned memory/dyld entitlements）、`hardenedRuntime: true`

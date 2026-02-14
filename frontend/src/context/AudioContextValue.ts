@@ -1,6 +1,9 @@
-import { createContext } from 'react';
-import type { SoundMixerState } from '../hooks/useLocalSoundMixer';
-import type { CustomSoundMeta } from '../types/customSound';
+import { createContext } from "react";
+import type { SoundMixerState } from "../hooks/useLocalSoundMixer";
+import type { CustomSoundMeta } from "../types/customSound";
+import type { AudioMode } from "../types/playlist";
+import type { PlaylistPlayerResult } from "../hooks/usePlaylistPlayer";
+import type { PlaylistDataResult } from "../hooks/usePlaylistData";
 
 export interface AudioContextValue {
   mixer: SoundMixerState;
@@ -18,6 +21,10 @@ export interface AudioContextValue {
   manualPlay: boolean;
   toggleManualPlay: () => void;
   soundSources: Record<string, string>;
+  audioMode: AudioMode;
+  switchAudioMode: (mode: AudioMode) => void;
+  playlistPlayer: PlaylistPlayerResult;
+  playlistData: PlaylistDataResult;
 }
 
 export const AudioContext = createContext<AudioContextValue | null>(null);

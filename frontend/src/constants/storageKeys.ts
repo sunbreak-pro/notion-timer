@@ -13,4 +13,6 @@ export const STORAGE_KEYS = {
   TASK_TREE_FOLDER_FILTER: "sonic-flow-task-tree-folder-filter",
   TASK_TREE_SORT_MODE: "sonic-flow-task-tree-sort-mode",
   CALENDAR_MODE: "sonic-flow-calendar-mode",
+  AUDIO_MODE: "sonic-flow-audio-mode",
+  ACTIVE_PLAYLIST_ID: "sonic-flow-active-playlist-id",
 } as const;

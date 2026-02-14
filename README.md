@@ -14,8 +14,9 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **Work画面**: LeftSidebarの「Work」セクションで常時アクセス可能、ヘッダーにセッション完了・タスク完了・ポモドーロ設定ボタンを横並び配置、SoundMixerはsessionTypeに応じて自動切替
 - **サイドバータイマー表示**: タイマー実行中はWork項目下にタスク名・残り時間・編集ボタンを表示
 - **TaskTreeタイマー表示**: 実行中のタスク行に残り時間テキスト+ミニプログレスバーを表示
-- **Music管理画面**: 全サウンドのフラットリスト表示、検索・タグフィルタ、各サウンドにボリューム・トグル・シーク操作、「タイマーに追加」ボタンでWorkScreenへの追加/解除、カスタムサウンド追加、タイマー非依存の独立再生ボタン、タグ管理パネル
+- **Music管理画面**: Sounds/Playlistsタブ切替、全サウンドのフラットリスト表示、検索・タグフィルタ、各サウンドにボリューム・トグル・シーク操作、「タイマーに追加」ボタンでWorkScreenへの追加/解除、カスタムサウンド追加、タイマー非依存の独立再生ボタン、タグ管理パネル
 - **ノイズミキサー**: 6種の環境音（Rain, Thunder, Wind, Ocean, Birds, Fire）、Web Audio APIによるリアルタイム再生・ミキシング、統一サウンド設定（Work/Rest共通）、シークコントロール（再生位置スライダー）、WorkScreenでは選択サウンド最大6個をコンパクトリスト表示+ピッカーモーダルで追加
+- **プレイリスト**: ミキサーと排他切替、楽曲をシーケンシャル再生（1曲ずつ順番に再生→ループ）、DnD並び替え、シャッフル/リピート（off/one/all）、シークバー、ボリュームコントロール、WorkScreenフッターにプレーヤーバー表示
 - **AIコーチング**: Gemini API連携、タスク分解/励まし/レビューの3モード
 - **外観設定**: ダークモード/ライトモード切替、フォントサイズ10段階スライダー（12px〜25px）
 - **タスク完了演出**: チェックボックスでタスク完了時に紙吹雪アニメーション
@@ -26,7 +27,7 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 - **Tips画面**: ショートカット一覧（6カテゴリ/29件）、タスク/タイマー/カレンダー/メモ/アナリティクス/エディタの操作ガイド（7タブ構成）
 - **リッチテキストエディタ**: TipTap拡張（Toggle List/Table/Callout/Image）、スラッシュコマンド対応、テキスト選択時Bubbleツールバー（Bold/Italic/Strikethrough/Code/Link/TextColor）
 - **コマンドパレット**: ⌘Kで起動、16コマンド（Navigation/Task/Timer/View）をリアルタイム検索・実行
-- **カレンダー**: 月/週表示切替、タスクを日付別に表示、フィルタリング（incomplete/completed）、複数カレンダー対応（フォルダ別ビュー）、カレンダーサイドバーで切替、タスク/ノート作成切替+フォルダ選択、ルーティン達成インジケーター
+- **カレンダー**: Tasks/Memoモード切替（サイドバータブ）、Tasksモードは月/週表示切替・タスク日付別表示・フィルタリング（incomplete/completed）・複数カレンダー対応（フォルダ別ビュー）、MemoモードはDaily memo+Notes+Routine達成状況を月表示で統合表示、タスク/ノート作成切替+フォルダ選択
 - **ルーティン（ハビットトラッカー）**: MemoView内Routineタブ、毎日/カスタム曜日頻度設定、日々のチェック記録、直近7日○×履歴、連続ストリーク表示、月別達成サマリー
 - **タスクツリーフォルダフィルタ**: PROJECTSセクションにドロップダウンフィルター、フォルダ単位で表示絞り込み
 - **アナリティクス**: 基本統計（総タスク数、完了率、フォルダ数）、作業時間グラフ（日/週/月別BarChart + タスク別横棒グラフ、Recharts）、総作業時間・セッション数・日平均サマリー
@@ -67,6 +68,40 @@ Notionライクなタスク管理に「環境音ミキサー」と「ポモド�
 ---
 
 ## 開発ジャーナル
+
+### 2026-02-14 - Music Library (Playlist) 機能追加
+
+#### 概要
+
+Music画面にプレイリスト機能を追加。環境音ミキサーとは排他で、楽曲を1曲ずつシーケンシャル再生する方式。DnD並び替え、シャッフル、リピート（off/one/all）、シークバー、ボリュームコントロールを完備。
+
+#### 変更点
+
+- **DB**: V15マイグレーション（playlists, playlist_items テーブル）
+- **Electron**: playlistRepository（CRUD + items管理）、playlistHandlers（9 IPCチャンネル）、preload + registerAll更新
+- **DataService**: 10メソッド追加（fetchPlaylists, createPlaylist, updatePlaylist, deletePlaylist, fetchPlaylistItems, fetchAllPlaylistItems, addPlaylistItem, removePlaylistItem, reorderPlaylistItems）
+- **フック**: usePlaylistData（CRUD + 楽観的更新）、usePlaylistEngine（シーケンシャル再生エンジン）、usePlaylistPlayer（高レベル状態管理）
+- **AudioProvider**: audioMode（mixer/playlist）排他制御、playlistData/playlistPlayer をContext経由で公開
+- **WorkScreen**: AudioModeSwitch（Mixer/Playlist切替タブ）、PlaylistPlayerBar（再生コントロール）
+- **MusicScreen**: Sounds/Playlistsタブ切替、PlaylistManager（一覧管理）、PlaylistDetail（トラック一覧 + DnD）
+- **i18n**: playlist関連20キー追加（en/ja）
+- **型**: Playlist, PlaylistItem, RepeatMode, AudioMode
+
+### 2026-02-14 - Calendar Split: Tasks / Memo 切り替え + Routine 日付フィルタ
+
+#### 概要
+
+カレンダーをTasks専用・Memo専用の2モードに分割。右サイドバーのタブで切り替え可能。Routineの作成日以前の日付を分母から除外するフィルタも追加。
+
+#### 変更点
+
+- **CalendarSidebar**: Tasks/Memoタブ追加、Memoモード時はカレンダーリスト・+ボタン非表示
+- **CalendarHeader**: Memoモード時にビューモード切り替え（Month/Week/3day）非表示
+- **CalendarView**: Memoモード時は月表示固定、タスクフィルター非表示、notesByDate計算追加
+- **DayCell**: Memoモード分岐追加（Routine達成 + Daily memo黄色チップ + Notes青チップ、+N more対応）
+- **useRoutines**: `isDayApplicable`にcreatedAt比較追加、currentStreakに作成日ガード追加
+- **App.tsx**: calendarMode状態管理（localStorage永続化）、handleCalendarSelectNoteハンドラ追加
+- **i18n**: calendarSidebar.tasksTab/memoTab、calendar.noteItem追加
 
 ### 2026-02-14 - Code Signing 設定（macOS Notarization + Windows署名 + CI/CDリリース）
 

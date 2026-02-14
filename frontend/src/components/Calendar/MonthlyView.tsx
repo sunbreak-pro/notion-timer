@@ -1,5 +1,6 @@
 import type { TaskNode } from "../../types/taskTree";
 import type { MemoNode } from "../../types/memo";
+import type { NoteNode } from "../../types/note";
 import { DayCell } from "./DayCell";
 import { formatDateKey } from "../../hooks/useCalendar";
 
@@ -13,8 +14,11 @@ interface MonthlyViewProps {
   getTaskColor?: (taskId: string) => string | undefined;
   getFolderTag?: (taskId: string) => string;
   memosByDate?: Map<string, MemoNode>;
-  onSelectMemo?: (date: string) => void;
   getRoutineCompletion?: (date: string) => { completed: number; total: number };
+  calendarMode?: "tasks" | "memo";
+  notesByDate?: Map<string, NoteNode[]>;
+  onMemoChipClick?: (date: string, e: React.MouseEvent) => void;
+  onNoteChipClick?: (noteId: string, e: React.MouseEvent) => void;
 }
 
 export function MonthlyView({
@@ -25,8 +29,11 @@ export function MonthlyView({
   getTaskColor,
   getFolderTag,
   memosByDate,
-  onSelectMemo,
   getRoutineCompletion,
+  calendarMode,
+  notesByDate,
+  onMemoChipClick,
+  onNoteChipClick,
 }: MonthlyViewProps) {
   const today = new Date();
   const todayKey = formatDateKey(today);
@@ -58,8 +65,11 @@ export function MonthlyView({
               getTaskColor={getTaskColor}
               getFolderTag={getFolderTag}
               memo={memosByDate?.get(key)}
-              onSelectMemo={onSelectMemo}
               routineCompletion={getRoutineCompletion?.(key)}
+              calendarMode={calendarMode}
+              notes={notesByDate?.get(key)}
+              onMemoChipClick={onMemoChipClick}
+              onNoteChipClick={onNoteChipClick}
             />
           );
         })}

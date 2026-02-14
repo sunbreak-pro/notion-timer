@@ -1,49 +1,74 @@
 import type Database from "better-sqlite3";
+import log from "../logger";
 
 export function runMigrations(db: Database.Database): void {
   const currentVersion = db.pragma("user_version", { simple: true }) as number;
+  log.info(`[DB] Current schema version: ${currentVersion}`);
 
   if (currentVersion < 1) {
+    log.info("[DB] Running migration V1");
     migrateV1(db);
   }
   if (currentVersion < 2) {
+    log.info("[DB] Running migration V2");
     migrateV2(db);
   }
   if (currentVersion < 3) {
+    log.info("[DB] Running migration V3");
     migrateV3(db);
   }
   if (currentVersion < 4) {
+    log.info("[DB] Running migration V4");
     migrateV4(db);
   }
   if (currentVersion < 5) {
+    log.info("[DB] Running migration V5");
     migrateV5(db);
   }
   if (currentVersion < 6) {
+    log.info("[DB] Running migration V6");
     migrateV6(db);
   }
   if (currentVersion < 7) {
+    log.info("[DB] Running migration V7");
     migrateV7(db);
   }
   if (currentVersion < 8) {
+    log.info("[DB] Running migration V8");
     migrateV8(db);
   }
   if (currentVersion < 9) {
+    log.info("[DB] Running migration V9");
     migrateV9(db);
   }
   if (currentVersion < 10) {
+    log.info("[DB] Running migration V10");
     migrateV10(db);
   }
   if (currentVersion < 11) {
+    log.info("[DB] Running migration V11");
     migrateV11(db);
   }
   if (currentVersion < 12) {
+    log.info("[DB] Running migration V12");
     migrateV12(db);
   }
   if (currentVersion < 13) {
+    log.info("[DB] Running migration V13");
     migrateV13(db);
   }
   if (currentVersion < 14) {
+    log.info("[DB] Running migration V14");
     migrateV14(db);
+  }
+  if (currentVersion < 15) {
+    log.info("[DB] Running migration V15");
+    migrateV15(db);
+  }
+
+  const newVersion = db.pragma("user_version", { simple: true }) as number;
+  if (newVersion !== currentVersion) {
+    log.info(`[DB] Schema migrated: ${currentVersion} → ${newVersion}`);
   }
 }
 
@@ -496,6 +521,31 @@ function migrateV13(db: Database.Database): void {
     ALTER TABLE sound_workscreen_selections_new RENAME TO sound_workscreen_selections;
 
     PRAGMA user_version = 13;
+  `);
+}
+
+function migrateV15(db: Database.Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS playlists (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL DEFAULT 'Untitled Playlist',
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      repeat_mode TEXT NOT NULL DEFAULT 'all',
+      is_shuffle INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS playlist_items (
+      id TEXT PRIMARY KEY,
+      playlist_id TEXT NOT NULL,
+      sound_id TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_playlist_items_playlist ON playlist_items(playlist_id);
+
+    PRAGMA user_version = 15;
   `);
 }
 

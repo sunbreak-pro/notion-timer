@@ -29,6 +29,8 @@ import { createPomodoroPresetRepository } from "../database/pomodoroPresetReposi
 import { registerPomodoroPresetHandlers } from "./pomodoroPresetHandlers";
 import { createRoutineRepository } from "../database/routineRepository";
 import { registerRoutineHandlers } from "./routineHandlers";
+import { createPlaylistRepository } from "../database/playlistRepository";
+import { registerPlaylistHandlers } from "./playlistHandlers";
 import { wrapHandler } from "./ipcMetrics";
 
 export function registerAllHandlers(db: Database.Database): void {
@@ -88,6 +90,7 @@ export function registerAllHandlers(db: Database.Database): void {
       () => registerPomodoroPresetHandlers(createPomodoroPresetRepository(db)),
     ],
     ["Routines", () => registerRoutineHandlers(createRoutineRepository(db))],
+    ["Playlists", () => registerPlaylistHandlers(createPlaylistRepository(db))],
   ];
 
   for (const [name, register] of registrations) {
@@ -98,6 +101,11 @@ export function registerAllHandlers(db: Database.Database): void {
       log.error(
         `[IPC] Failed to register ${name} handlers: ${err.message}\n${err.stack}`,
       );
+      if (err.message.includes("no such table")) {
+        log.error(
+          `[IPC] Hint: Table missing — check if migration ran. Current user_version: ${db.pragma("user_version", { simple: true })}`,
+        );
+      }
     }
   }
 

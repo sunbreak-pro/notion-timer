@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import type { TaskNode, SectionId } from "../types/taskTree";
 import type { TimerContextValue } from "../context/TimerContextValue";
+import { STORAGE_KEYS } from "../constants/storageKeys";
 
 interface UseTaskDetailHandlersParams {
   selectedTaskId: string | null;
@@ -174,6 +175,15 @@ export function useTaskDetailHandlers({
     [setMemoDate, setActiveSection],
   );
 
+  const handleCalendarSelectNote = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (_noteId: string) => {
+      localStorage.setItem(STORAGE_KEYS.MEMO_TAB, "notes");
+      setActiveSection("memo");
+    },
+    [setActiveSection],
+  );
+
   const handleCreateFolder = useCallback(
     (title: string) => {
       addNode("folder", null, title);
@@ -204,6 +214,7 @@ export function useTaskDetailHandlers({
     handleCalendarCreateTask,
     handleCalendarCreateNote,
     handleCalendarSelectMemo,
+    handleCalendarSelectNote,
     handleCreateFolder,
     handleCreateTask,
   };

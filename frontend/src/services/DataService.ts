@@ -23,6 +23,7 @@ import type { NoteNode } from "../types/note";
 import type { TaskTemplate } from "../types/template";
 import type { CalendarNode } from "../types/calendar";
 import type { RoutineNode, RoutineLog } from "../types/routine";
+import type { Playlist, PlaylistItem } from "../types/playlist";
 import type {
   LogEntry,
   IpcChannelMetrics,
@@ -189,6 +190,26 @@ export interface DataService {
     startDate: string,
     endDate: string,
   ): Promise<RoutineLog[]>;
+
+  // Playlists
+  fetchPlaylists(): Promise<Playlist[]>;
+  createPlaylist(id: string, name: string): Promise<Playlist>;
+  updatePlaylist(
+    id: string,
+    updates: Partial<
+      Pick<Playlist, "name" | "sortOrder" | "repeatMode" | "isShuffle">
+    >,
+  ): Promise<Playlist>;
+  deletePlaylist(id: string): Promise<void>;
+  fetchPlaylistItems(playlistId: string): Promise<PlaylistItem[]>;
+  fetchAllPlaylistItems(): Promise<PlaylistItem[]>;
+  addPlaylistItem(
+    id: string,
+    playlistId: string,
+    soundId: string,
+  ): Promise<PlaylistItem>;
+  removePlaylistItem(itemId: string): Promise<void>;
+  reorderPlaylistItems(playlistId: string, itemIds: string[]): Promise<void>;
 
   // Data I/O
   exportData(): Promise<boolean>;
