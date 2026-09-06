@@ -1,5 +1,21 @@
 # HISTORY (chat-refactor-core)
 
+### 2026-09-06 - #1388 退役機能の dead i18n キー 33 個と dead CSS を一掃（PR #1551 open）
+
+#### 概要
+
+#1153（kanban ボード）と #1239（backlinks）の退役が catalog と tokens.css に残した文字列・アニメーションを回収した。`i18nKeys.test.ts` が順方向（call site → catalog）しか見ないため、退役のたびに残骸が溜まる構造になっている。
+
+#### 変更点
+
+- **i18n catalog**: en / ja から 33 キー削除（en 986 → 953）。`kanban` / `backlinks` / `sidebar` / `search` は空になったので名前空間ごと撤去。`materials.todos.*` 8 / `materials.templates.*` 7 / `section.tags` / `trash.task` / `todoDetail.tags` / `scheduleScreen.todoOpenInTodos` も同時に削除
+- **借用キーの移設**: 生きた 2 画面が退役名前空間を借りていたので先に引っ越し。`kanban.add*` 4 → `scheduleScreen.todoAdd*`（`web/src/schedule/CalendarTab.tsx:1239`）/ `kanban.color*Label` 2 → `itemActions.tagColor*Label`（`web/src/wikitag/TagColorControls.tsx:56`）。en / ja とも文字列は 1 バイトも変えていない
+- **dead CSS**: `shared/src/styles/tokens.css` から `.kanban-modal-*` + `@keyframes kanban-*` + そのためだけの reduced-motion 上書き 2 本、および `.text-scaling-xs〜xl`（フォント制御は `shared/src/context/ThemeContext.tsx:225` の root font-size に一本化済み）を削除（−66 行）
+- **Scope 外の 1 ファイル**: `shared/tests/i18n.test.ts` の #680 複数形テストが dead キー `materials.todos.todoCount` を参照していた（そのテストだけがキーを生かしていた）。主張を変えずに `materials.tags.usageCount` へ付け替え
+- **死活判定の取り方**: フルの dotted path が shared / web / desktop/src / mcp-server / mobile のどこにも現れないことを条件にし、動的に届く 4 系統（`section.*` / `undoRedo.labels.*` / `scheduleCalendar.weekday*` / `briefing.saveFailed.*`）は `sections.ts` registry と `MATERIALS_TABS` / `ANALYTICS_TAB_ORDER` の実値まで辿って除外した
+- **検証**: `ci.yml` の `verify` 14 ステップ（shared → web → desktop → mcp-server）+ `docs-lint` をローカルで全緑。終了コードはパイプを通さず直接取得（CLAUDE.md §7.1 の `( npm run X | tail )` の罠を回避）
+- **見つけたが直していない**: `timerSettings.targetSessions` / `scheduleScreen.done` も参照ゼロだが Issue の列挙外のため未着手。ja の表記ゆれ（「デフォルト色」/「デフォルトの色」）も PR に記載のみ。逆方向（catalog → call site）のガードは依然として無い
+
 ### 2026-09-01 - コード整理監査の findings 5 本を PR まで（#1386 / #1387 / #1389 / #1385 / #1300）
 
 #### 概要
