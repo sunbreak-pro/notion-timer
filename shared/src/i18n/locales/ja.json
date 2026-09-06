@@ -1,7 +1,4 @@
 {
-  "sidebar": {
-    "settings": "設定"
-  },
   "settings": {
     "shortcutLabels": {
       "commandPalette": "コマンドパレットを開く",
@@ -224,7 +221,6 @@
     "notes": "ノート",
     "restore": "復元",
     "deletePermanently": "完全に削除",
-    "task": "Todo",
     "note": "ノート",
     "event": "イベント",
     "events": "イベント",
@@ -346,39 +342,14 @@
     "statusNotStarted": "未着手",
     "statusDone": "完了",
     "content": "メモ",
-    "tags": "タグ",
     "save": "保存",
     "saved": "保存済み",
     "unsaved": "未保存"
   },
-  "kanban": {
-    "viewStatus": "ステータス別",
-    "viewTag": "タグ別",
-    "segmentedGroupLabel": "ボード表示切替",
-    "emptyColumn": "Todo はまだありません",
-    "placeholderHint": "タグ別ビューは準備中です",
-    "untagged": "タグなし",
-    "colorPickerLabel": "色を変更",
-    "colorClearLabel": "デフォルト色",
-    "colorCustomLabel": "カスタム",
-    "addTodo": "追加",
-    "addDialogTitle": "Todo を追加",
-    "addTitleLabel": "タイトル",
-    "addTitlePlaceholder": "タイトルを入力",
-    "addSubmit": "追加",
-    "addCancel": "キャンセル"
-  },
   "materials": {
     "todos": {
-      "filterLabel": "ステータスで絞り込む",
       "statusGroupLabel": "ステータスを変更",
-      "detailTitle": "Todo の詳細",
-      "quickAddTitle": "Todo を追加",
-      "quickAddPlaceholder": "タイトルを入力",
-      "quickAddSubmit": "追加",
-      "empty": "Todo がありません",
-      "addCta": "Todo を追加",
-      "todoCount_other": "Todo {{count}} 件"
+      "detailTitle": "Todo の詳細"
     },
     "notes": {
       "searchPlaceholder": "ノートを検索…",
@@ -406,24 +377,18 @@
       "groupMoreRows": "残り {{count}} 件を表示"
     },
     "templates": {
-      "title": "テンプレート",
       "menuEntry": "テンプレートとして登録する",
       "defaultName": "{{title}}のテンプレート",
       "savedTitle": "テンプレートを作成しました",
       "savedHint": "右側のサイドバー（詳細を開く）から確認できます。",
       "savedDone": "完了",
-      "listHeading": "テンプレート",
       "empty": "テンプレートはまだありません",
-      "new": "新規",
       "nameLabel": "テンプレート名",
       "namePlaceholder": "テンプレート名を入力…",
       "untitled": "(無題のテンプレート)",
-      "content": "内容",
       "delete": "テンプレートを削除",
       "deleteConfirmBody": "テンプレート「{{name}}」を削除しますか？削除したテンプレートはゴミ箱に入らないため、元に戻せません。",
       "deleteConfirmAction": "削除する",
-      "use": "このテンプレートからノートを作成",
-      "pickHint": "テンプレートを選ぶか、新しく作成してください。",
       "applyMenuEntry": "テンプレートから反映する",
       "applyPickTitle": "テンプレートから反映",
       "applyPickHint": "反映するテンプレートを選んでください。",
@@ -433,7 +398,6 @@
       "applyConfirm": "反映する",
       "applyConfirmTitleEmpty": "テンプレートを反映しますか？",
       "applyConfirmBodyEmpty": "「{{name}}」の内容をこのノートの本文に書き込みます。本文はまだ空なので、失われるものはありません。",
-      "noTagsHint": "テンプレートにはタグやリンクを付けられません。生成したノートには付けられます。",
       "bodyPlaceholder": "テンプレートを書く…",
       "sidebarHeading": "テンプレート",
       "edit": "テンプレートを編集",
@@ -547,7 +511,9 @@
   },
   "itemActions": {
     "tagColor": "「{{name}}」の色",
-    "tagColorEmpty": "色はタグに付きます。先にタグを追加してください"
+    "tagColorEmpty": "色はタグに付きます。先にタグを追加してください",
+    "tagColorClearLabel": "デフォルト色",
+    "tagColorCustomLabel": "カスタム"
   },
   "itemConvert": {
     "toTodo": "Todo に変換",
@@ -667,9 +633,12 @@
     "todoMoveToOthers": "その他へ移す",
     "todoAddCta": "Todo",
     "todoAddDialogTitle": "Todo を追加",
+    "todoAddTitleLabel": "タイトル",
+    "todoAddTitlePlaceholder": "タイトルを入力",
+    "todoAddSubmit": "追加",
+    "todoAddCancel": "キャンセル",
     "todoOpenDetail": "この Todo を開く",
     "todoEmptyAddable": "未配置の Todo はありません",
-    "todoOpenInTodos": "Todo で開く",
     "durationMin": "{{m}}分",
     "durationHour": "{{h}}時間",
     "durationHourMin": "{{h}}時間{{m}}分",
@@ -880,9 +849,6 @@
       }
     }
   },
-  "search": {
-    "clear": "検索をクリア"
-  },
   "undoRedo": {
     "undone": "元に戻しました: {{label}}",
     "redone": "やり直しました: {{label}}",
@@ -944,7 +910,6 @@
     "schedule": "予定",
     "work": "集中",
     "analytics": "分析",
-    "tags": "タグ",
     "settings": "設定",
     "briefing": "朝刊"
   },
@@ -979,11 +944,6 @@
     "pinned": "ピン留め中",
     "detailTitle": "ノート",
     "moreActions": "その他の操作"
-  },
-  "backlinks": {
-    "incomingLinks": "このノートへのリンク",
-    "empty": "このノートへのリンクはまだありません。",
-    "selectHint": "アイテムを選ぶと、そこへのリンクが一覧に出ます。"
   },
   "connect": {
     "tagsHeading": "タグ",

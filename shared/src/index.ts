@@ -287,6 +287,14 @@ export {
   RECENT_NOTES_LIMIT,
 } from "./state/recentNotesStore";
 export { useRecentNoteIds } from "./hooks/useRecentNotes";
+// #1473 — the tag the Connect hub had open, kept across a section switch the
+// same way materialsSelectionStore keeps the Materials selection (#282).
+// Session-scoped: it resets with the process.
+export {
+  getConnectTagSelection,
+  setConnectTagSelection,
+  resetConnectSelection,
+} from "./state/connectSelectionStore";
 // #473 — the on-screen area, which the soft keyboard shrinks and `vh` does not.
 export {
   useVisualViewport,

@@ -1026,15 +1026,18 @@ describe("Row edit action (#410)", () => {
     const actions = screen.getAllByRole("button", { name: /^Edit: / });
     expect(actions.length).toBe(6);
     for (const action of actions) {
-      // #585: the cluster owns the right-edge pin and the negative margins
-      // now that two actions share it — the button keeps the padding that
-      // buys its 24x24 target (WCAG 2.5.8), and the row height and right
-      // edge stay exactly where they were with one action.
+      // #585: the cluster owns the right-edge pin now that two actions share
+      // it, and the button keeps the padding that buys its 24x24 target
+      // (WCAG 2.5.8). `-my-1` spends the vertical half of that padding on the
+      // row's own whitespace so the row height does not move.
       expect(action.className).toContain("py-1");
       const cluster = action.parentElement!;
       expect(cluster.className).toContain("ml-auto");
       expect(cluster.className).toContain("-my-1");
-      expect(cluster.className).toContain("-mr-1.5");
+      // #1514: NOT the horizontal twin. The block has no side padding, so
+      // `-mr-1.5` had nothing to grow into and simply hung the cluster 6px
+      // outside its own container — the overflow the 390px audit measured.
+      expect(cluster.className).not.toContain("-mr-");
     }
   });
 
@@ -1148,6 +1151,63 @@ describe("EveningView remaining todos, status control (#796 / #873)", () => {
       // mobile-scope.md: 44px is the floor, and a 16px box cannot meet it.
       expect(el.className).toContain("min-h-11");
     }
+  });
+});
+
+/*
+ * #1514 — at 390px the「今日のスケジュール」row ran 349px wide inside a 343px
+ * block, and the two always-printed action words took 128px of it. What was
+ * left squeezed a todo's title to 67px, which broke an 18-character title
+ * across three lines.
+ *
+ * jsdom has no layout (CLAUDE.md §7.1), so neither the overflow nor the
+ * three lines can be measured here. What is pinned is the two rules that
+ * remove them: nothing in the block hangs outside its container any more
+ * (asserted with the cluster above and the「+」below), and the action words
+ * are printed only from `md` up while every accessible name keeps them.
+ */
+describe("Narrow rows fit: icon-only actions, nothing overhanging (#1514)", () => {
+  it("prints each action word only from the wide breakpoint up", () => {
+    renderView();
+    const labels = [LABELS.edit, LABELS.delete];
+    for (const text of labels) {
+      const printed = screen.getAllByText(text);
+      expect(printed.length).toBeGreaterThan(0);
+      for (const node of printed) {
+        expect(node.className).toContain("hidden");
+        expect(node.className).toContain("md:inline");
+      }
+    }
+  });
+
+  it("keeps every action named after the word it stops printing", () => {
+    renderView();
+    // The name is the whole reason the label stays in the tree: hide the
+    // text and a voice-control user still says「編集」, a screen reader still
+    // hears which action and where it lands.
+    expect(screen.getAllByRole("button", { name: /^Edit: / }).length).toBe(6);
+    expect(screen.getAllByRole("button", { name: /^Delete: / }).length).toBe(
+      4,
+    );
+  });
+
+  it("grows the icon to 16px while it stands alone, 13px once the word is back", () => {
+    const { container } = renderView();
+    const icons = container.querySelectorAll('button[title="Open in Todos"] svg');
+    expect(icons.length).toBeGreaterThan(0);
+    for (const icon of icons) {
+      expect(icon.getAttribute("class")).toContain("size-4");
+      expect(icon.getAttribute("class")).toContain("md:size-[13px]");
+    }
+  });
+
+  it("keeps the section「+」inside the block, in line with the row actions", () => {
+    renderView();
+    // It shared the old `-mr-1.5`, so dropping only the cluster's would have
+    // left the heading's button 6px to the right of every action below it.
+    const add = screen.getByRole("button", { name: LABELS.addScheduleItem });
+    expect(add.className).toContain("-my-1");
+    expect(add.className).not.toContain("-mr-");
   });
 });
 

@@ -15,6 +15,7 @@ import { createSlashCommand } from "./slashCommand";
 import { createItemLinkNode } from "./itemLinkNode";
 import { createItemLinkSuggestion } from "./itemLinkSuggestion";
 import { createAttachmentNode } from "./attachmentNode";
+import { createCalloutNode } from "./calloutNode";
 import type { LoadItemLinkTargets } from "./useItemLinkTargets";
 import type { AttachmentWiring } from "./useAttachmentUpload";
 
@@ -395,6 +396,14 @@ export function RichTextEditor({
             download: t("attachment.download"),
           },
         }),
+        // callout container — registered unconditionally for the same reason
+        // as the two atoms above, and here it is the whole point: the MCP
+        // server writes callouts (`generate_content`, `wrap_callout`, and a
+        // `> [!NOTE]` line in any markdown-taking tool) but nothing in the
+        // editor creates one, so this node exists purely so those documents
+        // open instead of failing the schema check and being autosaved away
+        // as blank (#1521).
+        createCalloutNode(),
         // "[[" wiki-link autocomplete — gated on the loadLinkTargets prop. The
         // loader + callbacks are read through refs so they never go stale.
         ...(linkEnabled

@@ -1,5 +1,18 @@
 # HISTORY (chat-main)
 
+### 2026-09-06 - open Issue 33 件を 9 レーンへ /goal 組み立て + 同日 merge の Mobile 修正 6 本を実ブラウザ検証
+
+#### 概要
+
+ユーザー依頼「現状の把握 + issue-prompter でプロンプト作成」→「chat-main で実行できることを一つ」。`issue-prompter` で open 33 件（open PR 0 本）を 9 レーン 23 件の `/goal` に束ねて表示し、続けて同日に main へ merge された Mobile 幅点検の修正 6 本（#1485 / #1513 / #1520 / #1524 / #1525 / #1527）を `playwright-ui-verifier` で runtime 検証した。結果は PASS 5 / N/A 1、console error 増分 0（0029 起因の 400 は除外）。各 Issue に実測値をコメント。
+
+#### 変更点
+
+- **/goal 配布**: settings 2 / analytics 2 / materials 4 / schedule 5 / briefing 2 / work 1 / connect 2 / tags-docs 1 / shared-fix 2（#1521 + #1512 の共有部品分のみ）/ refactor-core 1（#1388）。采配残 = #1526（`section:settings` と `section:tags` の 2 ラベルで宛先が割れる）/ #1300（コードは main 着地済み・残りはリリース workflow の初回実行と実機受け入れ = 人手）/ #1301（#1300 の着地が前提）/ #1408 #1409 #1335（`[main]`）/ #1121 #716（`[all]` Epic）/ #898 #677（frozen）。#1512 の画面別分は共有部品の着地後に section ごとへ割り直す
+- **実ブラウザ検証（main 8560feda・vite 5173 の先客を流用）**: #1513 = ロゴ `word-break: keep-all`・scrollWidth 343 = clientWidth・「夕」「刊」同一行（UI 言語が en だったので ja 文字列は同一要素へ一時差し替えて計測）/ #1520 = ルーチン 0 件で N/A / #1524 = **migration 0029 が本番未適用（remote 最新 0028）で `timer_sessions` が 400 = 本物の 1 系統失敗**のもと status 要素「Some data could not be loaded (work sessions)…」が出て Todos 5 / Notes 8 など他系統が生存 / #1525 = カテゴリ選択でドロワー 332px が閉じ、ペイン width 390 / #1527 = 行タイトル width 260（旧 111）・2 段構成 / #1485（1280×800）= Todo 作成 → ヘッダー Undo で消え、リロード後も復活なし（soft delete でゴミ箱行き = 設計どおり）。検証データ `verify-1485` はゴミ箱から完全削除済み
+- **副産物（未起票）**: ノート表示で warning `[web RichTextEditor] TipTap content schema error: Invalid JSON content` が複数回出る。#1521（callout ノード欠落で本文破棄）と同根の可能性があり、#1521 の着地後に再確認する
+- **環境メモ**: ローカル `chore/tracker-main-20260906`（origin にも存在）は PR #1530 と同じ 18 行の差分しか持たない残骸で、PR 不要。worktree `docs-1409-report` / `plan-1409` / `tracker-main-20260905b` の削除は引き続きユーザー手番
+
 ### 2026-09-05 - #1409 Mobile 幅点検の実行セッション — finding 16 件（#1512〜#1527）起票・レポート PR
 
 #### 概要
@@ -67,31 +80,5 @@
 - **#1335 作業分 = PR #1443**: 2026-09-01 に working tree へ置いたままだった `.claude/automation/` 6 ファイル + settings-unattended 2 本を、ユーザー裁定（PR にして出す）に従い `git diff` パッチ + 未追跡 2 本のコピーで一時 worktree `automation-1335` へ移して PR。docs-lint 緑
 - **判断 4 件を AskUserQuestion で回収 → 台帳へ**: D-20260901-shared-fix-1 = **A**（ツアー再生は続きから・現状維持）/ D-20260901-shared-fix-2 = **B 相当**（揃える。PR #1395 / #1410 が merge 済みのため別 Issue #1442 で。提示ラベルとキュー原文のズレを D ファイルに注記）/ D-20260902-main-1 = **A**（#1440 は Todo 由来だけに寄せる。キュー未提出のまま回答が先行 — D-20260812-shared-fix-3 と同型）/ #1335 の着地先 = PR。ANSWERS.md へ 3 行転記・shared-fix キューから 2 件削除・#1440 に裁定コメント
 - **未処理で残したもの**: #1442 の briefing-refine への `/goal`（起票直後で未配布）/ #1375 の 3 レーン分割起票（#1440 の裁定後に着手可能・未実施）/ mobile-refine からの #1400 / #1402 実機確認依頼（#1409 の実行セッションへ畳む）
-
-### 2026-09-01 - main の CI 赤（TagUsageCard の存在しない import）を PR #1430 で修正
-
-#### 概要
-
-cb445180 以降の main で `shared — build (tsc -b)` が TS2307 で落ちていた。`shared/src/components/Analytics/TagUsageCard.tsx:13` が `./EmptyState` を import していたが、Analytics サブバレルの空状態は `AnalyticsEmptyState` という名前で、`./EmptyState` は存在しない。import 名と JSX タグ名を揃える 2 行の rename で解消し、PR #1430 を open。
-
-#### 変更点
-
-- **原因**: `components/index.ts` が Analytics サブバレルを `export *` で再エクスポートするため、`components/EmptyState` との衝突を避けて意図的に `AnalyticsEmptyState` へ改名してある（`AnalyticsEmptyState.tsx:14-17` のコメントが根拠）。TagUsageCard だけが旧名で import していた（同じフォルダの `MobileAnalyticsView` / `ScheduleTab` / `TimeTab` は全て新名）
-- **修正**: `TagUsageCard.tsx` の import 1 行 + JSX タグ 1 箇所を `AnalyticsEmptyState` へ。props（`icon` / `title` / `description`）は両者で完全一致のため振る舞いの変更なし
-- **検証**: `shared` の build / typecheck:tests / lint、`tests/analyticsTagUsageCard.test.tsx`（3 passed）、`web` の build — すべて緑
-- **経路**: main 直下では feature ブランチを切れないため、一時 worktree `hotfix-emptystate` から `claude/shared-fix-tagusage-emptystate-import` を切って push → PR #1430（open）→ worktree は即削除
-- **衝突リスク**: 同じ修正の branch を `materials-refine`（`claude/shared-fix-main-red-20260901`）と `refactor-core`（`claude/shared-fix-analytics-emptystate-import`）が先に切っていた。いずれも未 commit / 未 push だが、両レーンへ「#1430 で着地するので降りてよい」と伝えないと三重作業になる
-
-### 2026-09-01 - アプリ内 Note「Issue報告」を回収して Issue 9 本起票（#1399〜#1407）→ Note 削除
-
-#### 概要
-
-MCP 経由でアプリ内 Note「Issue報告」（Desktop 1 / Mobile 4 / 共通 4 の 9 項目）を回収し、重複チェックと実装箇所のあたり付けをしたうえで #1399〜#1407 として起票した。文が途切れていた 1 項目は起票前にユーザーへ確認して内容を確定。全 9 項目の起票完了後、指示どおり Note をソフトデリートした（「Issue報告のテンプレート」Note は対象外として温存）。
-
-#### 変更点
-
-- **起票 9 本**: #1399（Desktop leftSidebar ブランドヘッダーの縦ずれ・`[layout-standard]`）/ #1400（Mobile サイドバー幅をフォントサイズ非連動へ・`[mobile-refine]`）/ #1401（Mobile 月カレンダー刷新 — 横余白ゼロ・丸点→タイトルの縦リスト・省略記号なし。#1148 の後続）/ #1402（サイドバー swipe 判定を外側にも・#1050 の後続）/ #1403（Event 編集の終日トグルと日付フィールドの重なり・#940 の後続）/ #1404（materials スラッシュコマンドに画像・ファイル添付 — Supabase Storage 前提・🛑 バケット作成はユーザー手番と明記）/ #1405（Event→Todo の逆変換を編集パネルへ・#997 / #1043 参照・Materials 側は触らない）/ #1406（「本日のTodo」タブを「本日分 / その他」の 2 分類へ再編 + ホバー移動 + 移動時は日付のみ変更で時刻保持 — 途切れ項目を AskUser で確定）/ #1407（Materials 切替時のノート表示ロード）
-- **Note 削除**: `note-b26afda4-…`（Issue報告）を `delete_note` でソフトデリート（Trash から復元可）
-- **ルーティング**: schedule 4 本 = `section:schedule` / materials 2 本 = `section:materials` / shell 3 本 = `shared-fix`（`[layout-standard]` 1 + `[mobile-refine]` 2）。mobile 系 4 本は Epic #716 を参照に付けた
 
 > 古いエントリは [`archive/2026-09/chat-main.md`](./archive/2026-09/chat-main.md)・[`archive/2026-08/chat-main.md`](./archive/2026-08/chat-main.md)・[`archive/2026-07/chat-main.md`](./archive/2026-07/chat-main.md)・[`archive/2026-06/chat-main.md`](./archive/2026-06/chat-main.md)・[`archive/2026-05/chat-main.md`](./archive/2026-05/chat-main.md) を参照

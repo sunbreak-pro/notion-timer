@@ -12,6 +12,7 @@ import {
   RightSidebarProvider,
   useRightSidebarContext,
   WikiTagsUnifiedProvider,
+  resetConnectSelection,
   type DataService,
 } from "@life-editor/shared";
 import { ConnectScreen } from "../src/connect/ConnectScreen";
@@ -145,7 +146,12 @@ const railLabels = () =>
     .getAllByRole("button")
     .map((row) => row.getAttribute("aria-label"));
 
-beforeEach(cleanup);
+beforeEach(() => {
+  cleanup();
+  // #1473: the tag selection outlives the tree on purpose, so it must not
+  // outlive a test.
+  resetConnectSelection();
+});
 
 describe("ConnectScreen", () => {
   it("counts each tag off the four reads, and files the rest as untagged", async () => {
@@ -247,6 +253,34 @@ describe("ConnectScreen", () => {
       role: "event",
       date: "2026-08-29",
     });
+  });
+
+  it("re-opens the tag the user had picked after a section switch (#1473)", async () => {
+    await renderScreen();
+    fireEvent.click(screen.getByRole("button", { name: "Work: 4 items" }));
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Work" }),
+    ).toBeTruthy();
+
+    // A section switch unmounts the body (sectionDescriptors mounts it inside
+    // the switch) and mounts it afresh on the way back. Same DataService, same
+    // Provider tree, no props that could carry the selection across.
+    cleanup();
+    await renderScreen();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Work" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Draft the PR/ })).toBeTruthy();
+  });
+
+  it("comes back with nothing selected when the user had cleared it", async () => {
+    await renderScreen();
+    fireEvent.click(screen.getByRole("button", { name: "Work: 4 items" }));
+    cleanup();
+    // Deselection is a state the user chose too, not the absence of one.
+    resetConnectSelection();
+    await renderScreen();
+    expect(screen.queryByRole("heading", { level: 2 })).toBeNull();
   });
 
   it("reads exactly the four item lists, once", async () => {

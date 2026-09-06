@@ -1,7 +1,4 @@
 {
-  "sidebar": {
-    "settings": "Settings"
-  },
   "settings": {
     "shortcutLabels": {
       "commandPalette": "Open command palette",
@@ -224,7 +221,6 @@
     "notes": "Notes",
     "restore": "Restore",
     "deletePermanently": "Delete permanently",
-    "task": "todo",
     "note": "note",
     "event": "event",
     "events": "Events",
@@ -347,40 +343,14 @@
     "statusNotStarted": "Not started",
     "statusDone": "Done",
     "content": "Notes",
-    "tags": "Tags",
     "save": "Save",
     "saved": "Saved",
     "unsaved": "Unsaved"
   },
-  "kanban": {
-    "viewStatus": "By status",
-    "viewTag": "By tag",
-    "segmentedGroupLabel": "Switch board view",
-    "emptyColumn": "No todos here yet",
-    "placeholderHint": "Tag view is coming soon",
-    "untagged": "No tag",
-    "colorPickerLabel": "Change color",
-    "colorClearLabel": "Default color",
-    "colorCustomLabel": "Custom",
-    "addTodo": "Add",
-    "addDialogTitle": "Add todo",
-    "addTitleLabel": "Title",
-    "addTitlePlaceholder": "Enter a title",
-    "addSubmit": "Add",
-    "addCancel": "Cancel"
-  },
   "materials": {
     "todos": {
-      "filterLabel": "Filter by status",
       "statusGroupLabel": "Change status",
-      "detailTitle": "Todo details",
-      "quickAddTitle": "Add todo",
-      "quickAddPlaceholder": "Enter a title",
-      "quickAddSubmit": "Add",
-      "empty": "No todos yet",
-      "addCta": "Add todo",
-      "todoCount_one": "{{count}} todo",
-      "todoCount_other": "{{count}} todos"
+      "detailTitle": "Todo details"
     },
     "notes": {
       "searchPlaceholder": "Search notes…",
@@ -408,24 +378,18 @@
       "groupMoreRows": "Show {{count}} more"
     },
     "templates": {
-      "title": "Templates",
       "menuEntry": "Register as template",
       "defaultName": "{{title}} template",
       "savedTitle": "Template created",
       "savedHint": "You can find it in the right sidebar (Show details).",
       "savedDone": "Done",
-      "listHeading": "Templates",
       "empty": "No templates yet",
-      "new": "New",
       "nameLabel": "Template name",
       "namePlaceholder": "Name this template…",
       "untitled": "(untitled template)",
-      "content": "Content",
       "delete": "Delete template",
       "deleteConfirmBody": "Delete the template “{{name}}”? Deleted templates do not go to Trash, so this cannot be undone.",
       "deleteConfirmAction": "Delete",
-      "use": "Create a note from this template",
-      "pickHint": "Pick a template, or create a new one.",
       "applyMenuEntry": "Apply a template",
       "applyPickTitle": "Apply a template",
       "applyPickHint": "Pick the template to pour into this note.",
@@ -435,7 +399,6 @@
       "applyConfirm": "Apply",
       "applyConfirmTitleEmpty": "Apply the template?",
       "applyConfirmBodyEmpty": "This writes “{{name}}” into the note body. Nothing is written there yet, so nothing is lost.",
-      "noTagsHint": "Templates carry no tags or links — the note you create from one does.",
       "bodyPlaceholder": "Write the template…",
       "sidebarHeading": "Templates",
       "edit": "Edit template",
@@ -550,7 +513,9 @@
   },
   "itemActions": {
     "tagColor": "\"{{name}}\" color",
-    "tagColorEmpty": "Colors belong to tags — add a tag first."
+    "tagColorEmpty": "Colors belong to tags — add a tag first.",
+    "tagColorClearLabel": "Default color",
+    "tagColorCustomLabel": "Custom"
   },
   "itemConvert": {
     "toTodo": "Convert to Todo",
@@ -672,9 +637,12 @@
     "todoMoveToOthers": "Take off today",
     "todoAddCta": "Todo",
     "todoAddDialogTitle": "New todo",
+    "todoAddTitleLabel": "Title",
+    "todoAddTitlePlaceholder": "Enter a title",
+    "todoAddSubmit": "Add",
+    "todoAddCancel": "Cancel",
     "todoOpenDetail": "Open this todo",
     "todoEmptyAddable": "No unscheduled todos",
-    "todoOpenInTodos": "Open in Todos",
     "durationMin": "{{m}} min",
     "durationHour": "{{h}} hr",
     "durationHourMin": "{{h}} hr {{m}} min",
@@ -886,9 +854,6 @@
       }
     }
   },
-  "search": {
-    "clear": "Clear search"
-  },
   "undoRedo": {
     "undone": "Undid: {{label}}",
     "redone": "Redid: {{label}}",
@@ -950,7 +915,6 @@
     "schedule": "Schedule",
     "work": "Work",
     "analytics": "Analytics",
-    "tags": "Tags",
     "settings": "Settings",
     "briefing": "Briefing"
   },
@@ -985,11 +949,6 @@
     "pinned": "Pinned",
     "detailTitle": "Note",
     "moreActions": "More actions"
-  },
-  "backlinks": {
-    "incomingLinks": "Links to this note",
-    "empty": "No notes link here yet.",
-    "selectHint": "Select an item to see what links to it."
   },
   "connect": {
     "tagsHeading": "Tags",

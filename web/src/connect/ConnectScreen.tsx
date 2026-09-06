@@ -10,6 +10,8 @@ import {
   useSyncDomains,
   useTranslation,
   useWikiTagsUnifiedContext,
+  getConnectTagSelection,
+  setConnectTagSelection,
   WIDE_QUERY,
   type DailyNode,
   type DataService,
@@ -196,7 +198,22 @@ export function ConnectScreen({
     [t],
   );
 
-  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  /*
+   * Which tag is open (#1473). Seeded from — and written through to — the
+   * module-level store rather than plain component state, because this screen
+   * is unmounted by every section switch (sectionDescriptors mounts it inside
+   * the switch) and the other sections all come back showing what the user
+   * had open. The store is the same idiom Materials uses for its note / daily
+   * / todo selection (#282); the view already tolerates a stored id whose tag
+   * has since gone (it resolves to "nothing selected"), so no validation here.
+   */
+  const [selectedTagId, setSelectedTagIdState] = useState<string | null>(() =>
+    getConnectTagSelection(),
+  );
+  const setSelectedTagId = useCallback((tagId: string | null) => {
+    setConnectTagSelection(tagId);
+    setSelectedTagIdState(tagId);
+  }, []);
   const [query, setQuery] = useState("");
 
   const formatCount = useCallback(

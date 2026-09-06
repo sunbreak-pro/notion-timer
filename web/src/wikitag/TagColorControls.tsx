@@ -52,9 +52,11 @@ export function TagColorControls({ itemId }: { itemId: string }) {
             key={a.id}
             current={tag.color ?? undefined}
             label={t("itemActions.tagColor", { name: tag.name })}
-            // Same copy as the Kanban color control — one key per fact.
-            clearLabel={t("kanban.colorClearLabel")}
-            customLabel={t("kanban.colorCustomLabel")}
+            // #1388: these two used to borrow the retired Kanban board's keys.
+            // They now live beside this component's other labels in
+            // `itemActions.*`, with the same strings.
+            clearLabel={t("itemActions.tagColorClearLabel")}
+            customLabel={t("itemActions.tagColorCustomLabel")}
             onPick={(color) => {
               void wiki.setTagColor(tag.id, color).catch((err) => {
                 console.error("setTagColor failed", err);
