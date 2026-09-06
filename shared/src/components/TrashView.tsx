@@ -26,6 +26,21 @@ import { cn } from "./cn";
  * entirely instead of stacking five empty sections. A row-level `busy`
  * marker replaces the old global boolean so the in-flight row shows its own
  * spinner while every action stays disabled (no double submit).
+ *
+ * Narrow rows STACK (#1527). One line could not hold both the name and the
+ * two controls: at 390px the 44px checkbox, the labelled restore button and
+ * the delete button left the name 111px, so everything past the first 6-8
+ * characters was an ellipsis — and thirty rows of one repeating routine read
+ * as thirty identical rows. A trash list exists to be READ (you have to
+ * recognise what you are about to restore or destroy), so the name takes the
+ * first line alone and the controls drop to a second, right-aligned one.
+ *
+ * Icon-only restore was the cheaper fix, and it was measured rather than
+ * assumed: it buys ~46px, which still leaves the name under half the row, and
+ * it pays for that by flattening the danger asymmetry above — restore and
+ * delete would become two icons side by side. The stack costs row height
+ * instead, which is the right currency here: this is a place you visit to undo
+ * something, not a list you scroll.
  */
 
 /** The five soft-delete categories surfaced in the web build (W2 scope). */
@@ -496,75 +511,101 @@ export function TrashView({
                   busy.id === item.id
                     ? busy
                     : null;
+                const selectBox = (
+                  <SelectBox
+                    checked={selected.has(refKey(group.category, item.id))}
+                    onChange={() => toggleOne(group.category, item.id)}
+                    label={labels.selectItem.replace("{name}", item.label)}
+                    disabled={anyBusy}
+                    wide={wide}
+                  />
+                );
+                const name = (
+                  <span
+                    className={cn(
+                      "min-w-0 flex-1 truncate text-sm",
+                      rowBusy ? "text-lumen-text-tertiary" : "text-lumen-text",
+                    )}
+                  >
+                    {item.label}
+                  </span>
+                );
+                const restoreControl = rowBusy ? (
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lumen-sm",
+                      "bg-lumen-bg-secondary px-2.5 text-xs font-medium",
+                      "text-lumen-text-secondary",
+                      wide ? "h-7" : "h-9",
+                    )}
+                  >
+                    <RowSpinner />
+                    {rowBusy.action === "restore"
+                      ? labels.restoring
+                      : labels.deleting}
+                  </span>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    size={wide ? "sm" : "md"}
+                    disabled={anyBusy}
+                    leadingIcon={<RotateCcw size={14} aria-hidden="true" />}
+                    onClick={() => onRestore(group.category, item.id)}
+                  >
+                    {labels.restore}
+                  </Button>
+                );
+                const deleteControl = (
+                  <IconButton
+                    icon={<Trash2 size={wide ? 16 : 18} />}
+                    label={labels.deletePermanently}
+                    variant="danger"
+                    size={wide ? "md" : "lg"}
+                    disabled={anyBusy}
+                    onClick={() =>
+                      setPending({
+                        kind: "one",
+                        category: group.category,
+                        item,
+                      })
+                    }
+                  />
+                );
                 return (
                   <li
                     key={item.id}
                     aria-busy={rowBusy ? true : undefined}
                     className={cn(
-                      "flex items-center",
+                      "flex",
                       wide
-                        ? "gap-3 py-2 pl-4 pr-3"
-                        : "gap-2 py-1.5 pl-3.5 pr-1.5",
+                        ? "items-center gap-3 py-2 pl-4 pr-3"
+                        : "flex-col gap-1 py-2 pl-3.5 pr-1.5",
                       rowBusy && "bg-lumen-bg-subsidebar",
                       anyBusy && !rowBusy && "opacity-60",
                     )}
                   >
-                    <SelectBox
-                      checked={selected.has(refKey(group.category, item.id))}
-                      onChange={() => toggleOne(group.category, item.id)}
-                      label={labels.selectItem.replace("{name}", item.label)}
-                      disabled={anyBusy}
-                      wide={wide}
-                    />
-                    <span
-                      className={cn(
-                        "min-w-0 flex-1 truncate text-sm",
-                        rowBusy
-                          ? "text-lumen-text-tertiary"
-                          : "text-lumen-text",
-                      )}
-                    >
-                      {item.label}
-                    </span>
-                    {rowBusy ? (
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-lumen-sm",
-                          "bg-lumen-bg-secondary px-2.5 text-xs font-medium",
-                          "text-lumen-text-secondary",
-                          wide ? "h-7" : "h-9",
-                        )}
-                      >
-                        <RowSpinner />
-                        {rowBusy.action === "restore"
-                          ? labels.restoring
-                          : labels.deleting}
-                      </span>
+                    {wide ? (
+                      <>
+                        {selectBox}
+                        {name}
+                        {restoreControl}
+                        {deleteControl}
+                      </>
                     ) : (
-                      <Button
-                        variant="secondary"
-                        size={wide ? "sm" : "md"}
-                        disabled={anyBusy}
-                        leadingIcon={<RotateCcw size={14} aria-hidden="true" />}
-                        onClick={() => onRestore(group.category, item.id)}
-                      >
-                        {labels.restore}
-                      </Button>
+                      <>
+                        {/* The name owns line one; the controls sit under it,
+                            pushed to the right edge the delete button used to
+                            hold on its own. */}
+                        <div className="flex min-w-0 items-center gap-2">
+                          {selectBox}
+                          {name}
+                        </div>
+                        <div className="flex items-center justify-end gap-2">
+                          {restoreControl}
+                          {deleteControl}
+                        </div>
+                      </>
                     )}
-                    <IconButton
-                      icon={<Trash2 size={wide ? 16 : 18} />}
-                      label={labels.deletePermanently}
-                      variant="danger"
-                      size={wide ? "md" : "lg"}
-                      disabled={anyBusy}
-                      onClick={() =>
-                        setPending({
-                          kind: "one",
-                          category: group.category,
-                          item,
-                        })
-                      }
-                    />
                   </li>
                 );
               })}

@@ -376,3 +376,74 @@ describe("TrashView — multi-select (#1294)", () => {
     expect(rowBox.parentElement?.className).toContain("min-h-11");
   });
 });
+
+/*
+ * #1527 — the name has to be readable.
+ *
+ * At 390px the single-line row spent its width on chrome: a 44px checkbox, a
+ * labelled restore button and a delete button left the name 111px, which cut
+ * every title to 6-8 characters. Thirty rows generated from one routine came
+ * out as thirty identical stubs, so the list could not answer the only
+ * question it is for — which of these am I restoring?
+ *
+ * jsdom has no layout (CLAUDE.md §7.1), so the pixels are not assertable here.
+ * What IS assertable is the arrangement that produces them: on narrow nothing
+ * clickable shares the name's line, and on wide the row is untouched.
+ */
+describe("TrashView — narrow rows (#1527)", () => {
+  function rowFor(label: string): HTMLElement {
+    const box = screen.getByRole("checkbox", { name: `Select "${label}"` });
+    const row = box.closest("li");
+    if (!row) throw new Error(`no row around the checkbox for "${label}"`);
+    return row;
+  }
+
+  function lineOf(el: HTMLElement): HTMLElement {
+    const line = el.parentElement;
+    if (!line) throw new Error("element is not in a row");
+    return line;
+  }
+
+  it("gives the name a line of its own on narrow", () => {
+    mockMatchMedia(false);
+    renderView();
+
+    const row = rowFor("Buy milk");
+    const nameLine = lineOf(within(row).getByText("Buy milk"));
+
+    // The checkbox stays beside the name (it selects THIS row, so it has to);
+    // both buttons are what the name was losing its width to.
+    within(nameLine).getByRole("checkbox", { name: 'Select "Buy milk"' });
+    expect(within(nameLine).queryAllByRole("button")).toHaveLength(0);
+  });
+
+  it("keeps both controls in the row, one line down", () => {
+    mockMatchMedia(false);
+    renderView();
+
+    const row = rowFor("Buy milk");
+    const nameLine = lineOf(within(row).getByText("Buy milk"));
+    const restore = within(row).getByRole("button", { name: "Restore" });
+    const remove = within(row).getByRole("button", {
+      name: "Delete permanently",
+    });
+
+    // Moved, not dropped — and moved together, so the pair still reads as one
+    // group rather than straddling the fold.
+    expect(nameLine.contains(restore)).toBe(false);
+    expect(lineOf(restore)).toBe(lineOf(remove));
+  });
+
+  it("leaves the wide row on a single line", () => {
+    mockMatchMedia(true);
+    renderView();
+
+    const row = rowFor("Buy milk");
+    const name = within(row).getByText("Buy milk");
+    const restore = within(row).getByRole("button", { name: "Restore" });
+
+    // Same parent as the row itself = one flex line, exactly as before #1527.
+    expect(lineOf(name)).toBe(row);
+    expect(lineOf(restore)).toBe(row);
+  });
+});
