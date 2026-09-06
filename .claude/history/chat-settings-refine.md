@@ -1,5 +1,21 @@
 # HISTORY (chat-settings-refine)
 
+### 2026-09-06 - narrow 幅の Settings 2 件（#1525 / PR #1532・#1527 / PR #1534）
+
+#### 概要
+
+#1409（Mobile 幅 390×844 の実ブラウザ点検）が拾った settings レーンの open 2 件を、1 課題 = 1 ブランチ（どちらも origin/main 分岐）で直して PR まで出した。どちらも機能は正しく、狭い画面で「押しても何も起きないように見える」「名前が読めない」という見え方の問題。merge は P-001 でユーザー手番のため未実施。
+
+#### 変更点
+
+- **#1525 → PR #1532（カテゴリを選んでもドロワーが閉じない）**: narrow ではカテゴリ一覧が `MobileDrawer`（`role=dialog`・幅 332px = viewport の 85%）に載るので、`tab` を切り替えても切替先のペインは右端 58px しか見えなかった。`SettingsScreen.tsx` の `onSelect` で `!isWide` のときだけ `rightSidebar.close()` を呼ぶ — `DailyView` の日付選択・`NotesView` のノート選択と同じ形。`requestClose` ではなく `close` を使うのは、これがプログラム側の後片付けであって「下書きを捨てていいか」を聞く場面ではないため（#753 の契約）
+- **#1525 の例外**: Tips 行だけは閉じない。Tips はペインではなく modal で、modal はどのみちドロワーを覆う。閉じてしまうと modal を閉じた瞬間に「選んでいないペイン」へ落ちるので、一覧に戻れる方を採った
+- **#1527 → PR #1534（ゴミ箱のタイトル列が 111px）**: 390px の行は 44px のチェックボックス + ラベル付き「復元」ボタン + 削除アイコンで幅を使い切り、341px の行のうちタイトルに 111px しか残っていなかった（6〜8 文字で省略）。同じルーチンから生成された 30 行が全部同じ見た目になり、「どれを復元しようとしているのか」というゴミ箱唯一の問いに答えられない。`TrashView.tsx` の narrow 行を 2 段にし、1 段目はタイトル（+ チェックボックス）が独占、2 段目に復元 / 削除を右寄せ。タイトル列は約 270px。wide は無変更
+- **#1527 で捨てた案（測ってから捨てた）**: Issue が併記していた「復元をアイコン化」は稼げるのが約 46px で、タイトルは行幅の半分（170px）に届かない。しかもこの部品が冒頭コメントで宣言している danger asymmetry（復元 = ラベル付きの主動線 / 削除 = アイコンで一段静か）が崩れ、アイコン 2 つが並ぶだけになる。2 段化は代わりに行の高さ（約 52px → 約 92px）を払うが、ゴミ箱は眺める一覧ではなく取り消しに来る場所なので、そちらの通貨で払う方が正しいと判断した
+- **テスト**: jsdom にレイアウトが無い（§7.1）ので px は測れず、その px を生む**構造**を固定した。`settingsTabs.test.tsx` に 4 本（narrow で閉じる / wide で閉じない / Trash カテゴリでも閉じる / Tips では閉じない）、`trashView.test.tsx` に 3 本（narrow ではタイトルの行にボタンが 0 個 / 復元と削除は行内に揃って残る / wide は 1 行のまま）。**どちらも修正を一時的に戻して該当テストが落ちることを実測**（false green ではない）
+- **検証**: 2 ブランチそれぞれで CI `verify` の全ステップ（shared / web / desktop / mcp-server）と `docs-lint` をローカル全緑。実ブラウザ確認は §7.4 に従い merge 後 chat-main 側
+- **環境**: #1525 側の初回 sweep で `web/tests/briefingEveningLazyMount.test.tsx` が 1 件落ちたが、単体再実行 7/7 緑・静かな状態での web 全件 114 files / 1079 tests 緑で、既知の CPU 競合フレーク（`cold-vite-cache-fails-lazy-mount-tests`）。`git push` はこの機の credential manager が非対話で固まるため、`gh auth token` を一時 helper に渡す既知の回避で通した
+
 ### 2026-08-30 - Settings 3 件（#1210 / PR #1307・#1293 / PR #1317・#1294 / PR #1323）
 
 #### 概要
@@ -63,20 +79,3 @@ settings レーンの open 3 件を「1 Issue = 1 ブランチ（origin/main 分
 - **テスト**: shared に `scheduleInitialView`（resolver の fallback）/ `mobileFontSizePresets`（対応付け + カードのコントロール入替）/ `deleteAccountDialog`（ゲートと許容ルール・busy ロック・backdrop 無効）、web に `settingsTabs`（行→本文の routing・Tips が本文を替えないこと）/ `settingsMobileFontSize`（狭幅版・既存 Settings スイートは全部 wide だった）/ `settingsAccountDeletion`（武装済み confirm 以外は `deleteAccount()` に届かないこと）
 - **検証**: 3 ブランチそれぞれで CI `verify` の全ステップ（shared lint / build / typecheck:tests / test、web 同、desktop typecheck / test / build、mcp-server build / typecheck:tests / test）と `docs-lint` をローカル実行し全緑。実ブラウザ・実機確認は §7.4 に従い merge 後 chat-main 側（#1182 の px 値の詰めと #1200 の実退会 E2E がここに残る）
 - **衝突対応**: 別セッション `connect-refine-a6` が同じ /goal を受けて本 worktree に入り、`claude/settings-1174-settings-tabs` を作って `SettingsScreen.tsx` / i18n を編集していた。SendMessage で名乗り合って解消（向こうが撤退）。先方の `SettingsTabsNav.tsx` / `SettingsSchedule.tsx` と barrel の export は revert せず引き継ぎ、`SCHEDULE_INITIAL_VIEWS` を足して整合させた
-
-### 2026-08-28 - チュートリアルの初回自動開始と Settings 再実行導線（Issue #1123 / PR #1164）
-
-#### 概要
-
-#1122 で入ったツアー基盤（TourProvider / ステップ定義 / スポットライト / 進捗永続化）に、入口 2 つを配線した。初回起動での自動開始は host が `autoStart` を渡すだけ、Settings の「やり直す」は新規カードから `restart()` を叩くだけで、ツアーの状態は 1 つも増やしていない。ただし `autoStart` をそのまま入れると実害が出るので guard を 1 つ足した — アンカー探索はステップのセクションへ**遷移してからでないと**表示可否を判定できないため、`data-tour-id` がまだどこにも無い現在のアプリでは、無言でセクションを 2 つ渡り歩いて最後の場所にユーザーを置き去りにする。しかも host が道中の各セクションを `life-editor-last-section` に書くので、次回起動もその寄り道先が開く。
-
-#### 変更点
-
-- **web/src/AppProviders.tsx**: `TourProvider` に `autoStart`。完了・スキップの判定は Provider の永続状態（`useLocalStorage` は初期化子で同期的に読むので、スキップ済みのツアーがリロードで一瞬出ることはない）
-- **shared/src/components/SettingsTutorial.tsx（新規）**: Reset カードと同じ形の純粋部品。`onRestart` は forward せず `() => onRestart()` で呼ぶ（クリックイベントが第 1 引数に流れ込むのを避ける）。完了・スキップ後はここが唯一の戻り道なので、条件表示にせず常設
-- **web/src/settings/SettingsScreen.tsx**: Reset の上に配置し `useTourContext().restart` を接続。ツアーは必須 Provider なので `useShortcutConfig` のような null 分岐は無し
-- **shared/src/context/TourContext.tsx**: 走行開始時のセクションと「遷移したか」を ref で覚え、**1 ステップも表示できずに終わった走行**だけ開始地点へ戻す。表示できたステップがある走行は最後のステップの場所で終わる（従来どおり）
-- **i18n**: `settings.tutorial.{heading,description,button}` を en / ja 両方へ
-- **DataService の文面について**: Issue は「進捗を DataService 経由で」と書いているが、基盤 PR が積んだ判断キュー `D-20260827-shared-fix-1` の A（localStorage 据え置き）が既定のまま。差し替え先は `useTourProgress.ts` 1 ファイル
-- **テスト**: shared に auto-start 5 本（初回で開く / スキップ後は黙る / 完了後は黙る / 空振り走行は開始地点へ戻す / 歩いた走行は戻さない）、web に「Tutorial カード → `restart` だけが発火」1 本。戻す guard は無効化して実際に落ちることを確認済み
-- **検証**: CI の `verify` ステップ全段（shared lint / build / typecheck:tests / 2598 tests、web lint / build / typecheck:tests / 855 tests、desktop typecheck / 7 tests / build、mcp-server build / typecheck:tests / 318 tests）と docs-lint をローカルで全緑。実ブラウザ確認は §7.4 に従い merge 後 chat-main 側
