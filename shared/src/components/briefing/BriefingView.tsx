@@ -141,11 +141,13 @@ export interface BriefingLabels {
   statusNotStarted: string;
   statusDone: string;
   /**
-   * Visible label of every row's jump action —「編集」/ "Edit" (#410). It IS
-   * the button's accessible name now that the action is no longer icon-only;
-   * `jumpToSchedule` / `jumpToTodos` moved to the hover tooltip, where the
-   * longer wording still says WHERE the jump lands without contradicting the
-   * visible text (WCAG 2.5.3 Label in Name).
+   * Label of every row's jump action —「編集」/ "Edit" (#410). It LEADS the
+   * button's accessible name, and `jumpToSchedule` / `jumpToTodos` follow it
+   * there and in the hover tooltip, so the name says WHERE the jump lands
+   * without contradicting the printed text (WCAG 2.5.3 Label in Name).
+   *
+   * Printed beside the icon from `md` up; below it the button is icon-only
+   * and this word survives in the name alone (#1514).
    */
   edit: string;
   /**
@@ -269,8 +271,14 @@ function BlockHead({
  * Icon-only, unlike the row actions, because a heading has no column of
  * sibling buttons to be mistaken for a label of: the accessible name carries
  * the whole meaning and `title` shows it on hover. The padding puts the box at
- * 26×26 with the icon at 14px, and `-my-1 -mr-1.5` spends that growth on the
- * heading's own whitespace so the rule below it does not move.
+ * 26×26 with the icon at 14px, and `-my-1` spends the VERTICAL half of that
+ * growth on the heading's own whitespace so the rule below it does not move.
+ *
+ * The horizontal half (`-mr-1.5`) is gone since #1514: these sections carry no
+ * side padding, so a row's right edge IS the block's, and a negative margin
+ * there hung the box 6px outside its own container. The icon sits 6px in now,
+ * exactly where `RowActions` puts the row actions below it — the straight
+ * column down the right edge was the only thing that margin bought.
  */
 function BlockHeadAddButton({
   onClick,
@@ -285,7 +293,7 @@ function BlockHeadAddButton({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="-my-1 -mr-1.5 flex flex-shrink-0 items-center self-center rounded-lumen-sm p-1.5 text-lumen-text-secondary transition-colors hover:bg-lumen-hover hover:text-lumen-briefing-shu focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lumen-accent"
+      className="-my-1 flex flex-shrink-0 items-center self-center rounded-lumen-sm p-1.5 text-lumen-text-secondary transition-colors hover:bg-lumen-hover hover:text-lumen-briefing-shu focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lumen-accent"
     >
       <Plus size={14} aria-hidden="true" />
     </button>
@@ -300,28 +308,77 @@ function BlockHeadAddButton({
  * in one straight column whatever the titles measure; the old icon-only jump
  * button sat immediately after the title and drifted with it, row by row.
  *
- * The negative margins live here rather than on each button: they cancel the
- * padding the buttons need for their 24×24 targets (WCAG 2.5.8) so the boxes
- * grow into the row's own whitespace instead of pushing the row height and
- * the right edge around. Moving them from the button to the cluster keeps the
- * jump button rendering exactly where it did with one action in the row.
+ * `-my-1` lives here rather than on each button: it cancels the vertical half
+ * of the padding the buttons need for their 24×24 targets (WCAG 2.5.8), so
+ * the boxes grow into the row's own whitespace instead of pushing the row
+ * height around.
+ *
+ * There is no `-mr-1.5` twin any more (#1514). This block has no side padding,
+ * so a row's right edge is the block's right edge and there was no whitespace
+ * on that side to grow into — the cluster just hung 6px past its own
+ * container, which is the 349px-of-content-in-a-343px-box the 390px audit
+ * measured. `BlockHeadAddButton` dropped its own in the same change, so the
+ *「+」above and the actions below still line up in one straight column.
  */
 function RowActions({ children }: { children: ReactNode }) {
   return (
-    <div className="-my-1 -mr-1.5 ml-auto flex flex-shrink-0 items-center gap-0.5 self-center">
+    <div className="-my-1 ml-auto flex flex-shrink-0 items-center gap-0.5 self-center">
       {children}
     </div>
   );
 }
 
+/*
+ * Shape shared by the two row actions.
+ *
+ * `md:` — not a prop — because this view is pure presentation and the host
+ * hands it no width. Tailwind's `md` is rem-based, so it moves with the
+ * Settings font scale: the bigger the type, the wider the screen has to be
+ * before the labels are offered. That is the behaviour this rule wants, since
+ * what runs out at 390px is room for the words themselves (#1514).
+ *
+ * `gap-1` is `md:` too: with the label hidden it would be 4px of dead space
+ * between the icon and the button's right padding.
+ */
 const ROW_ACTION_BASE =
-  "flex items-center gap-1 whitespace-nowrap px-1.5 py-1 text-xs transition-colors";
+  "flex items-center whitespace-nowrap px-1.5 py-1 text-xs transition-colors md:gap-1";
+
+/**
+ * The action's word —「編集」/「削除」— printed beside its icon on a screen wide
+ * enough to hold it (#1514).
+ *
+ * At 390px it is not: the two labelled buttons took 128px off a 343px row, and
+ * what was left squeezed a todo's title to 67px — three lines of broken word
+ * for one 18-character todo. Hiding the words gives the title back ~77px and
+ * gets it onto one line.
+ *
+ * `hidden md:inline` rather than dropping the text from the tree: the
+ * accessible name is composed from this same label (「編集: スケジュールで開く」),
+ * and WCAG 2.5.3 (Label in Name) only binds while the label is VISIBLE — so a
+ * narrow screen loses the printed word and keeps every name a screen reader
+ * and a voice-control user hear.
+ */
+function RowActionLabel({ label }: { label: string }) {
+  return <span className="hidden md:inline">{label}</span>;
+}
+
+/*
+ * Icon size of a row action. 16px while the word is hidden, back to the 13px
+ * #410 chose once it is printed: a 13px arrow alone was the very thing that
+ * issue called too small to read as an action, and below `md` it now stands
+ * alone. Set in CSS rather than through lucide's `size` prop so it can answer
+ * the breakpoint at all (the prop writes width/height ATTRIBUTES, which any
+ * class overrides).
+ */
+const ROW_ACTION_ICON = "size-4 shrink-0 md:size-[13px]";
 
 /**
  * Row jump action —「編集」+ ↗ (#410).
  *
- * The label is visible because a 13px arrow alone was too small to read as an
- * action — and too small to hit.
+ * The label is printed because a 13px arrow alone was too small to read as an
+ * action — and too small to hit. Below `md` there is no room for the word
+ * next to a todo's title (#1514), so it steps back to the icon and the icon
+ * grows to 16px to answer the same objection.
  *
  * The accessible name leads with that visible label and only then says where
  * the jump lands (「編集: スケジュールで開く」). Naming it `編集` alone would
@@ -347,8 +404,8 @@ function EditJumpButton({
       title={hint}
       className={`${ROW_ACTION_BASE} text-lumen-text-secondary hover:text-lumen-accent`}
     >
-      <ArrowUpRight size={13} aria-hidden="true" />
-      {label}
+      <ArrowUpRight aria-hidden="true" className={ROW_ACTION_ICON} />
+      <RowActionLabel label={label} />
     </button>
   );
 }
@@ -378,8 +435,8 @@ function DeleteRowButton({
       title={hint}
       className={`${ROW_ACTION_BASE} text-lumen-text-secondary hover:text-lumen-danger`}
     >
-      <Trash2 size={13} aria-hidden="true" />
-      {label}
+      <Trash2 aria-hidden="true" className={ROW_ACTION_ICON} />
+      <RowActionLabel label={label} />
     </button>
   );
 }
