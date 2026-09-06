@@ -962,7 +962,13 @@
     "back": "Back to tags",
     "untagged": "Untagged",
     "itemCount_one": "{{count}} item",
-    "itemCount_other": "{{count}} items"
+    "itemCount_other": "{{count}} items",
+    "detail": {
+      "breakdownHeading": "By kind",
+      "recentHeading": "Recently tagged",
+      "recentUntaggedHeading": "Recently updated",
+      "recentEmpty": "Nothing is filed under this tag yet."
+    }
   },
   "attachment": {
     "insertImage": "Image",

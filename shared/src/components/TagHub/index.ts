@@ -18,6 +18,17 @@ export {
   TagHubItemGroups,
   type TagHubItemGroupsProps,
 } from "./TagHubItemGroups";
+// #1472 — what the shared detail panel shows while a tag is open.
+export {
+  TagHubDetailPanel,
+  type TagHubDetailLabels,
+  type TagHubDetailPanelProps,
+} from "./TagHubDetailPanel";
+export {
+  selectRecentTaggedItems,
+  TAG_HUB_RECENT_LIMIT,
+  type SelectRecentTaggedItemsInput,
+} from "./recentTaggedItems";
 export {
   UNTAGGED_TAG_ID,
   type TagHubGroup,

@@ -7,7 +7,10 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+import { useEffect, useRef } from "react";
 import {
+  RightSidebarProvider,
+  useRightSidebarContext,
   WikiTagsUnifiedProvider,
   resetConnectSelection,
   type DataService,
@@ -103,6 +106,40 @@ async function renderScreen(ds: DataService = makeDS()) {
   return { onNavigateToItem };
 }
 
+/*
+ * #1472: a stand-in for the shell's detail panel — registers itself as the
+ * portal target the way RightSidebarContents does, so whatever ConnectScreen
+ * portals lands in a region the assertions can scope to.
+ */
+function PanelWell() {
+  const { setPortalTarget } = useRightSidebarContext();
+  const ref = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    setPortalTarget(ref.current);
+    return () => setPortalTarget(null);
+  }, [setPortalTarget]);
+  return <aside aria-label="Details" ref={ref} />;
+}
+
+async function renderWithPanel(ds: DataService = makeDS()) {
+  const onNavigateToItem = vi.fn();
+  const { wrapper: SyncWrapper } = createBumpableSync();
+  render(
+    <SyncWrapper>
+      <RightSidebarProvider>
+        <WikiTagsUnifiedProvider dataService={ds}>
+          <ConnectScreen dataService={ds} onNavigateToItem={onNavigateToItem} />
+        </WikiTagsUnifiedProvider>
+        <PanelWell />
+      </RightSidebarProvider>
+    </SyncWrapper>,
+  );
+  await waitFor(() => screen.getByRole("list", { name: "Tags" }));
+  const panel = () =>
+    within(screen.getByRole("complementary", { name: "Details" }));
+  return { onNavigateToItem, panel };
+}
+
 /** The rail's rows, by their spelled-out "name: count" labels. */
 const railLabels = () =>
   within(screen.getByRole("list", { name: "Tags" }))
@@ -190,17 +227,49 @@ describe("ConnectScreen", () => {
     });
   });
 
+  it("puts the selected tag's breakdown and recent rows in the detail panel (#1472)", async () => {
+    const { panel, onNavigateToItem } = await renderWithPanel();
+    // Nothing selected — nothing portalled, so the shell's empty copy stands.
+    expect(panel().queryByRole("heading")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Work: 4 items" }));
+    expect(
+      panel().getByRole("heading", { level: 2, name: "Work" }),
+    ).toBeTruthy();
+    expect(
+      within(panel().getByRole("region", { name: "By kind" }))
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual(["Todo1 item", "Event1 item", "Note1 item", "Daily1 item"]);
+
+    // The panel's rows leave the hub the same way the main pane's do.
+    fireEvent.click(
+      within(
+        panel().getByRole("region", { name: "Recently tagged" }),
+      ).getByRole("button", { name: /Standup/ }),
+    );
+    expect(onNavigateToItem).toHaveBeenCalledWith({
+      id: "event-1",
+      role: "event",
+      date: "2026-08-29",
+    });
+  });
+
   it("re-opens the tag the user had picked after a section switch (#1473)", async () => {
     await renderScreen();
     fireEvent.click(screen.getByRole("button", { name: "Work: 4 items" }));
-    expect(screen.getByRole("heading", { level: 2, name: "Work" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Work" }),
+    ).toBeTruthy();
 
     // A section switch unmounts the body (sectionDescriptors mounts it inside
     // the switch) and mounts it afresh on the way back. Same DataService, same
     // Provider tree, no props that could carry the selection across.
     cleanup();
     await renderScreen();
-    expect(screen.getByRole("heading", { level: 2, name: "Work" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Work" }),
+    ).toBeTruthy();
     expect(screen.getByRole("button", { name: /Draft the PR/ })).toBeTruthy();
   });
 

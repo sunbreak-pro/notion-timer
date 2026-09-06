@@ -956,7 +956,13 @@
     "selectHint": "タグを選ぶと、そこに集まったものが一覧に出ます。",
     "back": "タグ一覧へ戻る",
     "untagged": "未分類",
-    "itemCount_other": "{{count}} 件"
+    "itemCount_other": "{{count}} 件",
+    "detail": {
+      "breakdownHeading": "種類別",
+      "recentHeading": "最近タグを付けたもの",
+      "recentUntaggedHeading": "最近更新したもの",
+      "recentEmpty": "このタグが付いたアイテムはまだありません。"
+    }
   },
   "attachment": {
     "insertImage": "画像",
