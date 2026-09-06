@@ -30,6 +30,7 @@ import {
   WIDE_QUERY,
 } from "@life-editor/shared";
 import { X, ChevronDown } from "lucide-react";
+import { formatShortDate } from "../schedule/scheduleCopy";
 
 /*
  * Web Work tab host (target-IA import). Mounts inside the TimerProvider (wired
@@ -95,7 +96,7 @@ function formatMinutes(totalSeconds: number): string {
 }
 
 export function WorkScreen({ dataService: ds }: { dataService: DataService }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const timer = useTimerContext();
   const isWide = useMediaQuery(WIDE_QUERY, true);
   // Optional (Mobile 省略 Provider) — null when no AudioProvider mounted.
@@ -183,6 +184,14 @@ export function WorkScreen({ dataService: ds }: { dataService: DataService }) {
       // Todos first, then events in calendar order. A routine occurrence is an
       // ordinary event here — it has its own row and its own id, so the time
       // lands on the day that was actually worked rather than on the series.
+      //
+      // Every event row carries its day and start time as a subtitle (#1519).
+      // The window is a week wide, so a DAILY routine contributes seven rows
+      // with one title between them: without the day there is nothing on the
+      // row that says which occurrence a session would be filed against. The
+      // window itself stays as it is — narrowing it to today would fix the
+      // ambiguity by deleting "start on tomorrow's 9am", which is what the
+      // seven days are there for.
       ...eventItems
         .filter((e) => !e.isDeleted && !e.isDismissed)
         .slice()
@@ -195,9 +204,12 @@ export function WorkScreen({ dataService: ds }: { dataService: DataService }) {
           id: e.id,
           title: e.title || t("common.untitled"),
           kind: "event" as const,
+          subtitle: `${formatShortDate(i18n.language, e.date)} ${
+            e.isAllDay ? t("work.todoSelector.allDay") : e.startTime
+          }`,
         })),
     ],
-    [todoNodes, eventItems, t],
+    [todoNodes, eventItems, t, i18n.language],
   );
 
   const phaseLabels = useMemo(

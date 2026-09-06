@@ -13,6 +13,12 @@ import { cn } from "./cn";
  * Todos and Events share one list, for the reason spelled out on the selector.
  * The kind rides on the leading glyph — the check mark that marks the CURRENT
  * selection keeps its own column so the two never contend for the same slot.
+ *
+ * A row is two lines when the option carries a subtitle (#1519): the mobile
+ * sheet is where a daily routine's seven occurrences stacked up as seven rows
+ * of the same name, so the day + start time gets its own line under the title
+ * rather than the desktop menu's trailing slot — there is no room beside a
+ * full-width title at 390px.
  */
 
 export interface PomodoroTodoSheetLabels {
@@ -93,7 +99,14 @@ export function PomodoroTodoSheet({
                   <span className="shrink-0 text-lumen-text-tertiary">
                     {workTargetIcon(t.kind, 16)}
                   </span>
-                  <span className="truncate">{t.title}</span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate">{t.title}</span>
+                    {t.subtitle ? (
+                      <span className="truncate text-xs font-normal text-lumen-text-tertiary">
+                        {t.subtitle}
+                      </span>
+                    ) : null}
+                  </span>
                 </button>
               </li>
             );
