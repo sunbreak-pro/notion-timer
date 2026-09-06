@@ -739,6 +739,21 @@
         "description": "Tag your todos, events and notes and the tags you used will be ranked here."
       }
     },
+    "loadFailed": {
+      "message": "Some data could not be loaded ({{sources}}). The numbers below leave it out.",
+      "separator": ", ",
+      "sources": {
+        "sessions": "work sessions",
+        "todos": "todos",
+        "todayEvents": "today's events",
+        "events": "events",
+        "routines": "routines",
+        "notes": "notes",
+        "tags": "tags",
+        "tagAssignments": "tag assignments",
+        "timerSettings": "timer settings"
+      }
+    },
     "mobile": {
       "weekTitle": "This Week",
       "routineTitle": "Routine Rate",

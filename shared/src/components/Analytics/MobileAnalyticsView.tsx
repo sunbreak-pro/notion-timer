@@ -19,6 +19,7 @@ import {
   getWorkSessions,
 } from "../../utils/analyticsAggregation";
 import { WEEK_STARTS_ON } from "../../utils/scheduleGridLayout";
+import { NoticePanel } from "../NoticePanel";
 import { AnalyticsEmptyState } from "./AnalyticsEmptyState";
 import type { AnalyticsLabels } from "./labels";
 
@@ -38,6 +39,13 @@ interface MobileAnalyticsViewProps {
   notes: NoteNode[];
   routines: RoutineNode[];
   loading: boolean;
+  /**
+   * Already-translated sentence naming the data the host could not read
+   * (#1524), or null. Drawn ABOVE the empty state as well as above the
+   * cards, because a failed load empties every list — and "nothing recorded
+   * yet" is exactly the wrong thing to say then.
+   */
+  warning?: string | null;
   labels: AnalyticsLabels;
 }
 
@@ -64,6 +72,7 @@ export function MobileAnalyticsView(
     scheduleItems,
     notes,
     routines,
+    warning,
     labels,
   } = props;
 
@@ -190,6 +199,11 @@ export function MobileAnalyticsView(
             {labels.title}
           </h2>
         </div>
+        {warning ? (
+          <div className="px-4 pb-2">
+            <NoticePanel tone="warning" role="status" message={warning} />
+          </div>
+        ) : null}
         <AnalyticsEmptyState
           icon={<BarChart3 size={26} />}
           title={labels.emptyMobile.title}
@@ -207,6 +221,9 @@ export function MobileAnalyticsView(
         </h2>
       </div>
       <div className="flex flex-col gap-3 px-4 pb-4 pt-2">
+        {warning ? (
+          <NoticePanel tone="warning" role="status" message={warning} />
+        ) : null}
         {/* Today (highlighted accent card) */}
         <div className="flex flex-col gap-3 rounded-lumen-lg border border-lumen-accent bg-lumen-accent-subtle p-4">
           <span className="text-sm font-semibold text-lumen-accent">
