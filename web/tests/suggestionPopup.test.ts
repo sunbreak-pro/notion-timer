@@ -358,3 +358,113 @@ describe("createSuggestionPopup", () => {
     expect(popup.el.style.top).toBe("626px"); // unchanged by the late resize
   });
 });
+
+/*
+ * The WIDTH cap (#1518).
+ *
+ * The height cap has been here since #471; the width had none, and the "[["
+ * menu is the one that needed it: its rows are sentences ("create a note called
+ * <query> and link it"), so the menu is as wide as the longest of them. On a
+ * 390px screen that measured 445 — placed correctly at the 8px margin and still
+ * drawn to x=453, which put a horizontal scrollbar on the PAGE and cut the last
+ * candidate off inside it. The "/" menu never showed it because its rows are
+ * single words.
+ *
+ * The numbers below are the ones the 2026-09-05 audit measured.
+ */
+describe("placeSuggestionMenu — the width cap (#1518)", () => {
+  /** The "[[" menu with a create-and-link row in it. */
+  const WIDE_MENU = { width: 445, height: 200 };
+
+  it("caps an over-wide menu to the visible area", () => {
+    const placement = placeSuggestionMenu({
+      caret: { top: 100, bottom: 120, left: 8 },
+      menu: WIDE_MENU,
+      visible: PHONE,
+    });
+    expect(placement.maxWidth).toBe(374); // 390 - 8 - 8
+    // What the bug actually was: the placement was right and the WIDTH was not,
+    // so the right edge landed outside the screen anyway.
+    expect(placement.left + placement.maxWidth).toBeLessThanOrEqual(
+      PHONE.right - 8,
+    );
+  });
+
+  it("measures the offset of the visible area, not just its size", () => {
+    // Pinch-scrolled / split view: the band starts at x=40 and is 300 wide.
+    const placement = placeSuggestionMenu({
+      caret: { top: 100, bottom: 120, left: 60 },
+      menu: WIDE_MENU,
+      visible: { top: 0, bottom: 844, left: 40, right: 340 },
+    });
+    expect(placement.maxWidth).toBe(284); // 340 - 40 - 16
+    expect(placement.left).toBe(48); // pulled back to the band's own margin
+  });
+
+  it("pulls an over-wide menu back using the CAPPED width", () => {
+    // With the natural 445 the right limit would be -63 and the menu would be
+    // pinned to the left margin by arithmetic rather than by the cap. Same
+    // answer here, but for a caret further right the two diverge.
+    const placement = placeSuggestionMenu({
+      caret: { top: 100, bottom: 120, left: 300 },
+      menu: WIDE_MENU,
+      visible: PHONE,
+    });
+    expect(placement.left).toBe(8); // 390 - 8 - 374
+  });
+
+  it("leaves a menu that already fits at its own width", () => {
+    const placement = placeSuggestionMenu({
+      caret: { top: 100, bottom: 120, left: 40 },
+      menu: MENU,
+      visible: PHONE,
+    });
+    // The cap is the screen's, so it is looser than the menu — nothing shrinks.
+    expect(placement.maxWidth).toBeGreaterThan(MENU.width);
+    expect(placement.left).toBe(40);
+  });
+
+  it("keeps a floor under the cap", () => {
+    // A 120px band cannot hold a readable candidate. Overhanging it is the
+    // lesser evil, the same bargain MIN_HEIGHT strikes for the scroller.
+    const placement = placeSuggestionMenu({
+      caret: { top: 100, bottom: 120, left: 10 },
+      menu: WIDE_MENU,
+      visible: { top: 0, bottom: 844, left: 0, right: 120 },
+    });
+    expect(placement.maxWidth).toBe(160);
+  });
+});
+
+describe("createSuggestionPopup — the width cap reaches the DOM (#1518)", () => {
+  it("writes the cap onto the container the menu is portalled into", () => {
+    // The menu is rendered into this container by TipTap's ReactRenderer after
+    // the fact, so the container is the only box that exists at placement time
+    // — and the only one that survives every re-render of the menu.
+    const vp = fakeViewport(844); // 390 wide
+    installViewport(vp);
+    vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(445);
+    const popup = createSuggestionPopup(() => {});
+
+    popup.position(() => rect(100, 120, 8));
+    expect(popup.el.style.maxWidth).toBe("374px");
+    expect(popup.el.style.left).toBe("8px");
+    popup.destroy();
+  });
+
+  it("re-caps when the visible area changes under it", () => {
+    // Rotating, or a split view narrowing: a cap written once would leave the
+    // menu at the old screen's width.
+    const vp = fakeViewport(844);
+    installViewport(vp);
+    vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(445);
+    const popup = createSuggestionPopup(() => {});
+    popup.position(() => rect(100, 120, 8));
+    expect(popup.el.style.maxWidth).toBe("374px");
+
+    vp.width = 320;
+    vp.emit("resize");
+    expect(popup.el.style.maxWidth).toBe("304px");
+    popup.destroy();
+  });
+});

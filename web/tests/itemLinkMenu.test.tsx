@@ -167,3 +167,49 @@ describe("ItemLinkMenu row selection", () => {
     expect(screen.getByRole("listbox").style.maxHeight).toBe("174px");
   });
 });
+
+/*
+ * #1518 — the menu is now capped to the screen, so a row that used to widen it
+ * has to fit inside it instead. Which half of a row survives the squeeze is a
+ * per-KIND decision, and that is what these pin.
+ */
+describe("ItemLinkMenu — long rows inside a capped menu (#1518)", () => {
+  function makeItem(
+    id: string,
+    title: string,
+    kind: ItemLinkMenuItem["kind"],
+  ): ItemLinkMenuItem {
+    return { id, title, kind, Icon: Link2, command: vi.fn() };
+  }
+
+  const LONG = "「PWV1409-schedule-2」のノートを作成してリンク";
+
+  it("wraps an action row rather than cutting the verb off it", () => {
+    render(
+      <ItemLinkMenu
+        items={[makeItem("create", LONG, "create")]}
+        command={vi.fn()}
+        emptyLabel="No matches"
+      />,
+    );
+    // An action row says what it DOES at its end, so an ellipsis would leave a
+    // row that names a note and no longer says what pressing it will do.
+    const label = screen.getByText(LONG);
+    expect(label.className).toContain("break-words");
+    expect(label.className).not.toContain("truncate");
+  });
+
+  it("still gives a candidate one line and an ellipsis", () => {
+    render(
+      <ItemLinkMenu
+        items={[makeItem("note-1", "A very long note title indeed", "candidate")]}
+        command={vi.fn()}
+        emptyLabel="No matches"
+      />,
+    );
+    // A note is named at its START — one line identifies it, and a list of
+    // wrapped titles would be a wall rather than a picker.
+    const label = screen.getByText("A very long note title indeed");
+    expect(label.className).toContain("truncate");
+  });
+});
