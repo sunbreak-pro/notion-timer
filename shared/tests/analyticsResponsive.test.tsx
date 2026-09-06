@@ -4,6 +4,8 @@ import { AnalyticsView } from "../src/components/Analytics/AnalyticsView";
 import type { AnalyticsViewProps } from "../src/components/Analytics/AnalyticsView";
 import type { AnalyticsLabels } from "../src/components/Analytics/labels";
 import type { TimerSession } from "../src/types/timer";
+import type { RoutineNode } from "../src/types/routine";
+import type { ScheduleItem } from "../src/types/schedule";
 
 /*
  * AnalyticsView branches on width (design-analytics-v2): Desktop (≥768px, the
@@ -241,5 +243,35 @@ describe("AnalyticsView responsive branch", () => {
     mockMatchMedia(false);
     render(<AnalyticsView {...baseProps()} />);
     expect(screen.getByText("Nothing recorded yet")).toBeInTheDocument();
+  });
+
+  it("Mobile routine rows give the name its own line, not a fixed 96px cell (#1520)", () => {
+    mockMatchMedia(false);
+    const title = "PWV1409-schedule-3";
+    render(
+      <AnalyticsView
+        {...baseProps({
+          routines: [{ id: "r1", title }] as unknown as RoutineNode[],
+          scheduleItems: [
+            { id: "e1", title, routineId: "r1", completed: true },
+            { id: "e2", title, routineId: "r1", completed: false },
+          ] as unknown as ScheduleItem[],
+        })}
+      />,
+    );
+
+    // jsdom has no layout, so "the name gets more than 96px" is not directly
+    // measurable here (CLAUDE.md §7.1). The structural equivalent is: the name
+    // shares its row with the rate ONLY — the progress bar, which used to take
+    // 143px of the 301px row beside it, now sits on the line below — and no
+    // ancestor pins the name to a fixed track.
+    const name = screen.getByText(title);
+    const nameRow = name.parentElement;
+    expect(nameRow?.textContent).toContain("50%");
+    expect(nameRow?.querySelector(".rounded-full")).toBeNull();
+    expect(nameRow?.parentElement?.querySelector(".rounded-full")).not.toBeNull();
+    for (let el: HTMLElement | null = name; el; el = el.parentElement) {
+      expect(el.className).not.toContain("96px");
+    }
   });
 });
