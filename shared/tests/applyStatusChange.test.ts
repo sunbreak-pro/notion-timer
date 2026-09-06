@@ -36,8 +36,16 @@ function setup(nodes: TodoNode[]) {
     vi.fn<(current: TodoNode[], updated: TodoNode[]) => void>();
   const persistSilent = vi.fn<(updated: TodoNode[]) => void>();
   const generateId = (t: TodoNodeType) => `${t}-x`;
+  // Not exercised here (only addNode takes the create-shaped write, #1485).
+  const persistCreateWithHistory = vi.fn();
   const { result } = renderHook(() =>
-    useTodoTreeCRUD(nodes, persistWithHistory, persistSilent, generateId),
+    useTodoTreeCRUD(
+      nodes,
+      persistWithHistory,
+      persistSilent,
+      generateId,
+      persistCreateWithHistory,
+    ),
   );
   return { result, persistWithHistory };
 }

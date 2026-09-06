@@ -142,10 +142,18 @@ export function useTodoTreeAPI(options: UseTodoTreeAPIOptions) {
     }
   }, [ds]);
 
+  // The most recent tree write, settled either way (#1485). `removeFromDb`
+  // queues behind it: the undo of a create can fire while the create's own
+  // upsert is still in flight, and a soft delete that reaches the DB first is
+  // a zero-row UPDATE — PostgREST calls that success, and the insert landing a
+  // moment later puts the todo back with the undo already spent.
+  const lastSyncRef = useRef<Promise<void>>(Promise.resolve());
+
   const syncToDb = useCallback(
     (updated: TodoNode[], onSettled?: PersistSettled) => {
       setPersistError(null);
-      ds.syncTodoTree(updated)
+      lastSyncRef.current = ds
+        .syncTodoTree(updated)
         .then(() => onSettled?.(true))
         .catch((e) => {
           logServiceError("TodoTree", "sync", e);
@@ -158,15 +166,29 @@ export function useTodoTreeAPI(options: UseTodoTreeAPIOptions) {
     [ds],
   );
 
+  // Undo of a create (#1485): the row leaves the DB the way an undone Event
+  // create does (useScheduleItemsCRUD → softDeleteScheduleItem) — a soft
+  // delete, so it is recoverable from Trash and a redo's upsert brings the
+  // same id back with `is_deleted: false`.
+  const removeFromDb = useCallback(
+    (id: string) => {
+      lastSyncRef.current = lastSyncRef.current
+        .then(() => ds.softDeleteTodo(id))
+        .catch((e) => logServiceError("TodoTree", "undoCreate", e));
+    },
+    [ds],
+  );
+
   const {
     persistWithHistory: rawPersistWithHistory,
+    persistCreateWithHistory: rawPersistCreateWithHistory,
     persistSilent: rawPersistSilent,
     undo,
     redo,
     canUndo,
     canRedo,
     clearHistory,
-  } = useTodoTreeHistory(setNodes, syncToDb, undoRedo);
+  } = useTodoTreeHistory(setNodes, syncToDb, undoRedo, removeFromDb);
 
   // The guard drops the write when the tree has not loaded yet (persisting a
   // half-known tree would delete the rows it doesn't know about). That drop is
@@ -186,6 +208,22 @@ export function useTodoTreeAPI(options: UseTodoTreeAPIOptions) {
       rawPersistWithHistory(currentNodes, updated, onSettled, label);
     },
     [rawPersistWithHistory],
+  );
+
+  const guardedPersistCreateWithHistory = useCallback(
+    (
+      currentNodes: TodoNode[],
+      updated: TodoNode[],
+      createdId: string,
+      onSettled?: PersistSettled,
+    ) => {
+      if (!loadedRef.current) {
+        onSettled?.(false);
+        return;
+      }
+      rawPersistCreateWithHistory(currentNodes, updated, createdId, onSettled);
+    },
+    [rawPersistCreateWithHistory],
   );
 
   const guardedPersistSilent = useCallback(
@@ -239,6 +277,7 @@ export function useTodoTreeAPI(options: UseTodoTreeAPIOptions) {
     guardedPersistWithHistory,
     guardedPersistSilent,
     generateTodoId,
+    guardedPersistCreateWithHistory,
   );
   const {
     softDelete: rawSoftDelete,
