@@ -8,6 +8,7 @@ import type { RoutineNode } from "../../types/routine";
 import type { WikiTag, WikiTagAssignment } from "../../types/wikiTagUnified";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { HeaderTabs, type HeaderTab } from "../HeaderTabs";
+import { NoticePanel } from "../NoticePanel";
 import {
   AnalyticsFilterProvider,
   useAnalyticsFilter,
@@ -71,6 +72,13 @@ export interface AnalyticsViewProps {
    * flashing zeros before the data lands.
    */
   initialLoading?: boolean;
+  /**
+   * One already-translated sentence naming the data the host could not read
+   * (#1524), or null when everything answered. Drawn as a warning band above
+   * the dashboard on BOTH widths, because a card showing 0 because its fetch
+   * failed must not look like a card showing 0 because the number is 0.
+   */
+  loadWarning?: string | null;
   notes: NoteNode[];
   routines: RoutineNode[];
   /** Pre-built todoId → display name map (Work tab todo chart). */
@@ -121,6 +129,7 @@ export function AnalyticsView(props: AnalyticsViewProps): React.JSX.Element {
           notes={props.notes}
           routines={props.routines}
           loading={props.initialLoading ?? false}
+          warning={props.loadWarning ?? null}
           labels={props.labels}
         />
       )}
@@ -136,6 +145,7 @@ function DesktopAnalytics({
   scheduleLoading,
   liveEvents,
   initialLoading,
+  loadWarning,
   notes,
   routines,
   todoNameMap,
@@ -210,6 +220,17 @@ function DesktopAnalytics({
           clipped ("0時間33分" → "0時間3…"). */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-lumen-gutter py-4 md:px-lumen-gutter-wide md:py-6">
         <div className="@container mx-auto w-full max-w-lumen-data">
+          {/* Part of the page's state after a load rather than the answer to
+              something the user just did, so the polite live region rather
+              than the assertive one (NoticePanel's own rule). */}
+          {loadWarning ? (
+            <NoticePanel
+              tone="warning"
+              role="status"
+              message={loadWarning}
+              className="mb-4"
+            />
+          ) : null}
           {initialLoading ? (
             <DesktopSkeleton />
           ) : (

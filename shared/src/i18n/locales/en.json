@@ -287,6 +287,7 @@
       "clear": "Clear the link",
       "select": "Choose a todo or an event",
       "clearSelection": "Clear selection",
+      "allDay": "All day",
       "emptyHint": "Nothing to link yet. Add a todo, or an event in the next 7 days."
     },
     "completion": {
@@ -737,6 +738,21 @@
       "tagUsage": {
         "title": "No tagged items in this range",
         "description": "Tag your todos, events and notes and the tags you used will be ranked here."
+      }
+    },
+    "loadFailed": {
+      "message": "Some data could not be loaded ({{sources}}). The numbers below leave it out.",
+      "separator": ", ",
+      "sources": {
+        "sessions": "work sessions",
+        "todos": "todos",
+        "todayEvents": "today's events",
+        "events": "events",
+        "routines": "routines",
+        "notes": "notes",
+        "tags": "tags",
+        "tagAssignments": "tag assignments",
+        "timerSettings": "timer settings"
       }
     },
     "mobile": {

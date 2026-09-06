@@ -30,6 +30,17 @@ export interface WorkTargetOption {
   title: string;
   /** Which column a session started against this option writes to (#1375). */
   kind: "todo" | "event";
+  /**
+   * Second line that tells identically named rows apart (#1519). Events fill
+   * it with their day and start time: a DAILY routine puts one occurrence per
+   * day of the picker's window in this list, so seven rows arrive carrying the
+   * same title and nothing else to choose between. Todos leave it unset — one
+   * todo is one row, so there is nothing to disambiguate.
+   *
+   * The host formats it (§6.4): month/day order is the user's locale, and
+   * these parts never resolve copy themselves.
+   */
+  subtitle?: string;
 }
 
 /** Leading glyph per kind — the only thing that says which list a row is in. */
@@ -132,6 +143,7 @@ export function PomodoroTodoSelector({
                 <MenuItem
                   key={t.id}
                   icon={workTargetIcon(t.kind)}
+                  shortcut={t.subtitle}
                   onSelect={() => {
                     onSelect(t);
                     setOpen(false);

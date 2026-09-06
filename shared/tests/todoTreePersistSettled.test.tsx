@@ -45,9 +45,14 @@ function makeSyncSpy() {
   >();
 }
 
-function renderHistory(syncToDb: SyncSpy, undoRedo: UndoRedoLike) {
-  return renderHook(() => useTodoTreeHistory(vi.fn(), syncToDb, undoRedo))
-    .result;
+function renderHistory(
+  syncToDb: SyncSpy,
+  undoRedo: UndoRedoLike,
+  removeFromDb: (id: string) => void = vi.fn(),
+) {
+  return renderHook(() =>
+    useTodoTreeHistory(vi.fn(), syncToDb, undoRedo, removeFromDb),
+  ).result;
 }
 
 describe("useTodoTreeHistory — the settle callback belongs to one write", () => {
@@ -91,6 +96,42 @@ describe("useTodoTreeHistory — the settle callback belongs to one write", () =
       expect(call[1]).toBeUndefined();
     }
   });
+
+  it("persistCreateWithHistory: undo removes the created row, redo does not", () => {
+    // #1485 — a re-persist of the old list cannot express "this row is gone"
+    // (syncToDb is an upsert), so the create's undo names the row.
+    const syncToDb = makeSyncSpy();
+    const removeFromDb = vi.fn<(id: string) => void>();
+    let pushed: { undo: () => void; redo: () => void } | null = null;
+    const undoRedo: UndoRedoLike = {
+      ...createNoopUndoRedo(),
+      push: (_domain, command) => {
+        pushed = command;
+      },
+    };
+    const result = renderHistory(syncToDb, undoRedo, removeFromDb);
+    const onSettled = vi.fn();
+    act(() =>
+      result.current.persistCreateWithHistory([], [todo("a")], "a", onSettled),
+    );
+    expect(syncToDb).toHaveBeenCalledWith([todo("a")], onSettled);
+    expect(removeFromDb).not.toHaveBeenCalled();
+    syncToDb.mockClear();
+
+    const command = pushed as unknown as { undo: () => void; redo: () => void };
+    act(() => command.undo());
+    // The siblings' pre-create order goes back first, then the row itself.
+    expect(syncToDb).toHaveBeenCalledWith([]);
+    expect(removeFromDb).toHaveBeenCalledWith("a");
+
+    act(() => command.redo());
+    expect(syncToDb).toHaveBeenLastCalledWith([todo("a")]);
+    expect(removeFromDb).toHaveBeenCalledTimes(1);
+    // The settle callback belongs to the first write only, as above.
+    for (const call of syncToDb.mock.calls) {
+      expect(call[1]).toBeUndefined();
+    }
+  });
 });
 
 describe("useTodoTreeCRUD.addNode — onSaved reports the row, not the draft", () => {
@@ -105,19 +146,37 @@ describe("useTodoTreeCRUD.addNode — onSaved reports the row, not the draft", (
       >();
     const persistSilent =
       vi.fn<(updated: TodoNode[], onSettled?: (ok: boolean) => void) => void>();
+    // #1485: addNode's history write is the create-shaped one, whose undo
+    // also takes the row out of the DB. Same settle-callback contract.
+    const persistCreateWithHistory =
+      vi.fn<
+        (
+          current: TodoNode[],
+          updated: TodoNode[],
+          createdId: string,
+          onSettled?: (ok: boolean) => void,
+        ) => void
+      >();
     const { result } = renderHook(() =>
       useTodoTreeCRUD(
         [],
         persistWithHistory,
         persistSilent,
         (type) => `${type}-fixed`,
+        persistCreateWithHistory,
       ),
     );
-    return { result, persistWithHistory, persistSilent };
+    return {
+      result,
+      persistWithHistory,
+      persistSilent,
+      persistCreateWithHistory,
+    };
   }
 
   it("passes the new node once the sync reports success", () => {
-    const { result, persistWithHistory } = renderCRUD();
+    const { result, persistWithHistory, persistCreateWithHistory } =
+      renderCRUD();
     const onSaved = vi.fn();
     let created: TodoNode | undefined;
     act(() => {
@@ -127,19 +186,23 @@ describe("useTodoTreeCRUD.addNode — onSaved reports the row, not the draft", (
     });
     // Nothing yet — the write is still in flight.
     expect(onSaved).not.toHaveBeenCalled();
+    // The create goes through the create-shaped write, and names its own id
+    // so the undo can remove exactly that row (#1485).
+    expect(persistWithHistory).not.toHaveBeenCalled();
+    expect(persistCreateWithHistory.mock.calls[0][2]).toBe("task-fixed");
 
-    const settle = persistWithHistory.mock.calls[0][2];
+    const settle = persistCreateWithHistory.mock.calls[0][3];
     act(() => settle?.(true));
     expect(onSaved).toHaveBeenCalledWith(created);
   });
 
   it("passes null when the sync fails, so nothing is written against the row", () => {
-    const { result, persistWithHistory } = renderCRUD();
+    const { result, persistCreateWithHistory } = renderCRUD();
     const onSaved = vi.fn();
     act(() => {
       result.current.addNode("task", null, "Write the deck", { onSaved });
     });
-    const settle = persistWithHistory.mock.calls[0][2];
+    const settle = persistCreateWithHistory.mock.calls[0][3];
     act(() => settle?.(false));
     expect(onSaved).toHaveBeenCalledWith(null);
   });
@@ -161,10 +224,10 @@ describe("useTodoTreeCRUD.addNode — onSaved reports the row, not the draft", (
   it("adds no callback at all when the caller wants none", () => {
     // The plumbing must stay invisible to the many callers that just add a
     // todo — an always-present wrapper would make every write look chained.
-    const { result, persistWithHistory } = renderCRUD();
+    const { result, persistCreateWithHistory } = renderCRUD();
     act(() => {
       result.current.addNode("task", null, "Plain add");
     });
-    expect(persistWithHistory.mock.calls[0][2]).toBeUndefined();
+    expect(persistCreateWithHistory.mock.calls[0][3]).toBeUndefined();
   });
 });

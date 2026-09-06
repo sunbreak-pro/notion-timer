@@ -520,9 +520,19 @@ export function BriefingView({
 
       {/* ── Masthead — the title and the focus line below deliberately keep
           the newspaper serif (#269) regardless of the Settings font; body
-          copy follows the global preference (#556) ────────────────── */}
+          copy follows the global preference (#556).
+
+          `break-keep` because the nameplate reads 「LIFE EDITOR 朝刊」and CJK
+          text may wrap between ANY two characters by default. At 390px the
+          line ran out one glyph early and the paper printed 「LIFE EDITOR 夕」
+          over 「刊」— a two-character word cut in half (#1513). keep-all
+          removes those inter-character break points, leaving the space before
+          the paper's name as the only one, so a narrow screen gets
+          「LIFE EDITOR」over 「朝刊」and a wide screen is untouched. The
+          English nameplate ("LIFE EDITOR BRIEFING") already broke at spaces
+          only, so en sees no change. ────────────────────────────── */}
       <header className="border-b-4 border-double border-lumen-border-strong pb-4 pt-6 text-center">
-        <h2 className="font-serif text-2xl font-semibold tracking-[0.3em] text-lumen-text">
+        <h2 className="break-keep font-serif text-2xl font-semibold tracking-[0.3em] text-lumen-text">
           {labels.masthead}
         </h2>
         <p className="mt-2 text-xs tracking-[0.2em] text-lumen-text-secondary">

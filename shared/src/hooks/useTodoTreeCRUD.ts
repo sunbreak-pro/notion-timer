@@ -45,6 +45,18 @@ export function useTodoTreeCRUD(
   ) => void,
   persistSilent: (updated: TodoNode[], onSettled?: PersistSettled) => void,
   generateId: (type: TodoNodeType) => string,
+  /**
+   * The create-shaped history write (#1485): its undo removes the named row
+   * from the DB as well as from the list. `addNode` is the only caller — the
+   * one write whose reversal is an absence, which a re-persist of the old
+   * list cannot express (see useTodoTreeHistory.persistCreateWithHistory).
+   */
+  persistCreateWithHistory: (
+    currentNodes: TodoNode[],
+    updated: TodoNode[],
+    createdId: string,
+    onSettled?: PersistSettled,
+  ) => void,
 ) {
   const addNode = useCallback(
     (
@@ -88,11 +100,16 @@ export function useTodoTreeCRUD(
       if (options?.skipUndo) {
         persistSilent([...updatedNodes, newNode], onSettled);
       } else {
-        persistWithHistory(nodes, [...updatedNodes, newNode], onSettled);
+        persistCreateWithHistory(
+          nodes,
+          [...updatedNodes, newNode],
+          newNode.id,
+          onSettled,
+        );
       }
       return newNode;
     },
-    [nodes, persistWithHistory, persistSilent, generateId],
+    [nodes, persistCreateWithHistory, persistSilent, generateId],
   );
 
   const updateNode = useCallback(

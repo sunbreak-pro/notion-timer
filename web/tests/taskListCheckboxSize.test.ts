@@ -121,3 +121,75 @@ describe("the Materials task-list checkbox keeps its size (#1183 / #1368)", () =
     expect(forced).toMatch(/background-color:\s*Highlight/);
   });
 });
+
+/*
+ * The TOUCH target, below the app's 768px breakpoint (#1523).
+ *
+ * The audit's measurement was `label` 20 x 25.6 against the paper's 49.5 and
+ * the Schedule tray's 50 — the same todo, three sizes, and the smallest one on
+ * the surface with the least precise pointer. Source text again: jsdom has no
+ * layout, so a rendered label measures 0 x 0 whatever the rule says.
+ *
+ * Every number below is derived from `TOUCH_TARGET_PX` rather than written out,
+ * so the floor moves in one place if it ever moves.
+ */
+describe("the Materials task-list checkbox is thumb-sized on narrow (#1523)", () => {
+  /** The touch floor from mobile-scope.md, in px. */
+  const TOUCH_TARGET_PX = 44;
+  const rem = (px: number) => `${px / 16}rem`;
+  const AREA = '  .note-editor .ProseMirror ul[data-type="taskList"] li > label::before {';
+
+  /**
+   * The narrow-width block the touch rules live in — found FROM those rules
+   * rather than from the first `@media (max-width: 767px)` in the file, which
+   * is the mobile font floor and has nothing to do with this.
+   */
+  function narrow(): string {
+    const inner = indexCss.indexOf(AREA);
+    expect(inner, "no narrow-width task-list rules").toBeGreaterThan(-1);
+    // Not `pointer: coarse`: the app's own convention is the 768px WIDTH
+    // breakpoint (ItemLinkMenu's `max-md:min-h-11`), and the audit that found
+    // this ran a desktop browser resized to 390px — which reports a fine
+    // pointer and would have seen no change at all under a pointer query.
+    const start = indexCss.lastIndexOf("@media (max-width: 767px) {", inner);
+    expect(
+      start,
+      "the touch rules are outside the 768px breakpoint",
+    ).toBeGreaterThan(-1);
+    return indexCss.slice(start, indexCss.indexOf("\n}", start));
+  }
+
+  it("gives the row the room, so two areas cannot overlap", () => {
+    // Without this the 44px areas of consecutive items would reach into each
+    // other and a tap near the boundary would toggle the wrong todo.
+    const row = block(
+      '  .note-editor .ProseMirror ul[data-type="taskList"] li {',
+      "\n  }",
+    );
+    expect(row).toContain(`min-height: ${rem(TOUCH_TARGET_PX)}`);
+  });
+
+  it("puts the area on the label rather than making the label taller", () => {
+    // A taller label would re-centre the box inside it and drop it off the
+    // first line of its own text (#883). A pseudo-element leaves the 1.6em
+    // line box — and therefore the alignment — exactly as it was.
+    const rule = block(AREA, "\n  }");
+    expect(rule).toMatch(/position: absolute/);
+    expect(rule).toContain(`height: ${rem(TOUCH_TARGET_PX)}`);
+    // Centred on the box it belongs to, not hung off its top edge.
+    expect(rule).toMatch(/top: 50%/);
+    expect(rule).toMatch(/transform: translateY\(-50%\)/);
+  });
+
+  it("keeps the area inside the checkbox's own column", () => {
+    // The pseudo-element spans the label's width, so widening the label is what
+    // stops the area covering the first characters of the text beside it.
+    expect(narrow()).toContain(`min-width: ${rem(TOUCH_TARGET_PX)}`);
+  });
+
+  it("leaves the drawn box the size the shared control draws", () => {
+    // Only the TARGET grows. A 44px mark would be a different checkbox from the
+    // one the paper and the tray draw, which is the opposite of #1368.
+    expect(narrow()).not.toMatch(/--todo-checkbox-size/);
+  });
+});

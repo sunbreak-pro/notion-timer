@@ -349,6 +349,54 @@ body {
 }
 
 /*
+ * Touch sizing for the box, below the app's single 768px breakpoint (#1523).
+ *
+ * The rule above keeps a 20px target at every width, on the grounds that a
+ * 44px one would reach into the lines above and below and swallow clicks meant
+ * to put the caret there. That reasoning holds for a MOUSE and stops holding
+ * for a finger: at 390px wide this was a 20x25.6 target sitting next to the
+ * paper's 49.5px rows and the Schedule tray's 50px ones — the same todo at
+ * three sizes, with the smallest of them on the surface whose pointer is the
+ * least precise.
+ *
+ * So the target grows where it is needed, and the row is GIVEN the room rather
+ * than the target stealing it:
+ *
+ *   - `min-height` on the item makes two consecutive 44px areas sit edge to
+ *     edge instead of overlapping, so a tap near the boundary cannot land on
+ *     the neighbouring todo.
+ *   - The area is a pseudo-element on the label, not a taller label: the label
+ *     keeps its 1.6em line box, which is what centres the box on the first
+ *     line of its own text (#883). Growing the label itself would drop the box
+ *     about 3px below that line.
+ *   - `min-width` widens the label to the same 44px, so the area is the
+ *     checkbox's own column and never covers the text beside it.
+ *
+ * 44px is the touch floor from mobile-scope.md — the same one ItemLinkMenu
+ * applies to its rows with `max-md:min-h-11`, at the same breakpoint. This is
+ * that convention in CSS, not a new one.
+ */
+@media (max-width: 767px) {
+  .note-editor .ProseMirror ul[data-type="taskList"] li {
+    min-height: 2.75rem;
+  }
+  .note-editor .ProseMirror ul[data-type="taskList"] li > label {
+    position: relative;
+    min-width: 2.75rem;
+    justify-content: center;
+  }
+  .note-editor .ProseMirror ul[data-type="taskList"] li > label::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2.75rem;
+    transform: translateY(-50%);
+  }
+}
+
+/*
  * Daily card variant (F-1 #258): the editor fills the card body and the whole
  * area is clickable-to-focus (the old textarea behaviour). EditorContent
  * renders a wrapper div around .ProseMirror — stretch both with flex.

@@ -137,3 +137,20 @@ Issue #182（Today カード metrics の折返し）を実測し、#180 の幅 c
 - **追修正**: `TodayDashboard.tsx` の入れ子 3 列 grid（MiniStat）を廃止し、`SummaryRow.tsx`（新規・ラベル左/値右の全幅行）へ変更。`WeeklySummary.tsx` の private SummaryRow も同ファイルへ共通化（マークアップ等価・見た目不変）
 - **再検証**: Sign up 使い捨てアカウント（established practice）で実画面 PASS — Today カード縦積み 3 行・折返し/重なりなし・#181 のタブ帯左端 x=294 が schedule/materials と一致・6 セクション巡回 console error 0。harness で ja ストレス値も 324px/258px 両カード幅で 1 行
 - **品質ゲート**: shared build/test（768 全通過・並走負荷時のみ flaky）・web build・role-qa PASS（Blocker 0）
+
+### 2026-07-28 - Analytics 4 件の連続処理（#420 / #428 / #429 / #430）
+
+#### 概要
+
+open-issue fan-out（`plans/2026-07-28-open-issue-fanout.md`）で本レーンに割り当てられた 4 件を順に処理。Issue ごとに `origin/main` からブランチを切り直し、PR #437 / #440 / #442 / #445 として merge。独立監査（role-qa）の指摘を追随 PR #449 で回収した。
+
+#### 変更点
+
+- **#420 完了日の UTC / ローカル暦日ズレ（PR #437）**: `completedAt` は `toISOString()` の UTC 文字列なのに、Analytics のバケットは全部ローカル暦日キー（#356）。消費側 5 箇所が `completedAt.substring(0, 10)` で UTC 日を読んでいたため、**JST では 09:00 前に完了したタスクが前日に計上されて「今日」から消えていた**。全 5 箇所（`TodayDashboard` / `WeeklySummary` / `MobileAnalyticsView` ×2 / `analyticsAggregation.aggregateTaskCompletionTrend`）を `dateKeyOfInstant()` + null ガードへ。**過去データの見え方が変わる**（再集計なので DB 変更なし）旨を PR 本文に明記。新規テスト `analyticsCompletedDayKey.test.tsx`
+- **#428 タグ別作業時間が trash 済みタスクを含む（PR #440）**: 仕様判断が先だったので、**案 1（trash 除外）を採用**して Issue コメントに根拠を残した。#365 の副作用ではなく **#365 のやり残し半分**（#365 自身の JSDoc がそう書いていた）で、`fetchTaskTree` と Connect の `buildGraphModel` がすでに除外側に揃っている。`aggregateWorkTimeByTag` に `liveTasks: TaskNode[]` を**必須引数**で追加（省略可にすると旧挙動が黙って戻るため）、`TagWorkTimeChart` / `TasksTab` に `nodes` prop を通した
+- **#429 `aggregateTagByEntityType` の退役（PR #442）**: 呼び出し元ゼロを grep 全数実測してから撤去。統合後の `WikiTagAssignment` に `entityType` が無く、**呼ぶと黙って全ゼロを返す**状態だった。関数・`TagEntityTypeBucket` 型・legacy 型 import・専用テスト suite をまとめて撤去し、退役理由をブロックコメントで残置
+- **#430 `[[` 候補フェッチの遅延化（PR #445）**: 従来は sync のたびに全候補（task / event / note の 3 role）を先読みしていた。`useItemLinkTargets` を React state 無しの ref 専用に書き換え、`loadTargets({ allowStale })` を `@tiptap/suggestion` の `items()`（Promise 可・プラグインが await する）から呼ぶ形に。**`[[` を打つまでフェッチが走らず、メニュー表示中は `allowStale` でキーストロークごとの再取得も起きない**。3 role + `balanceByRole` の配分はそのまま
+- **独立監査の追随（PR #449）**: (1) **#420 のテストが CI では絶対に落ちない**（`.github/workflows/ci.yml` は ubuntu = UTC でローカル日 == UTC 日）→ `shared/vitest.config.ts` に `test.env.TZ = "Asia/Tokyo"` を固定。効くことは一時 probe テストで実測（TZ:"UTC" で offset 0、Asia/Tokyo で −540）。(2) **`createdAt` の同型 2 箇所を取りこぼし**（`OverviewTab.tsx:88` / `MobileAnalyticsView.tsx:130` の「今週のノート」）→ 修正 + テスト追加 + 片方を revert して該当 1 件だけ落ちることを確認。(3) #428 の JSDoc が実態より狭い（除外されるのは purge 済み行だけでなく R2 孤児・legacy folder 行も）→ 文面修正。(4) `s.taskId !== null` と次行の truthy 参照の非対称 → `if (s.taskId && ...)` へ
+- **web 側の監査で潰した 2 件（PR #445 に同梱）**: `items()` が async になった副作用で、**`view.update` の中断中に別 update が exit 経路を完走すると、再開した `onStart` が誰も閉じないポップアップを出す**（ゾンビメニュー）→ プラグイン state の `active` を見てから開くガードを追加。もう 1 件は `inFlightRef` が生の fetch promise を持っていて相乗りした呼び出し側に reject が漏れる件 → settled 済みの形を保持するよう変更
+- **検証**: `cd shared && npm run test`（150 files / 1225 tests）・`shared` / `web` の build いずれも exit 0。実ブラウザ確認は chat-main 側の担当
+- **outbox 起票依頼 1 件**: legacy `WikiTagAssignment` / `WikiTagEntityType` が #429 で宣言のみになったため、DU-F の legacy タグ API 退役とまとめて掃除してほしい旨を append（PR #445 に同梱して main に着地済み）

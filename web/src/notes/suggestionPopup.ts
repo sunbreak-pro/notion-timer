@@ -48,6 +48,13 @@ export interface SuggestionMenuPlacement {
   left: number;
   /** Cap for the menu's own scroller so it never exceeds the visible area. */
   maxHeight: number;
+  /**
+   * Cap for the menu's own WIDTH, for the same reason (#1518). A menu is sized
+   * by its widest row, and the "[[" one has rows as long as a sentence — 445px
+   * for "create a note called X and link it" on a 390px phone, which ran off
+   * the right of the screen and gave the whole PAGE a horizontal scrollbar.
+   */
+  maxWidth: number;
   side: "below" | "above";
 }
 
@@ -68,6 +75,12 @@ const MIN_HEIGHT = 96;
  * change is not supposed to touch: the cap may only ever tighten.
  */
 const DESIGN_MAX_HEIGHT = 288;
+/**
+ * Floor for the width cap — the same bargain MIN_HEIGHT strikes. Below this a
+ * menu is too narrow to read a candidate in, and overhanging a screen that
+ * narrow is the lesser evil.
+ */
+const MIN_WIDTH = 160;
 
 /**
  * Where to put a suggestion menu of `menu` size for a caret at `caret`, given
@@ -106,15 +119,24 @@ export function placeSuggestionMenu({
     Math.min(rawTop, visible.bottom - EDGE - height),
   );
 
-  // Horizontal: start at the caret, then pull back so the whole menu fits. The
-  // left edge wins ties — on a narrow screen a menu wider than the viewport
-  // should overflow to the right, where it can still be scrolled to, not off
-  // the left where it cannot.
-  const rightLimit = visible.right - EDGE - menu.width;
+  // Horizontal: cap the width to the visible area first, then start at the caret
+  // and pull back so the whole menu fits. The cap is what #1518 added — before
+  // it a 445px menu on a 390px screen was merely PLACED at the left margin and
+  // still drawn at its natural width, so its right edge sat at 453 and the
+  // document grew a horizontal scrollbar with the last candidate cut off in it.
+  const maxWidth = Math.max(MIN_WIDTH, visible.right - visible.left - EDGE * 2);
+  // The width the menu will actually occupy once capped. The offset below has to
+  // be computed from THIS, not from the natural width, or an over-wide menu
+  // would be pulled left by a gap it no longer has.
+  const width = Math.min(menu.width, maxWidth);
+  // The left edge wins ties — on a screen too narrow even for the floor above, a
+  // menu should overflow to the right, where it can still be scrolled to, not
+  // off the left where it cannot.
+  const rightLimit = visible.right - EDGE - width;
   const leftLimit = visible.left + EDGE;
   const left = Math.max(leftLimit, Math.min(caret.left, rightLimit));
 
-  return { top, left, maxHeight, side };
+  return { top, left, maxHeight, maxWidth, side };
 }
 
 /** Read the visible area from `visualViewport`, falling back to the window. */
@@ -199,6 +221,12 @@ export function createSuggestionPopup(
     });
     el.style.left = `${placement.left + window.scrollX}px`;
     el.style.top = `${placement.top + window.scrollY}px`;
+    // Written every pass, and written to the CONTAINER rather than to the menu
+    // (#1518): the menu is portalled in here by ReactRenderer, so this is the
+    // one box that exists before it and outlives every re-render of it. The
+    // ResizeObserver below turns the resulting shrink into one more pass, which
+    // computes the same numbers and settles.
+    el.style.maxWidth = `${placement.maxWidth}px`;
     el.style.visibility = "visible";
     // Only on a real change: this runs on every keystroke while the menu is
     // open, and the cap is a React prop — re-sending the same number would

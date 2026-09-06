@@ -1,10 +1,26 @@
 # HISTORY (chat-work-refine)
 
+### 2026-09-06 - #1519 選択シートの予定行に日付を付けて発生分を区別できるようにした
+
+#### 概要
+
+集中の「Todo か予定を選ぶ」に、毎日の繰り返し予定が同名で 7 行並んでいた（#1409 の Mobile 幅点検で発覚）。行にタイトルしか無いので、どの日の発生分に時間を紐づけるのか選びようがない。ウィンドウを今日だけに絞る案もあったが、**7 日は「明日の予定に今から着手する」ための設計**（#1375 のコメントが根拠）なので、絞らず行の側に日付を足した。PR #1539 open（Closes #1519・merge = 人手 P-001）。
+
+#### 変更点
+
+- **`shared/src/components/PomodoroTodoSelector.tsx`**: `WorkTargetOption` に `subtitle?: string` を追加し、Desktop のドロップダウンでは既存の `MenuItem` の末尾スロット（`shortcut`）へ流す。新しい枠は作っていない
+- **`shared/src/components/PomodoroTodoSheet.tsx`**: subtitle がある行だけ 2 行構成に。390px ではタイトルの横に置く余地が無いため、Desktop と描き分けている
+- **`web/src/work/WorkScreen.tsx`**: subtitle の組み立てはホスト側（§6.4 — 部品は copy も locale も解決しない）。`formatShortDate`（`web/src/schedule/scheduleCopy.ts`）を再利用して `9/6 07:00` の形にし、終日は時刻の代わりに `work.todoSelector.allDay`。DB 上の `00:00` をそのまま出さないための分岐
+- **i18n**: `work.todoSelector.allDay` を en / ja 両方に追加（`briefing.allDay` / `scheduleScreen.allDay` が既にあるが、セクションごとに持つ既存の慣習に合わせた）
+- **テスト**: `web/tests/workScreenLayout.test.tsx` に 2 件（Mobile シートで 3 発生分がカレンダー順に別々の日付を出す / Desktop メニューでも同じ日付が出て Todo は 1 行のまま）。両テストの `useTranslation` mock に `i18n.language: "en"` を足した — 月日の順が機械の locale で揺れないようにするため
+- **検証**: CI `verify` のステップ列をローカル全通し — shared 2973 / web 1077 / desktop / mcp-server、`docs-lint` 含めすべて exit 0。途中 1 回 shared の worker 起動タイムアウト 12 件と `briefingEveningLazyMount` 1 件が出たが、いずれも既知の環境要因で静かな状態の再実行は緑
+- **未検証**: 実ブラウザ確認は worktree では回さない規約（§7.4）。merge 後 chat-main の宿題
+
 ### 2026-09-05 - #1475 中断したタイマーセッションが分析に混ざるのを止めた
 
 #### 概要
 
-集中タイマーを開始してすぐ止めると `timer_sessions` に「12 秒・未完了」の行が残り、分析の Todo 別作業時間と週間比較のセッション数に混ざっていた（#1408 の実ブラウザ点検で発覚・実測 id 18 / 19）。**書いているのは reset ではなく pause** だと判明したため、書き込み側ではなく読み取り側の単一判定で塞いだ。PR #1505 open（Closes #1475・merge = 人手 P-001）。
+集中タイマーを開始してすぐ止めると `timer_sessions` に「12 秒・未完了」の行が残り、分析の Todo 別作業時間と週間比較のセッション数に混ざっていた（#1408 の実ブラウザ点検で発覚・実測 id 18 / 19）。**書いているのは reset ではなく pause** だと判明したため、書き込み側ではなく読み取り側の単一判定で塞いだ。PR #1505 merged（Closes #1475）。
 
 #### 変更点
 

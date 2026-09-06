@@ -1,5 +1,33 @@
 # HISTORY (chat-analytics-refine)
 
+### 2026-09-06 - Analytics の Mobile 点検 2 件を 2 本の PR に（#1520 / #1524）
+
+#### 概要
+
+#1409 の Mobile 幅（390×844）画面点検で analytics に出た 2 件を、それぞれ origin/main から切った独立ブランチで直して PR にした。1 Issue = 1 ブランチ = 1 PR で、merge はユーザーの手番（P-001）。
+
+#### 変更点
+
+- **#1520（PR #1531）Mobile のルーチン名が 96px 固定で省略される**: 「ルーチン達成率（上位 3 件）」の行は名前・バー・パーセントを `grid-cols-[96px_1fr_40px]` で並べていた。301px の行のうち名前が 96px しか取れない一方でバーが 143px を占め、実測 139px の `PWV1409-schedule-3` が `PWV1409-sc…` に切られていた — 行の中で唯一「他から推測できない情報」がいちばん狭い枠に入っていた。バーを下段に落として上段を「名前 + パーセント」の 2 要素にし、名前がパーセント chip 以外の全部（390px 幅で約 255px）を使えるようにした。`truncate` は極端に長い名前用の保険として残置（行の高さを 1 行に保つため）
+- **#1524（PR #1533）集計の 1 系統の失敗で全カードが 0 になる**: `AnalyticsScreen` の 9 本のマウント読み取りが `Promise.all` で束ねられていたため、最初の 1 本が落ちた時点で残り 8 本の答えが捨てられ、画面は全項目 0 の `EMPTY` に落ちていた。2026-09-05 に migration 0029（`timer_sessions.event_id`）未適用で `fetchTimerSessions` が 400 を返し、Todo もイベントもノートも「0 件」と表示された件がこれ。`Promise.allSettled` に置き換え、系統ごとに自分の空値へフォールバック → 失敗した系統だけを名前で集め → ホストが i18n した 1 文に組み立て → `AnalyticsView` が既存 `NoticePanel`（tone=warning / role=status）でダッシュボード上部に描く。原因そのものは帯に出さず `logServiceError` で console に残す
+
+#### 設計判断
+
+- **警告帯は Mobile の空状態の「上」にも出す**: 全滅すると全リストが空になるので、`MobileAnalyticsView` の `isEmpty` 分岐が「まだ記録がありません」と言い切ってしまう。これが #1524 の嘘としては最も大きいので、空状態の分岐にも帯を通した
+- **部分成功は `useDomainLoad` にとっては成功のまま**にした。答えた系統は画面に出すべきなので。副作用として snapshot に部分結果が入り、次回マウントで自分の読み取りが返るまで帯ごと再生されるが、これは snapshot が元から受け入れている stale さで、0 を並べ直すよりは正確
+- **i18n の系統名は `TranslationKey` 型で守る**: `SOURCE_LABEL_KEY` は定数に持って `t` へ変数で渡すため、`shared/tests/i18nKeys.test.ts` の実行時スキャン（リテラル `t("...")` しか見ない）の外に出る。代わりに #726 の `TranslationKey` で定義箇所で型検査される
+
+#### つまずき
+
+- **ファイル書き換えを quoted heredoc + node でやるとき、テンプレートリテラルのバッククォートをエスケープしてはいけない**: `'EOF'` の heredoc はシェル展開をしないので `\`` はバックスラッシュ + バッククォートのまま JS に渡り、マーカー照合が黙って外れる。「MARKER NOT FOUND」で 1 往復無駄にした
+- **この repo の `.tsx` / `.json` は CRLF**。LF のまま差し込むと 1 ファイル内で改行コードが混在する（`core.autocrlf=true` なので commit 後は揃うが、作業コピーが汚れる）。読み書きの前後で `\r\n` ↔ `\n` を正規化する
+- **`docs-lint` が 4 分かかることがある**。前回は 2 分未満だったので、遅いだけかハングかの判別のためログのタイムスタンプを見る
+
+#### 検証
+
+2 ブランチとも `.github/workflows/ci.yml` の `verify` ジョブを上から全ステップ（shared → web → desktop → mcp-server）+ `docs-lint` をローカル実行し、15 本すべて exit 0（shared 295 files 2973 tests / web 115 files 1079 tests）。ゲートを束ねるラッパーは CLAUDE.md §7.1 の罠を避けて、出力を先にファイルへ取り `$?` を見てから表示する形にした（`( npm run X | tail )` だと `tail` の終了コードが返って常に緑になる）。新規 web suite は単体でも 4 tests 緑を実測。実ブラウザ確認は worktree では回さない規約のため chat-main 側。
+
+
 ### 2026-09-05 - Analytics の実ブラウザ点検 5 件を 5 本の PR に（#1476〜#1480）
 
 #### 概要
@@ -81,20 +109,3 @@
 - **潰した穴 1 件**: mobile の `hasNotes` は検索後の値なので、ヒット 0 件でヘッダごと消えて**検索ボックスに触れなくなる**（＝入力を消せない）。`hasNotes || searchActive` に変更。デスクトップは検索欄を無条件描画なので元から安全
 - **テスト**: `dailyListView.test.ts` を mode 対応に全面改訂（fixture は date / createdAt / updatedAt の 3 軸をわざと食い違わせ、モード取り違えでは通らない形にした）。`soloTagGroup.test.ts` 新設（stale フォールバックと sentinel リテラルの固定）。`statusFilterChips.test.tsx` に sm variant の選択 contract を追加。**mutation check 実施** — `sortKeyOf` から timestamp 分岐を落とすと新規 4 件がちょうど落ちることを確認
 - **検証**: `cd shared && npm run test`（154 files / 1273 tests）・`shared` / `web` の build・`web` の lint すべて exit 0
-
-### 2026-07-28 - Analytics 4 件の連続処理（#420 / #428 / #429 / #430）
-
-#### 概要
-
-open-issue fan-out（`plans/2026-07-28-open-issue-fanout.md`）で本レーンに割り当てられた 4 件を順に処理。Issue ごとに `origin/main` からブランチを切り直し、PR #437 / #440 / #442 / #445 として merge。独立監査（role-qa）の指摘を追随 PR #449 で回収した。
-
-#### 変更点
-
-- **#420 完了日の UTC / ローカル暦日ズレ（PR #437）**: `completedAt` は `toISOString()` の UTC 文字列なのに、Analytics のバケットは全部ローカル暦日キー（#356）。消費側 5 箇所が `completedAt.substring(0, 10)` で UTC 日を読んでいたため、**JST では 09:00 前に完了したタスクが前日に計上されて「今日」から消えていた**。全 5 箇所（`TodayDashboard` / `WeeklySummary` / `MobileAnalyticsView` ×2 / `analyticsAggregation.aggregateTaskCompletionTrend`）を `dateKeyOfInstant()` + null ガードへ。**過去データの見え方が変わる**（再集計なので DB 変更なし）旨を PR 本文に明記。新規テスト `analyticsCompletedDayKey.test.tsx`
-- **#428 タグ別作業時間が trash 済みタスクを含む（PR #440）**: 仕様判断が先だったので、**案 1（trash 除外）を採用**して Issue コメントに根拠を残した。#365 の副作用ではなく **#365 のやり残し半分**（#365 自身の JSDoc がそう書いていた）で、`fetchTaskTree` と Connect の `buildGraphModel` がすでに除外側に揃っている。`aggregateWorkTimeByTag` に `liveTasks: TaskNode[]` を**必須引数**で追加（省略可にすると旧挙動が黙って戻るため）、`TagWorkTimeChart` / `TasksTab` に `nodes` prop を通した
-- **#429 `aggregateTagByEntityType` の退役（PR #442）**: 呼び出し元ゼロを grep 全数実測してから撤去。統合後の `WikiTagAssignment` に `entityType` が無く、**呼ぶと黙って全ゼロを返す**状態だった。関数・`TagEntityTypeBucket` 型・legacy 型 import・専用テスト suite をまとめて撤去し、退役理由をブロックコメントで残置
-- **#430 `[[` 候補フェッチの遅延化（PR #445）**: 従来は sync のたびに全候補（task / event / note の 3 role）を先読みしていた。`useItemLinkTargets` を React state 無しの ref 専用に書き換え、`loadTargets({ allowStale })` を `@tiptap/suggestion` の `items()`（Promise 可・プラグインが await する）から呼ぶ形に。**`[[` を打つまでフェッチが走らず、メニュー表示中は `allowStale` でキーストロークごとの再取得も起きない**。3 role + `balanceByRole` の配分はそのまま
-- **独立監査の追随（PR #449）**: (1) **#420 のテストが CI では絶対に落ちない**（`.github/workflows/ci.yml` は ubuntu = UTC でローカル日 == UTC 日）→ `shared/vitest.config.ts` に `test.env.TZ = "Asia/Tokyo"` を固定。効くことは一時 probe テストで実測（TZ:"UTC" で offset 0、Asia/Tokyo で −540）。(2) **`createdAt` の同型 2 箇所を取りこぼし**（`OverviewTab.tsx:88` / `MobileAnalyticsView.tsx:130` の「今週のノート」）→ 修正 + テスト追加 + 片方を revert して該当 1 件だけ落ちることを確認。(3) #428 の JSDoc が実態より狭い（除外されるのは purge 済み行だけでなく R2 孤児・legacy folder 行も）→ 文面修正。(4) `s.taskId !== null` と次行の truthy 参照の非対称 → `if (s.taskId && ...)` へ
-- **web 側の監査で潰した 2 件（PR #445 に同梱）**: `items()` が async になった副作用で、**`view.update` の中断中に別 update が exit 経路を完走すると、再開した `onStart` が誰も閉じないポップアップを出す**（ゾンビメニュー）→ プラグイン state の `active` を見てから開くガードを追加。もう 1 件は `inFlightRef` が生の fetch promise を持っていて相乗りした呼び出し側に reject が漏れる件 → settled 済みの形を保持するよう変更
-- **検証**: `cd shared && npm run test`（150 files / 1225 tests）・`shared` / `web` の build いずれも exit 0。実ブラウザ確認は chat-main 側の担当
-- **outbox 起票依頼 1 件**: legacy `WikiTagAssignment` / `WikiTagEntityType` が #429 で宣言のみになったため、DU-F の legacy タグ API 退役とまとめて掃除してほしい旨を append（PR #445 に同梱して main に着地済み）

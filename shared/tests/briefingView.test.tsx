@@ -1210,3 +1210,28 @@ describe("Narrow rows fit: icon-only actions, nothing overhanging (#1514)", () =
     expect(add.className).not.toContain("-mr-");
   });
 });
+
+/*
+ * #1513 — the nameplate reads 「LIFE EDITOR 朝刊」in ja, and CJK text may wrap
+ * between any two characters unless a rule forbids it, so at 390px the paper
+ * printed 「LIFE EDITOR 夕」over 「刊」— one word split down the middle.
+ *
+ * jsdom has no layout (CLAUDE.md §7.1), so the wrap itself cannot be measured
+ * here. What is pinned instead is the rule that takes the mid-word break point
+ * away, on both papers: drop it and the split comes back silently.
+ */
+describe("Masthead never breaks the paper's name mid-word (#1513)", () => {
+  it("holds the morning nameplate's characters together", () => {
+    renderView();
+    expect(
+      screen.getByRole("heading", { name: LABELS.masthead }).className,
+    ).toContain("break-keep");
+  });
+
+  it("holds the evening nameplate's characters together", () => {
+    renderEvening();
+    expect(
+      screen.getByRole("heading", { name: EVENING_LABELS.masthead }).className,
+    ).toContain("break-keep");
+  });
+});

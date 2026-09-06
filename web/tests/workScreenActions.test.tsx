@@ -39,6 +39,9 @@ vi.mock("@life-editor/shared", async (importOriginal) => {
     useTranslation: () => ({
       t: (key: string, opts?: Record<string, unknown>) =>
         opts ? `${key}|${Object.values(opts).join(",")}` : key,
+      // The picker's date subtitles format against the active locale (#1519).
+      // Pinned to en so the month/day order below is a fact, not the machine's.
+      i18n: { language: "en" },
     }),
     // The settings + presets editor lives in the shell's detail panel; the
     // portal is the shell's, so it is flattened here.

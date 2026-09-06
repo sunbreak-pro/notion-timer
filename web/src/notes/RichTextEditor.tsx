@@ -75,6 +75,65 @@ const BlockquoteNoInputRules = Blockquote.extend({
   },
 });
 
+/*
+ * The task-list checkbox reports its own state (#1523).
+ *
+ * TipTap builds a real <input type="checkbox"> for a task item, so assistive
+ * tech already reads it as a checkbox — that much is native. What it does NOT
+ * carry is the pair of attributes every OTHER todo checkbox in the app carries:
+ * <TodoStatusCheckbox> is a <button role="checkbox" aria-checked>, because a
+ * button has no checked state of its own. The Mobile audit compared the two by
+ * reading those attributes and found the note body's box had neither, which
+ * made the same todo look like two different kinds of control depending on the
+ * screen it was met on.
+ *
+ * Stamping them on the native input is redundant for a screen reader (they say
+ * exactly what the element already says) and is what makes the app's todo
+ * checkboxes one family to anything that inspects them. The only real risk of
+ * a duplicated state is drift, so it is written from `box.checked` at both
+ * points TipTap touches that property — the change the user makes, and the
+ * `update` a document change brings back — never from a copy kept here.
+ */
+const TodoItemWithCheckboxRole = TodoItem.extend({
+  addNodeView() {
+    // TaskItem's own node view, which builds the <label><input> pair. Present
+    // in every version that has shipped one; the fallback below only keeps the
+    // types honest.
+    const buildTaskItem = this.parent?.();
+    return (props) => {
+      const view = buildTaskItem?.(props);
+      if (!view) return { dom: document.createElement("li") };
+
+      const box = (view.dom as HTMLElement).querySelector?.(
+        'input[type="checkbox"]',
+      ) as HTMLInputElement | null;
+      const stamp = () => {
+        if (!box) return;
+        box.setAttribute("role", "checkbox");
+        box.setAttribute("aria-checked", box.checked ? "true" : "false");
+      };
+      stamp();
+      // Registered after TipTap's own change listener, so `checked` already
+      // holds the value the press landed on by the time this runs.
+      box?.addEventListener("change", stamp);
+
+      const { update, destroy } = view;
+      return {
+        ...view,
+        update: (...args: Parameters<NonNullable<typeof update>>) => {
+          const handled = update ? update(...args) : true;
+          stamp();
+          return handled;
+        },
+        destroy: () => {
+          box?.removeEventListener("change", stamp);
+          destroy?.();
+        },
+      };
+    };
+  },
+});
+
 /**
  * How the editor's changes leave it — exactly one of the two (#713).
  *
@@ -291,7 +350,7 @@ export function RichTextEditor({
         // Checkbox lists — the built-in input rule turns a leading "[] " (or
         // "[x] ") into a todo item; nested items allow indented sub-todos.
         TodoList,
-        TodoItem.configure({ nested: true }),
+        TodoItemWithCheckboxRole.configure({ nested: true }),
         // "/" slash-command block menu (headings + lists). Labels reuse the
         // turn-into catalog so the picker matches the rest of the app.
         ...(slashMenu
