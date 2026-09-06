@@ -100,7 +100,25 @@ export function ScheduleToolbar({
   className,
 }: ScheduleToolbarProps) {
   return (
-    <div className={cn("flex items-center gap-2.5", className)}>
+    /*
+     * #1469: a CSS container, so the row folds on ITS OWN width rather than
+     * the viewport's. At 1280 wide the pane is viewport − nav − detail panel −
+     * gutters ≈ 680px with the panel open (the default view) and ≈ 990px with
+     * it closed; the full-text row needs ≈ 750px in Japanese, so the last item
+     * — the primary "add event" button — used to land alone on a second row
+     * whenever the panel was open, at exactly the viewport where the closed
+     * state fit fine. A `md:` breakpoint cannot tell those two apart; the
+     * container can. Below 48rem (`@max-3xl`) the two text buttons keep their
+     * icons and drop their words (accessible names stay on `aria-label`), and
+     * the gaps tighten one step. The host's `flex-wrap` stays as the fallback
+     * for panes narrower than even the compact row.
+     */
+    <div
+      className={cn(
+        "@container flex items-center gap-2.5 @max-3xl:gap-1.5",
+        className,
+      )}
+    >
       <button
         type="button"
         onClick={onToday}
@@ -126,7 +144,8 @@ export function ScheduleToolbar({
           <ChevronRight aria-hidden className="size-3.5" />
         </button>
       </div>
-      <span className="text-sm font-semibold text-lumen-text">
+      {/* min-w-0 + truncate: the label gives way before anything wraps. */}
+      <span className="min-w-0 truncate text-sm font-semibold text-lumen-text">
         {periodLabel}
       </span>
 
@@ -140,6 +159,8 @@ export function ScheduleToolbar({
           type="button"
           onClick={onToggleRepeats}
           aria-pressed={repeatsHidden}
+          aria-label={repeatsHidden ? labels.repeatsHidden : labels.hideRepeats}
+          title={repeatsHidden ? labels.repeatsHidden : labels.hideRepeats}
           className={cn(
             "flex items-center gap-1.5 rounded-lumen-md border px-2.5 py-[7px] text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lumen-accent",
             repeatsHidden
@@ -148,7 +169,13 @@ export function ScheduleToolbar({
           )}
         >
           <Repeat aria-hidden className="size-3.5" />
-          {repeatsHidden ? labels.repeatsHidden : labels.hideRepeats}
+          {/* #1469: the ACTION ("hide repeats") folds to the icon in a narrow
+              pane; the NOTICE ("N hidden") never does — the count is the #466
+              point of the button, an empty slot on a filtered grid would
+              otherwise read as free time. */}
+          <span className={cn(!repeatsHidden && "@max-3xl:hidden")}>
+            {repeatsHidden ? labels.repeatsHidden : labels.hideRepeats}
+          </span>
         </button>
       )}
 
@@ -182,13 +209,17 @@ export function ScheduleToolbar({
           // id — only one of the two layouts is ever mounted, so the tour
           // finds whichever create control this width actually shows.
           {...tourAnchor(TOUR_ANCHORS.scheduleAddEvent)}
+          // The name lives on aria-label so the icon-only fold (#1469) keeps
+          // it; title gives the hover tip the text used to be.
+          aria-label={addEventLabel}
+          title={addEventLabel}
           className={cn(
-            "flex items-center gap-1.5 rounded-lumen-md bg-lumen-accent px-3.5 py-[7px] text-sm font-medium text-lumen-on-accent transition-colors hover:bg-lumen-accent-hover",
+            "flex items-center gap-1.5 rounded-lumen-md bg-lumen-accent px-3.5 py-[7px] text-sm font-medium text-lumen-on-accent transition-colors hover:bg-lumen-accent-hover @max-3xl:px-2",
             FOCUS_RING_ON_ACCENT,
           )}
         >
           <Plus aria-hidden className="size-4" />
-          {addEventLabel}
+          <span className="@max-3xl:hidden">{addEventLabel}</span>
         </button>
       )}
     </div>
