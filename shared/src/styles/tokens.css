@@ -620,63 +620,6 @@
   }
 }
 
-/* Font-size scaling utilities (10-step theme system, CLAUDE.md §3.3).
-   Relative ems so a single root font-size drives the whole UI. Ported
-   from frontend/src/index.css @layer utilities. */
-@layer utilities {
-  .text-scaling-xs {
-    font-size: 0.75em;
-    line-height: 1.125em;
-  }
-  .text-scaling-sm {
-    font-size: 0.875em;
-    line-height: 1.25em;
-  }
-  .text-scaling-base {
-    font-size: 1em;
-    line-height: 1.5em;
-  }
-  .text-scaling-lg {
-    font-size: 1.125em;
-    line-height: 1.75em;
-  }
-  .text-scaling-xl {
-    font-size: 1.25em;
-    line-height: 1.75em;
-  }
-}
-
-/* Kanban detail modal (K3, W-UX). The backdrop fades in; the centered panel
-   scales up (from its center) with a slight rise. Disabled under
-   prefers-reduced-motion. */
-@keyframes kanban-backdrop-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes kanban-modal-in {
-  from {
-    opacity: 0;
-    transform: scale(0.965) translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.kanban-modal-backdrop {
-  animation: kanban-backdrop-in 0.22s ease forwards;
-}
-
-.kanban-modal-panel {
-  animation: kanban-modal-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) 0.04s both;
-}
-
 /*
  * Detail-panel entrances (#1050). The panel used to appear fully formed at
  * both widths, which reads as a layout jump rather than as something arriving.
@@ -790,9 +733,9 @@
  *   - "reduce" → force animations/transitions off regardless of the OS.
  *   - "off"    → keep motion even when the OS asks to reduce it (media block
  *     is excluded via the :not(), and no forced block matches).
- * Declarations neutralize animation + transition app-wide (the kanban modal's
- * rise is additionally flattened). Near-zero (not 0) durations keep any
- * transitionend/animationend listeners firing so nothing hangs waiting.
+ * Declarations neutralize animation + transition app-wide. Near-zero (not 0)
+ * durations keep any transitionend/animationend listeners firing so nothing
+ * hangs waiting.
  */
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-reduce-motion="off"]) *,
@@ -802,9 +745,6 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
-  :root:not([data-reduce-motion="off"]) .kanban-modal-panel {
-    transform: none !important;
-  }
 }
 
 :root[data-reduce-motion="reduce"] *,
@@ -813,7 +753,4 @@
   animation-duration: 0.001ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;
-}
-:root[data-reduce-motion="reduce"] .kanban-modal-panel {
-  transform: none !important;
 }

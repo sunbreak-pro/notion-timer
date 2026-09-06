@@ -86,23 +86,29 @@ describe("shared i18n", () => {
 /*
  * #680: "1 todos" shipped because the count key had a single form. The fix is
  * i18next's own plural resolution (en: one / other, ja: other), NOT a ternary
- * at the call site — so these assert through t() with a count, which is exactly
- * how KanbanView asks for the string.
+ * at the call site — so these assert through t() with a count, the way a call
+ * site asks for the string.
+ *
+ * #1388 repointed these from `materials.todos.todoCount` to the tag hub's
+ * usage count. The original key was KanbanView's, and the board retired with
+ * #1153 — leaving the catalog carrying a string no screen rendered, kept alive
+ * only by this test. The invariant is the resolution, not the key, so it moved
+ * to one a live screen actually asks for.
  */
 describe("shared i18n — plurals", () => {
   it("picks the singular form for count=1 in en", async () => {
     await i18n.changeLanguage("en");
 
-    expect(i18n.t("materials.todos.todoCount", { count: 1 })).toBe("1 todo");
-    expect(i18n.t("materials.todos.todoCount", { count: 2 })).toBe("2 todos");
-    expect(i18n.t("materials.todos.todoCount", { count: 0 })).toBe("0 todos");
+    expect(i18n.t("materials.tags.usageCount", { count: 1 })).toBe("1 item");
+    expect(i18n.t("materials.tags.usageCount", { count: 2 })).toBe("2 items");
+    expect(i18n.t("materials.tags.usageCount", { count: 0 })).toBe("0 items");
   });
 
   it("keeps the one Japanese form at every count", async () => {
     await i18n.changeLanguage("ja");
 
-    expect(i18n.t("materials.todos.todoCount", { count: 1 })).toBe("Todo 1 件");
-    expect(i18n.t("materials.todos.todoCount", { count: 2 })).toBe("Todo 2 件");
+    expect(i18n.t("materials.tags.usageCount", { count: 1 })).toBe("1 件");
+    expect(i18n.t("materials.tags.usageCount", { count: 2 })).toBe("2 件");
 
     await i18n.changeLanguage("en");
   });

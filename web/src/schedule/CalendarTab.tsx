@@ -1236,10 +1236,10 @@ export function CalendarTab({
         onSubmit={handleCreateTodo}
         labels={{
           title: t("scheduleScreen.todoAddDialogTitle"),
-          titleLabel: t("kanban.addTitleLabel"),
-          titlePlaceholder: t("kanban.addTitlePlaceholder"),
-          submit: t("kanban.addSubmit"),
-          cancel: t("kanban.addCancel"),
+          titleLabel: t("scheduleScreen.todoAddTitleLabel"),
+          titlePlaceholder: t("scheduleScreen.todoAddTitlePlaceholder"),
+          submit: t("scheduleScreen.todoAddSubmit"),
+          cancel: t("scheduleScreen.todoAddCancel"),
         }}
       />
     </>
