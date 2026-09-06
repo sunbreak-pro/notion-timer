@@ -134,7 +134,22 @@ export const ItemLinkMenu = forwardRef<ItemLinkMenuHandle, ItemLinkMenuProps>(
               >
                 <Icon size={14} aria-hidden />
               </span>
-              <span className="min-w-0 flex-1 truncate">{item.title}</span>
+              <span
+                className={[
+                  "min-w-0 flex-1",
+                  // #1518: an ACTION row says what it does at its end — "…の
+                  // ノートを作成してリンク" — so an ellipsis eats the verb and
+                  // leaves a row that names a note and no longer says what
+                  // pressing it will do. Now that the menu is capped to the
+                  // screen those rows have to fit rather than run off it, so
+                  // they wrap onto a second line instead of being cut.
+                  // A CANDIDATE is named at its start, where one line and an
+                  // ellipsis still identify it.
+                  isAction ? "break-words" : "truncate",
+                ].join(" ")}
+              >
+                {item.title}
+              </span>
               {item.hint && (
                 <span className="shrink-0 text-xs text-lumen-text-tertiary">
                   {item.hint}
