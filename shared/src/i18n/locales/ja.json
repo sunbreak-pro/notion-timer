@@ -733,6 +733,21 @@
         "description": "Todo・予定・ノートにタグを付けると、使ったタグがここに多い順で並びます。"
       }
     },
+    "loadFailed": {
+      "message": "一部のデータを読み込めませんでした（{{sources}}）。下の数値はその分が抜けています。",
+      "separator": "・",
+      "sources": {
+        "sessions": "作業セッション",
+        "todos": "Todo",
+        "todayEvents": "今日の予定",
+        "events": "予定",
+        "routines": "ルーチン",
+        "notes": "ノート",
+        "tags": "タグ",
+        "tagAssignments": "タグ付け",
+        "timerSettings": "タイマー設定"
+      }
+    },
     "mobile": {
       "weekTitle": "今週",
       "routineTitle": "ルーチン達成率",

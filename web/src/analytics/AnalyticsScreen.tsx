@@ -17,6 +17,8 @@ import {
   todayCalendarKey,
   useDomainLoad,
   useSyncDomains,
+  logServiceError,
+  type TranslationKey,
 } from "@life-editor/shared";
 
 /*
@@ -57,6 +59,41 @@ interface AnalyticsScreenProps {
   onTabChange: (tab: AnalyticsTab) => void;
 }
 
+/*
+ * The nine independent reads behind the dashboard (#1524), named so a failure
+ * can be reported BY SOURCE rather than as one anonymous "load failed". The
+ * ids are the host's own — they are the keys of the i18n subtree that gives
+ * each one a display name, not anything the shared view knows about.
+ */
+type AnalyticsSource =
+  | "sessions"
+  | "todos"
+  | "todayEvents"
+  | "events"
+  | "routines"
+  | "notes"
+  | "tags"
+  | "tagAssignments"
+  | "timerSettings";
+
+/*
+ * Held in a constant and handed to `t` as a variable, which puts these keys
+ * outside the reach of the runtime key scan (shared/tests/i18nKeys.test.ts
+ * only sees literal calls). `TranslationKey` is what checks them instead, at
+ * the point they are DEFINED (#726).
+ */
+const SOURCE_LABEL_KEY: Record<AnalyticsSource, TranslationKey> = {
+  sessions: "analytics.loadFailed.sources.sessions",
+  todos: "analytics.loadFailed.sources.todos",
+  todayEvents: "analytics.loadFailed.sources.todayEvents",
+  events: "analytics.loadFailed.sources.events",
+  routines: "analytics.loadFailed.sources.routines",
+  notes: "analytics.loadFailed.sources.notes",
+  tags: "analytics.loadFailed.sources.tags",
+  tagAssignments: "analytics.loadFailed.sources.tagAssignments",
+  timerSettings: "analytics.loadFailed.sources.timerSettings",
+};
+
 // Data fetched once on mount (independent of the selected analytics range).
 interface AnalyticsData {
   sessions: TimerSession[];
@@ -76,6 +113,11 @@ interface AnalyticsData {
   tags: WikiTagUnified[];
   assignments: WikiTagAssignmentUnified[];
   targetPerDay: number;
+  /**
+   * Which of the reads above did NOT answer (#1524). Empty on a clean load;
+   * anything in it is drawn as a band naming what the numbers are missing.
+   */
+  failedSources: AnalyticsSource[];
 }
 
 const EMPTY: AnalyticsData = {
@@ -88,6 +130,7 @@ const EMPTY: AnalyticsData = {
   tags: [],
   assignments: [],
   targetPerDay: 4,
+  failedSources: [],
 };
 
 export function AnalyticsScreen({
@@ -134,17 +177,29 @@ export function AnalyticsScreen({
     // skeleton on each one would make the numbers flicker while working.
     refetchReportsLoading: false,
     load: async (service) => {
-      const [
-        sessions,
-        nodes,
-        todayItems,
-        events,
-        routines,
-        notes,
-        tags,
-        assignments,
-        timerSettings,
-      ] = await Promise.all([
+      /*
+       * allSettled, not all (#1524). These nine reads share nothing — the todo
+       * count does not depend on the session log — but `Promise.all` rejects
+       * on the FIRST failure, so one bad response threw the whole object away
+       * and every card fell back to EMPTY's zero.
+       *
+       * That is not a hypothetical: on 2026-09-05 migration 0029
+       * (`timer_sessions.event_id`) was not on production yet,
+       * `fetchTimerSessions` answered 400, and the dashboard went on to report
+       * no todos, no events and no notes either — with no error text and no
+       * empty state to tell "you have none" apart from "we could not read
+       * them". A confidently wrong zero is worse than a gap, so each read now
+       * falls back on its own and the screen names the ones it lost.
+       *
+       * The partial result is still a SUCCESS as far as useDomainLoad is
+       * concerned, which is deliberate: the eight sources that answered belong
+       * on screen, and the ninth is reported by `failedSources` instead of by
+       * throwing everything away a second time. It does mean a partial result
+       * reaches the snapshot slot, so the next mount replays the band with it
+       * until its own read lands — the same staleness the snapshot already
+       * accepts, and truer than replaying zeros.
+       */
+      const settled = await Promise.allSettled([
         service.fetchTimerSessions(),
         service.fetchTodoTree(),
         service.fetchScheduleItemsByDateRange(today, today),
@@ -155,7 +210,7 @@ export function AnalyticsScreen({
         service.listAllTagAssignments(),
         service.fetchTimerSettings(),
       ]);
-      return {
+      const [
         sessions,
         nodes,
         todayItems,
@@ -164,7 +219,35 @@ export function AnalyticsScreen({
         notes,
         tags,
         assignments,
-        targetPerDay: timerSettings.targetSessions ?? 4,
+        timerSettings,
+      ] = settled;
+
+      const failedSources: AnalyticsSource[] = [];
+      function take<T, F>(
+        source: AnalyticsSource,
+        result: PromiseSettledResult<T>,
+        fallback: F,
+      ): T | F {
+        if (result.status === "fulfilled") return result.value;
+        failedSources.push(source);
+        // The console line stays — it carries the actual reason, which the
+        // one-sentence band deliberately does not.
+        logServiceError("Analytics", `load ${source}`, result.reason);
+        return fallback;
+      }
+
+      const settings = take("timerSettings", timerSettings, null);
+      return {
+        sessions: take("sessions", sessions, EMPTY.sessions),
+        nodes: take("todos", nodes, EMPTY.nodes),
+        todayItems: take("todayEvents", todayItems, EMPTY.todayItems),
+        events: take("events", events, EMPTY.events),
+        routines: take("routines", routines, EMPTY.routines),
+        notes: take("notes", notes, EMPTY.notes),
+        tags: take("tags", tags, EMPTY.tags),
+        assignments: take("tagAssignments", assignments, EMPTY.assignments),
+        targetPerDay: settings?.targetSessions ?? EMPTY.targetPerDay,
+        failedSources,
       };
     },
     apply: setData,
@@ -230,6 +313,19 @@ export function AnalyticsScreen({
     }
     return map;
   }, [data.nodes]);
+
+  /*
+   * The partial-load band's copy (#1524). Composed here, not in the shared
+   * view, for the usual reason (§6.4 — the shared tree never calls `t`), and
+   * null when nothing failed so the band renders nothing at all.
+   */
+  const loadWarning = useMemo(() => {
+    if (data.failedSources.length === 0) return null;
+    const sources = data.failedSources
+      .map((source) => t(SOURCE_LABEL_KEY[source]))
+      .join(t("analytics.loadFailed.separator"));
+    return t("analytics.loadFailed.message", { sources });
+  }, [data.failedSources, t]);
 
   const labels = useMemo<AnalyticsLabels>(
     () => ({
@@ -417,6 +513,7 @@ export function AnalyticsScreen({
       onScheduleRangeChange={handleScheduleRangeChange}
       scheduleLoading={scheduleLoading}
       initialLoading={initialLoading}
+      loadWarning={loadWarning}
       notes={data.notes}
       routines={data.routines}
       todoNameMap={todoNameMap}
