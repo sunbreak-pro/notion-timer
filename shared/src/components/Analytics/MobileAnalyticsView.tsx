@@ -340,22 +340,33 @@ export function MobileAnalyticsView(
             </div>
             <div className="flex flex-col gap-2.5">
               {model.topRoutines.map((r) => (
-                <div
-                  key={r.routineId}
-                  className="grid grid-cols-[96px_1fr_40px] items-center gap-2.5"
-                >
-                  <span className="truncate text-xs text-lumen-text">
-                    {r.routineTitle}
-                  </span>
+                /*
+                 * Two rows, not three columns (#1520). The name used to sit in
+                 * a fixed 96px cell next to the bar, so at 390px a title that
+                 * measured 139px was cut to "PWV1409-sc…" while the bar took
+                 * 143px of the same 301px row — the name had the smallest
+                 * share of the row and was the only part of it that could not
+                 * be inferred from what was left. Dropping the bar to its own
+                 * line gives the title everything the rate chip does not claim
+                 * (~255px here), and a full-width bar reads its percentage
+                 * more accurately besides. `truncate` stays as the backstop
+                 * for a genuinely long name so the row keeps one line.
+                 */
+                <div key={r.routineId} className="flex flex-col gap-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="truncate text-xs text-lumen-text">
+                      {r.routineTitle}
+                    </span>
+                    <span className="flex-shrink-0 text-xs font-semibold tabular-nums text-lumen-text">
+                      {r.rate}%
+                    </span>
+                  </div>
                   <div className="h-2 overflow-hidden rounded-full bg-lumen-surface-sunken">
                     <span
                       className="block h-full bg-lumen-accent-secondary"
                       style={{ width: `${r.rate}%` }}
                     />
                   </div>
-                  <span className="text-right text-xs font-semibold tabular-nums text-lumen-text">
-                    {r.rate}%
-                  </span>
                 </div>
               ))}
             </div>
