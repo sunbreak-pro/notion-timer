@@ -75,6 +75,13 @@ export function useTodoTreeHistory(
   setNodes: Dispatch<SetStateAction<TodoNode[]>>,
   syncToDb: (nodes: TodoNode[], onSettled?: PersistSettled) => void,
   undoRedo: UndoRedoLike,
+  /**
+   * Takes ONE row out of the DB — what undoing a create has to do (#1485).
+   * `syncToDb` cannot: it is an upsert over the nodes it is handed, so a node
+   * missing from the list is simply not written, never removed. Injected
+   * rather than derived from `syncToDb` so this hook stays DataService-free.
+   */
+  removeFromDb: (id: string) => void,
 ) {
   const {
     push,
@@ -114,6 +121,54 @@ export function useTodoTreeHistory(
     [setNodes, syncToDb, push],
   );
 
+  /*
+   * #1485 — the create-shaped write. `persistWithHistory` undoes by
+   * re-persisting the list from before, and for every OTHER tree write that
+   * is a faithful reversal: a status flip, a reorder, a soft delete are all
+   * field changes on rows that stay in the list, so writing the old values
+   * back IS the undo. A create is the one write whose reversal is an ABSENCE,
+   * and an upsert has no way to say that — the new row went into the DB with
+   * the first sync and the second sync, not naming it, left it exactly as it
+   * was. On screen the node vanished (setNodes), then Realtime echoed the
+   * write back, the tree re-read, and the todo was standing there again with
+   * the Undo button already spent (#1485: the Schedule creation panel's Todo
+   * tab, but the Todos board's own add took the same path).
+   *
+   * So the undo names the row: the list from before goes back as it always
+   * did (the siblings the create shifted down get their order back), and
+   * then the created row itself is removed. Redo is the plain re-persist —
+   * the row's node is in `after`, and the upsert writes it back with
+   * `is_deleted: false` (toItemsMetaInsertRow materialises the column), which
+   * is why a soft delete is enough for the removal and the id survives the
+   * round trip.
+   */
+  const persistCreateWithHistory = useCallback(
+    (
+      currentNodes: TodoNode[],
+      updated: TodoNode[],
+      createdId: string,
+      onSettled?: PersistSettled,
+    ) => {
+      const before = currentNodes;
+      const after = updated;
+      push("todoTree", {
+        label: "todoTreeChange",
+        undo: () => {
+          setNodes(before);
+          syncToDb(before);
+          removeFromDb(createdId);
+        },
+        redo: () => {
+          setNodes(after);
+          syncToDb(after);
+        },
+      });
+      setNodes(updated);
+      syncToDb(updated, onSettled);
+    },
+    [setNodes, syncToDb, removeFromDb, push],
+  );
+
   const persistSilent = useCallback(
     (updated: TodoNode[], onSettled?: PersistSettled) => {
       setNodes(updated);
@@ -139,6 +194,7 @@ export function useTodoTreeHistory(
 
   return {
     persistWithHistory,
+    persistCreateWithHistory,
     persistSilent,
     undo,
     redo,
