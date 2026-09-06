@@ -1,9 +1,9 @@
 ---
-Status: Draft
+Status: COMPLETED
 Created: 2026-09-05
-Branch: docs/plan-1409-mobile-screen-audit（計画書）/ 実行セッションはブランチを切らない（chat-main・`main` 直下）
+Branch: docs/plan-1409-mobile-screen-audit（計画書）/ 実行は chat-main・`main` 直下（レポートと archive 移動は docs/1409-mobile-screen-audit-report）
 Owner-chat: main
-Previous: ../../../archive/2026-09-02-desktop-screen-audit.md
+Previous: ./2026-09-02-desktop-screen-audit.md
 Related:
   - "#1409" — Mobile 幅 全画面の実ブラウザ点検（本計画の対象 Issue）
   - "#1408" — 対の Desktop 側（2026-09-05 実行完了・finding #1467〜#1486）
@@ -335,8 +335,8 @@ Desktop 計画の除外リストにあった #1371 / #1399 / #1405 / #1406 / #14
 ## References
 
 - Issue: #1409（本計画）/ #1408（Desktop 側・完了）/ #716（Epic Mobile v2 — 実機目視の DoD）
-- 判定の正本: [`docs/requirements/mobile-scope.md`](../../requirements/mobile-scope.md)（#319 = D-20260723-main-1。§1 の分類・§4 の表・§6 の native ガード注記）
-- 前段: [`archive/2026-09-02-desktop-screen-audit.md`](../../../archive/2026-09-02-desktop-screen-audit.md) / [`docs/reports/2026-09-05-desktop-screen-audit.md`](../../reports/2026-09-05-desktop-screen-audit.md) §7（申し送り）
+- 判定の正本: [`docs/requirements/mobile-scope.md`](../docs/requirements/mobile-scope.md)（#319 = D-20260723-main-1。§1 の分類・§4 の表・§6 の native ガード注記）
+- 前段: [`archive/2026-09-02-desktop-screen-audit.md`](./2026-09-02-desktop-screen-audit.md) / [`docs/reports/2026-09-05-desktop-screen-audit.md`](../docs/reports/2026-09-05-desktop-screen-audit.md) §7（申し送り）
 - skill: `playwright-verify`（Gate P0〜P5・Report Format）/ `issue-dispatch`（起票）/ `docs-workflow`（ラベル routing）
 - agent: `~/.claude/agents/playwright-ui-verifier.md`（同時 1 体・コード修正禁止）
 - registry: `shared/src/sections.ts`（`mobileOrder` / `MOBILE_SECTIONS`）/ `shared/src/components/AppShell.tsx`（`maxBottomTabs`）/ `web/src/sectionDescriptors.tsx`（`narrowHeader`）/ `web/src/MobileShellActions.tsx`（More シートの行）/ `shared/src/constants/breakpoints.ts`（`WIDE_BREAKPOINT_PX = 768`）
@@ -348,9 +348,10 @@ Desktop 計画の除外リストにあった #1371 / #1399 / #1405 / #1406 / #14
 ## Worklog
 
 - 2026-09-05: 計画書作成（計画セッション・ブラウザ未起動）。Desktop 側 #1408 の実行完了（同日）を受けて着手。実行セッションは別途ユーザーが開く（#1409 の 👀 ゲート）
+- 2026-09-05 17:44〜19:45 JST: 実行 Step 2〜10。dev server は先客 5174 を流用・`browser_resize(390, 844)` で固定（`innerWidth = 390` を全報告で実測）。シェル調査（chat-main）→ 7 画面をエージェント直列（フォールバック 0 回・stream 停止なし）→ 結合 M1〜M10（chat-main）→ 後始末（MCP + 1280 幅の繰り返し削除 + 390 幅のゴミ箱一括削除）→ finding 16 件を #1512〜#1527 に起票・Desktop 既知 6 件にコメント → レポート `docs/reports/2026-09-05-mobile-screen-audit.md`。**環境の注記**: migration 0029 が本番未適用で `timer_sessions` の取得が 400 → 分析の集計が全 0（M2 は環境起因で PARTIAL・作りの側は #1524）
 
-完了時（archive する時）の乖離レビュー 3 行は必須:
+乖離レビュー（archive 時）:
 
-1. スコープ逸脱の有無
-2. AC 免除の有無
-3. 途中で出た判断とその行き先（`D-…` / Issue #NNN / 「行き先なし」）
+1. スコープ逸脱: なし。コードは触っていない（所見は起票まで = P-008）。`mobile-scope.md` も書き換えず、齟齬 2 行は #1522 として起票
+2. AC 免除: なし。M2 / M5 は PARTIAL（M2 = 0029 未適用の環境起因・M5 = アンカー日のリセットが仕様か不明 → 判断待ち P-8）。判断待ちは 16 件（レポート §6）でユーザーへ。「FAB の位置」項目は前提が古かった（narrow に FAB は無い）ので「前提違い」として記録
+3. 途中の判断: 本日分 ⇄ その他 の移動ボタンは `[@media(hover:none)]` で常時表示の実装のため finding にせず実機申し送り（行き先 = レポート §9）／ 往復で時刻が消える件は D-20260902-sched-1 = A の決定どおり（行き先 = 同 D）／ callout ノードの欠落は幅共通だが重要所見として起票（#1521）／ 削除タグの `wiki_tags` 残置はゴミ箱にカテゴリが無い構造の問題として判断待ち P-16（行き先なし）
