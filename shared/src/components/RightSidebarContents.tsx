@@ -69,7 +69,18 @@ export function RightSidebarContents({
             type="button"
             onClick={onClose}
             aria-label={closeLabel}
-            className="grid h-7 w-7 place-items-center rounded-lumen-sm text-lumen-text-secondary transition-colors hover:bg-lumen-hover hover:text-lumen-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lumen-accent"
+            /*
+             * Floored to the 44px touch target (#1512), where the audit read
+             * it at 32. Unconditional, with no `max-md:` — this button is
+             * ALREADY mobile-only: it renders only when closeLabel + onClose
+             * are both passed, and since #1284 the Desktop <RightSidebar>
+             * passes neither. <MobileDrawer> is the one caller.
+             *
+             * It costs no room either. The header row above is a fixed h-12
+             * (3rem), so the button grows inside space the drawer had already
+             * reserved — nothing below it moves.
+             */
+            className="grid min-h-11 min-w-11 place-items-center rounded-lumen-sm text-lumen-text-secondary transition-colors hover:bg-lumen-hover hover:text-lumen-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lumen-accent"
           >
             <PanelRightClose size={16} />
           </button>
