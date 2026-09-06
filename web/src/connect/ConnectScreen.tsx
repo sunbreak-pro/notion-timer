@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 import {
   buildTagHubModel,
+  RightSidebarPortal,
+  selectRecentTaggedItems,
+  TagHubDetailPanel,
   TagHubView,
   useDomainLoad,
   useMediaQuery,
@@ -12,6 +15,7 @@ import {
   type DataService,
   type NoteNode,
   type ScheduleItem,
+  type TagHubDetailLabels,
   type TagHubItem,
   type TagHubLabels,
   type TodoNode,
@@ -37,6 +41,13 @@ import {
  * four read-only lists. The one Provider it does sit inside is
  * WikiTagsUnifiedProvider (mounted by its descriptor row), because the tag and
  * assignment caches it holds are already loaded and already Realtime-tracked.
+ *
+ * THE SHARED DETAIL PANEL (#1472). While a tag is open, the selected tag's
+ * breakdown and its recently-filed rows go into the shell's right panel
+ * through RightSidebarPortal — the same slot the note list, the todo fields
+ * and the Settings categories use. Nothing is portalled while nothing is
+ * selected, so the panel's own empty copy stays the honest one. The panel's
+ * open / closed state is the shell's and is left alone here.
  */
 
 interface ConnectScreenProps {
@@ -193,6 +204,42 @@ export function ConnectScreen({
     [t],
   );
 
+  // The selected tag, resolved once here for the panel; the view resolves it
+  // again for the main pane, which is cheap and keeps the view prop-driven.
+  const selectedTag = useMemo(
+    () =>
+      selectedTagId
+        ? (model.tags.find((tag) => tag.id === selectedTagId) ?? null)
+        : null,
+    [model.tags, selectedTagId],
+  );
+  const selectedGroups = useMemo(
+    () => (selectedTag ? (model.groupsByTag.get(selectedTag.id) ?? []) : []),
+    [model.groupsByTag, selectedTag],
+  );
+  const recent = useMemo(
+    () =>
+      selectedTag
+        ? selectRecentTaggedItems({
+            tagId: selectedTag.id,
+            assignments: wiki.allAssignments,
+            groups: selectedGroups,
+          })
+        : [],
+    [selectedTag, selectedGroups, wiki.allAssignments],
+  );
+
+  const detailLabels = useMemo<TagHubDetailLabels>(
+    () => ({
+      breakdownHeading: t("connect.detail.breakdownHeading"),
+      recentHeading: t("connect.detail.recentHeading"),
+      recentUntaggedHeading: t("connect.detail.recentUntaggedHeading"),
+      recentEmpty: t("connect.detail.recentEmpty"),
+      roles: labels.roles,
+    }),
+    [t, labels.roles],
+  );
+
   const handleOpenItem = useCallback(
     (item: TagHubItem) => {
       onNavigateToItem({ id: item.id, role: item.role, date: item.date });
@@ -201,20 +248,34 @@ export function ConnectScreen({
   );
 
   return (
-    <TagHubView
-      model={model}
-      selectedTagId={selectedTagId}
-      onSelectTag={setSelectedTagId}
-      query={query}
-      onQueryChange={setQuery}
-      onOpenItem={handleOpenItem}
-      formatCount={formatCount}
-      wide={isWide}
-      // The tags come from the Provider and the items from the load above;
-      // either still in flight means the hub cannot yet tell "empty" from
-      // "not read yet", which is the flash this prevents.
-      isLoading={sourcesLoading || wiki.loading}
-      labels={labels}
-    />
+    <>
+      {selectedTag && (
+        <RightSidebarPortal>
+          <TagHubDetailPanel
+            tag={selectedTag}
+            groups={selectedGroups}
+            recent={recent}
+            onOpenItem={handleOpenItem}
+            formatCount={formatCount}
+            labels={detailLabels}
+          />
+        </RightSidebarPortal>
+      )}
+      <TagHubView
+        model={model}
+        selectedTagId={selectedTagId}
+        onSelectTag={setSelectedTagId}
+        query={query}
+        onQueryChange={setQuery}
+        onOpenItem={handleOpenItem}
+        formatCount={formatCount}
+        wide={isWide}
+        // The tags come from the Provider and the items from the load above;
+        // either still in flight means the hub cannot yet tell "empty" from
+        // "not read yet", which is the flash this prevents.
+        isLoading={sourcesLoading || wiki.loading}
+        labels={labels}
+      />
+    </>
   );
 }
