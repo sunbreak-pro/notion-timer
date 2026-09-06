@@ -862,3 +862,77 @@ describe("NotesView — a search that matches nothing (#1470)", () => {
     expect(screen.getAllByText("materials.notes.empty").length).toBe(2);
   });
 });
+
+/*
+ * The same query, in the phone's drawer (#1470).
+ *
+ * The Issue was filed off the Desktop audit and fixed against it; the Mobile
+ * audit then reported the identical three symptoms at 390x844, which is a
+ * different SURFACE even though #876 gave it the same component: on narrow the
+ * list is mounted inside the hamburger's MobileDrawer, the create pill is the
+ * one thing reachable without opening that drawer, and the centre panel behind
+ * it is showing the empty state rather than a note.
+ *
+ * The cases above all run wide (`state.isWide` is reset to true), so nothing
+ * held the narrow surface to the same answers. These do — and they are the
+ * evidence for the Mobile half of the Issue rather than an assumption that one
+ * shared component means one behaviour.
+ */
+describe("NotesView — a search that matches nothing, on narrow (#1470)", () => {
+  beforeEach(() => {
+    state.isWide = false;
+    state.searchQuery = "ZZZQQNOMATCH";
+  });
+
+  function chipRow(): HTMLElement {
+    const row = document.querySelector<HTMLElement>(
+      '[data-tour-id="materials-tag-filter"]',
+    );
+    if (!row) throw new Error("the tag filter row is not on screen");
+    return row;
+  }
+
+  it("says nothing matched, in the drawer and in the panel behind it", () => {
+    render(<NotesView />);
+
+    screen.getByText("materials.notes.searchEmpty");
+    // The centre panel reads `hasNotes`, which is the VAULT's — so a query
+    // cannot make the screen behind the drawer claim the vault is empty.
+    expect(screen.queryByText("materials.notes.empty")).toBeNull();
+    screen.getByText("materials.notes.mainEmpty");
+  });
+
+  it("leaves the one create entry a phone can reach without the drawer", () => {
+    render(<NotesView />);
+
+    // The toolbar pill, and not the list's accent CTA underneath it — which
+    // here would offer to make a note out of the search term.
+    expect(
+      screen.getAllByRole("button", { name: "materials.notes.addCta" }).length,
+    ).toBe(1);
+  });
+
+  it("keeps the tag chips, so the drawer still has a way back", () => {
+    render(<NotesView />);
+
+    const chips = within(chipRow())
+      .getAllByRole("button")
+      .map((b) => b.textContent ?? "");
+    expect(chips.some((c) => c.startsWith("Work"))).toBe(true);
+    expect(chips.some((c) => c.startsWith("materials.notes.untagged"))).toBe(
+      true,
+    );
+  });
+
+  it("drops the query when one of those chips is pressed", () => {
+    render(<NotesView />);
+
+    const work = within(chipRow())
+      .getAllByRole("button")
+      .find((b) => b.textContent?.startsWith("Work"));
+    if (!work) throw new Error("no Work chip");
+    fireEvent.click(work);
+
+    expect(state.setSearchQuery).toHaveBeenCalledWith("");
+  });
+});
