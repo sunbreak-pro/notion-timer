@@ -1,6 +1,21 @@
 # HISTORY (chat-briefing-refine)
 
-### 2026-09-05 - ストリークカードの折り返しと朝刊 Todo チェックボックスの名前（#1467 PR #1492 merged / #1486 PR #1499 open）
+### 2026-09-06 - 390px の紙面を 2 件直す: ロゴの語中改行と Todo 行のはみ出し（#1513 PR #1537 merged / #1514 PR #1544 open）
+
+#### 概要
+
+#1409 の Mobile 幅（390×844）実ブラウザ点検で出た朝刊まわりの minor 2 件を、それぞれ origin/main 起点の独立ブランチで PR まで通した。どちらも「スタイルの書き間違い」ではなく**既定の折り返し規則が狭い幅で表に出た**もので、原因の層が違う（#1513 = CJK の行分割規則 / #1514 = 負のマージンと常設ラベルの幅争い）。
+
+#### 変更点
+
+- **#1513 / `shared/src/components/briefing/BriefingView.tsx` + `EveningView.tsx`**: マストヘッドの h2 に `break-keep`（`word-break: keep-all`）。CJK は既定で**文字と文字の間ならどこでも改行してよい**ので、行が 1 文字分足りないと最後の切れ目が 夕 と 刊 の間に来ていた。keep-all で文字間の改行候補が消え、残る切れ目は「LIFE EDITOR」と紙面名の間のスペースだけになる（狭 = 2 行・広 = 従来どおり 1 行）。英語紙名は元からスペースでしか折れないので en は不変
+- **#1514 / 6px のはみ出し**: 原因は `RowActions` の `-mr-1.5`。「ボタンの余白は見た目の余白なので行の空きに食い込ませる」ための指定だが、**このブロックは左右パディングを持たない**ので行の右端 = ブロックの右端で、食い込む先が無く束が 6px 外へ出ていた（343px の枠に 349px = 点検の実測値そのもの）。`BlockHeadAddButton` が同じマージンを持っていたため 2 つ揃えて外した（片方だけだと「+」が下の操作列より 6px 右にずれる）
+- **#1514 / 67px のタイトル**: 「編集」「削除」の文字を `md` 以上でだけ出す（`hidden md:inline`）。2 語で 128px を占めていたのが約 77px 返り、18 文字の Todo が 1 行に収まる。アイコンは単独になる狭幅でだけ 13px → 16px（#410 の「13px の矢印単独は操作だと読めない」が、まさに文字を隠した状態のため）。**文字は DOM に残す** ので読み上げ名（「編集: スケジュールで開く」）は不変 — WCAG 2.5.3 は文字が見えているときだけ効き、2.5.8 の 24×24 はアイコンのみで 28×24 で満たす。幅判定に prop でなく `md:` を使ったのは、この View が純表示でホストから幅をもらわないため（rem 基準なのでフォント倍率と一緒に動くのも、文字が入らないことが原因の規則としては正しい向き）
+- **テスト**: shared に 6 本追加（#1513 は 2 本 = 両紙のマストヘッドに規則が載っているか / #1514 は 4 本 = 文字が `md` 以上でだけ出る・読み上げ名は不変・アイコンのサイズ切替・「+」も枠内）。jsdom にレイアウトが無いので折り返しとはみ出しそのものは測らず、原因側の規則を固定した。**既存の #585 テストが `-mr-1.5` の存在を要求していた** — その指定こそが今回のはみ出しなので `not.toContain("-mr-")` に反転し、理由をコメントに残した
+- **ゲート**: 両ブランチとも `ci.yml` の `verify` ジョブ全ステップ + `docs-lint` をローカル再現して 15 ステップ全緑（`npm ci` の 4 ステップのみ省略 = node_modules 導入済み）。#1514 の 1 回目は `web — build` が exit 127 で落ちたが**単体では exit 0** で、run 自体が停止された巻き添えと判明したため全ステップ回し直して全緑を確認した
+- **記録**: 計画書なし（Issue 直行の軽ティア）。スコープ逸脱なし（触ったのは briefing の 2 View と 1 スイート）。AC 免除なし。44px の当たり判定は Issue 本文の指示どおり別 Issue へ委ねた（狭幅のアイコンのみは 28×24 で、WCAG の 24×24 は満たすが 44px には届かない）— PR 本文に明記済み
+
+### 2026-09-05 - ストリークカードの折り返しと朝刊 Todo チェックボックスの名前（#1467 PR #1492 merged / #1486 PR #1499 merged）
 
 #### 概要
 
@@ -56,20 +71,3 @@ Todo 行だけ時刻欄が空で、9:30 に置いた Todo と「今日のどこ�
 - **#1048（PR #1062）**: shared `focusSections.ts` 新規（merge/extract・履歴保持）・`extractBriefing` は全段落を AI コメント化・`EveningView` に「明日のフォーカス」欄・web `useFocusNote.ts` 新規（draft/echo/失敗 Toast）・i18n で `noBriefing` → `noFocus`。mcp `write_briefing` は温存（follow-up 起票依頼を outbox へ・文言判断は D-20260818-briefing-1 としてキューへ）
 - **#1046（PR #1068）**: shared `stripEveningSection` / `eveningBodyLines` / `DailyEveningCard.tsx` 新規・web `DailyView` が夕刊抜き本文をマウントし保存時に `mergeEveningSection` で付け直す（本文編集が夕刊を落とせない）・`useDayScheduleSummary.ts` 新規（schedule ドメイン追従）
 - **テスト**: shared +22 本（focusSections 11 / strip・lines 6 / DailyEveningCard 5）・web +7 本（briefingFocus 4 / dailyView 3）・mcp round-trip を新契約に追随
-
-### 2026-08-16 - 紙面の保存失敗を Toast で拾い、#938 のコンフリクトを解消（#955・PR #980 open）
-
-#### 概要
-
-判断 D-20260815-briefing-7 = **B** の実装。紙面の書き込み 3 経路（宣言 / 夕刊 / 目標）はどれも保存失敗を `console.error` に飲み込み、draft を画面に残したまま先へ進んでいた — **保存されたように見えて、リロードした瞬間に消える**。穴の本体は「キャプションが無い」ではなく「失敗が無音」なので、3 経路まとめて直した。あわせて、#939 の着地で衝突した #938（PR #971）に origin/main を取り込んで解消した。
-
-#### 変更点
-
-- **仕組みは 1 本**: `useSaveFailureReport()`（`web/src/briefing/hooks/`）。i18n キーを `BriefingWriteTarget`（intention / evening / goals）から導出するので、4 本目の経路は「名前を足して呼ぶ」だけで載り、文言の足し忘れはキー名が画面に出て一発で分かる。
-- **`useToastOptional` を shared に追加**（`useRightSidebarOptional` と同じ形）。**投げる `useToast` はエラー経路に使えない** — ToastProvider が無い場所（既存の briefing テスト全部・単体レンダリング）で回復可能な保存失敗をクラッシュに格上げし、それらに不要な Provider を巻かせることになる。
-- **draft は消さない**（DoD 2 項目め）。ユーザーの唯一の控えなので、消したら Toast が警告している当のデータ消失を自分で起こす。Toast は 8 秒（既定 4 秒より長い — 領収書ではなく「画面のものは保存されていない」という唯一の通知で、たいてい別の欄を打っている最中に届くため）。
-- **目標ノートの読み取り catch だけ Toast を出さない**（意図的）: 打った文字が懸かっておらず、オフラインで開くたびに鳴らすと「本当に消える方の通知」まで反射で消される癖がつく。理由をコード内に明記。
-- **テスト**: `web/tests/briefingSaveFailure.test.tsx` 5 件。失敗はフックではなく **DataService 側に注入**（実際の失敗はそこで起きる）。3 経路それぞれ + 成功時は無言 + Provider 無しでクラッシュしない。**空振りでない裏取り**: 宣言側を `console.error` に戻すと 1 件目だけが落ちることを実測。
-- **#938 のコンフリクト解消**（PR #971）: #939 が先に着地し、削除対象のブロックが隣接していたため 5 ファイルで衝突。**すべて「隣り合う別々の行の削除」**だったので両方の削除を残す形で解消（labels 3 箇所 / セクション 2 つ / テストの describe は両方採用 / `mobile-scope.md` は main の #876 行を採用）。解消後に全ゲート再実測（shared 245 files 2305 件 / web 54 files 481 件・lint 0 error・`records.mjs check` / `docs-lint` OK）。
-- **ゲート（#955）**: shared（lint 0 error / build / test 246 files 2326 件）・web（lint 0 error / build / test 54 files 487 件）すべて exit 0。
-- **記録**: archive 対象なし。スコープ逸脱なし。AC 免除なし。実装中に浮上した判断なし。**merge 順の懸念は解消** — #957 が先に merge されたので #955 は期間キー化後の `useGoalsDoc` に対して書けており、両者にコンフリクトは無い。
