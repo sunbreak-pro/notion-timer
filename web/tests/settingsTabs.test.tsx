@@ -29,6 +29,10 @@ import { SettingsScreen } from "../src/settings/SettingsScreen";
 const state = vi.hoisted(() => ({
   setInitialView: vi.fn(),
   getSession: vi.fn(),
+  /* Wide by default — the narrow suite below flips it for its own renders. */
+  isWide: true,
+  /* #1525 — the two members SettingsScreen reads off the detail panel. */
+  rightSidebar: { open: vi.fn(), close: vi.fn() },
   /* Only the five reads TrashScreen makes; every list comes back empty, so
      the Trash body settles on its own empty state. */
   dataService: {
@@ -48,7 +52,8 @@ vi.mock("@life-editor/shared", async (importOriginal) => {
       t: (key: string, opts?: Record<string, unknown>) =>
         opts ? `${key}|${Object.values(opts).join(",")}` : key,
     }),
-    useMediaQuery: () => true,
+    useMediaQuery: () => state.isWide,
+    useRightSidebarOptional: () => state.rightSidebar,
     useThemeContext: () => ({
       theme: "light",
       themeMode: "system",
@@ -126,6 +131,7 @@ async function renderSettings() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  state.isWide = true;
   state.getSession.mockResolvedValue({ user: { email: "me@example.com" } });
 });
 
@@ -281,5 +287,63 @@ describe("SettingsScreen — the Tips row (#1174)", () => {
 
     expect(screen.queryByRole("dialog")).toBe(null);
     expect(generalOnScreen()).toBe(true);
+  });
+});
+
+/*
+ * #1525 — the list gets out of the way on narrow.
+ *
+ * Wide and narrow draw this same nav in two different frames: a pinned column
+ * beside the body, and a modal drawer 85% as wide as the viewport ON TOP of
+ * it. Choosing a category in the drawer used to leave the drawer up, so the
+ * pane it had just switched to was a 58px sliver behind it — the press looked
+ * like it had done nothing until you found the header's close button.
+ *
+ * The width is the whole condition, so both directions are pinned here: a
+ * narrow press closes the panel, a wide press must NOT (closing a pinned
+ * column would take the navigation away from a screen whose navigation it is).
+ * Tips is the third case — a modal, not a pane — and it leaves the list up so
+ * dismissing it hands the reader back to where they pressed from.
+ */
+describe("SettingsScreen — the narrow drawer (#1525)", () => {
+  it("closes the drawer when a category is chosen on narrow", async () => {
+    state.isWide = false;
+    await renderSettings();
+
+    pressRow("section.schedule");
+
+    expect(state.rightSidebar.close).toHaveBeenCalledTimes(1);
+    // And the choice still landed — the close is on top of the swap, not
+    // instead of it.
+    screen.getByRole("radiogroup", {
+      name: "settings.schedule.initialViewLabel",
+    });
+  });
+
+  it("closes it for the Trash category too, not just the preference panes", async () => {
+    state.isWide = false;
+    await renderSettings();
+
+    pressRow("settings.tabs.trash");
+    await act(async () => {});
+
+    expect(state.rightSidebar.close).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves the pinned column alone on wide", async () => {
+    await renderSettings();
+
+    pressRow("section.schedule");
+
+    expect(state.rightSidebar.close).not.toHaveBeenCalled();
+  });
+
+  it("leaves the drawer up for Tips, which is a modal rather than a pane", async () => {
+    state.isWide = false;
+    await renderSettings();
+
+    pressRow("settings.tabs.tips");
+
+    expect(state.rightSidebar.close).not.toHaveBeenCalled();
   });
 });

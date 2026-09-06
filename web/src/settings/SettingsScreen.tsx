@@ -175,6 +175,7 @@ export function SettingsScreen() {
    */
   const rightSidebar = useRightSidebarOptional();
   const openPanel = rightSidebar?.open;
+  const closePanel = rightSidebar?.close;
   const askedForPanelRef = useRef(false);
   useEffect(() => {
     if (askedForPanelRef.current || !isWide || !openPanel) return;
@@ -863,10 +864,25 @@ export function SettingsScreen() {
           value={tab}
           onSelect={(id) => {
             if (id === TIPS_ROW_ID) {
+              /*
+               * Tips is a modal, not a pane, so the drawer stays where it is:
+               * the modal covers it anyway, and dismissing the modal should
+               * hand the list back rather than drop the reader into whatever
+               * pane happened to be selected before.
+               */
               setTipsOpen(true);
               return;
             }
             setTab(id as SettingsTabId);
+            /*
+             * #1525 — on narrow this nav lives in the MobileDrawer, a modal
+             * overlay 85% as wide as the viewport, so leaving it up covers the
+             * pane it just switched to (58px of it stayed visible). Same move
+             * DailyView / NotesView make when a narrow list picks its subject.
+             * `close` (not `requestClose`): this is a programmatic tidy-up, not
+             * the user asking to discard anything (#753).
+             */
+            if (!isWide) closePanel?.();
           }}
           label={t("settings.tabs.navLabel")}
         />
