@@ -41,7 +41,9 @@ const stub = vi.hoisted(() => ({
 
 vi.mock("@life-editor/shared", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  useTranslation: () => ({ t: (key: string) => key }),
+  // `i18n.language` is read for the picker's date subtitles (#1519), so the
+  // mock has to carry it — the real hook always does.
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: "en" } }),
   useMediaQuery: () => stub.wide,
   useTimerContext: () => stub.useTimer(),
 }));
@@ -65,16 +67,30 @@ const fetchTodoTree = vi.fn();
 // selector empty for every test in this file.
 const fetchScheduleItemsByDateRange = vi.fn();
 
-function makeDS(): WorkScreenDataService {
+function makeDS(events: unknown[] = []): WorkScreenDataService {
   fetchTodoTree.mockResolvedValue([
     { id: "t1", type: "task", title: "Write the spec", isDeleted: false },
     { id: "t-gone", type: "task", title: "Deleted todo", isDeleted: true },
   ]);
-  fetchScheduleItemsByDateRange.mockResolvedValue([]);
+  fetchScheduleItemsByDateRange.mockResolvedValue(events);
   return {
     fetchTodoTree,
     fetchScheduleItemsByDateRange,
   } as unknown as WorkScreenDataService;
+}
+
+/** One occurrence of a daily routine — the #1519 shape: same title, own day. */
+function occurrence(date: string, startTime: string, extra = {}) {
+  return {
+    id: `ev-${date}`,
+    title: "Morning pages",
+    date,
+    startTime,
+    endTime: "08:00",
+    routineId: "r1",
+    isDeleted: false,
+    ...extra,
+  };
 }
 
 /**
@@ -157,7 +173,7 @@ function NarrowShell({ children }: { children: ReactNode }) {
   );
 }
 
-function renderWork(Shell: typeof WideShell) {
+function renderWork(Shell: typeof WideShell, events: unknown[] = []) {
   // WorkScreen reads `useSyncDomains` since #1157, and `useSyncContext` throws
   // outside its Provider. The timer is still the local stub above — this adds
   // the Sync Provider only, which is what the header comment's "TimerProvider
@@ -166,7 +182,7 @@ function renderWork(Shell: typeof WideShell) {
   render(
     <SyncWrapper>
       <Shell>
-        <WorkScreen dataService={makeDS()} />
+        <WorkScreen dataService={makeDS(events)} />
       </Shell>
     </SyncWrapper>,
   );
@@ -221,5 +237,62 @@ describe("Work — Layout Standard v2 adoption (#590)", () => {
     // And the settings still arrive through the same portal, via the drawer.
     fireEvent.click(screen.getByRole("button", { name: "open detail" }));
     expect(screen.getByText("pomodoro.title")).not.toBeNull();
+  });
+});
+
+/*
+ * #1519 — the picker offers a WEEK of events (#1375), so a daily routine
+ * arrives as seven rows sharing one title. Before this the rows carried
+ * nothing else, and picking one was a guess about which day the session would
+ * be filed against. The window is not narrowed: "start on tomorrow's 9am" is
+ * what the seven days are for. Each event row states its day instead.
+ */
+describe("Work — the picker's event rows name their day (#1519)", () => {
+  it("gives each occurrence of a repeat its own day + start time", async () => {
+    stub.wide = false;
+    const main = renderWork(NarrowShell, [
+      occurrence("2026-09-07", "07:00"),
+      occurrence("2026-09-06", "07:00"),
+      occurrence("2026-09-08", "00:00", { isAllDay: true }),
+    ]);
+
+    fireEvent.click(
+      within(main).getByRole("button", { name: "work.todoSelector.select" }),
+    );
+    const rows = await screen.findAllByRole("button", {
+      name: /Morning pages/,
+    });
+
+    // Calendar order, and every row says which day it is.
+    expect(rows.length).toBe(3);
+    expect(within(rows[0]).getByText("9/6 07:00")).not.toBeNull();
+    expect(within(rows[1]).getByText("9/7 07:00")).not.toBeNull();
+    // An all-day occurrence has no clock to show, so it says so instead of
+    // printing the 00:00 the row happens to be stored with.
+    expect(
+      within(rows[2]).getByText("9/8 work.todoSelector.allDay"),
+    ).not.toBeNull();
+  });
+
+  it("says the same day in the desktop dropdown, and todos stay one line", async () => {
+    const main = renderWork(WideShell, [occurrence("2026-09-06", "07:00")]);
+
+    // The trigger replaces the selector's loading skeleton once the ONE load
+    // lands, so it has to be awaited — unlike the narrow sheet, which is
+    // reached through a chip that is drawn before the list arrives.
+    fireEvent.click(
+      await within(main).findByRole("button", {
+        name: "work.todoSelector.placeholder",
+      }),
+    );
+    const menu = await screen.findByRole("menu");
+    expect(
+      within(menu).getByRole("menuitem", { name: /Morning pages/ }).textContent,
+    ).toBe("Morning pages9/6 07:00");
+    // A todo is one row for one thing — nothing to disambiguate, no subtitle.
+    expect(
+      within(menu).getByRole("menuitem", { name: /Write the spec/ })
+        .textContent,
+    ).toBe("Write the spec");
   });
 });

@@ -287,6 +287,7 @@
       "clear": "紐づけを外す",
       "select": "Todo か予定を選ぶ",
       "clearSelection": "選択を外す",
+      "allDay": "終日",
       "emptyHint": "紐づけられるものがありません。Todo を作るか、7 日以内に予定を追加してください。"
     },
     "completion": {
