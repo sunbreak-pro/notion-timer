@@ -71,15 +71,36 @@ export function ConfirmDialog({
       {/* Cancel is DOM-first so the Modal's initial focus lands on the safe
           answer — never on a destructive one (same arrangement as
           RepeatScopeDialog). Visual order still reads cancel → confirm. */}
+      {/*
+       * `max-md:min-h-11` — the 44px touch floor below the app's single
+       * breakpoint (#1512), where the audit read these two at 31.5.
+       *
+       * On the buttons and not on Button's own `sm` row, because that row is
+       * load-bearing for ~15 other call sites, several of them Desktop chrome
+       * (SidebarNav, TagHubTagRail) where a 44px button would be conspicuous.
+       * A dialog is the one place with the room to spare.
+       *
+       * A floor rather than `size="lg"`: lg would also change the padding and
+       * the type step, and it would do it on Desktop too — this dialog should
+       * look exactly as it does today on a mouse. min-height beats the size
+       * row's `h-7` without colliding with it (two `h-*` classes would be
+       * resolved by Tailwind's emit order, not by call order — #830).
+       */}
       <div className="mt-4 flex justify-end gap-2">
         {cancelLabel != null && (
-          <Button variant="secondary" size="sm" onClick={onCancel}>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="max-md:min-h-11"
+            onClick={onCancel}
+          >
             {cancelLabel}
           </Button>
         )}
         <Button
           variant={danger ? "danger" : "primary"}
           size="sm"
+          className="max-md:min-h-11"
           onClick={onConfirm}
         >
           {confirmLabel}

@@ -38,6 +38,20 @@ export interface SegmentedOption {
  * which hangs an invisible 44px hit area over the smaller pill. The band
  * therefore ends up EASIER to hit than it was before this size existed (36px),
  * while reading as less furniture.
+ *
+ * #1512 re-measured this band at 33px and filed it as an undersized target.
+ * It is NOT one, and the size table is deliberately unchanged: the audit read
+ * `getBoundingClientRect()` on the button, which cannot see a ::after, and the
+ * hit area it missed is the 44px one above. Growing the pill to match the
+ * number would put back the very height #1039 was asked to remove ("要素を
+ * 圧迫している") — so the fix stayed on the row's ICON buttons, whose targets
+ * were short in a way a pseudo-element could not repair (Undo/Redo sit
+ * gap-0.5 apart, so widening their hit areas would overlap each other).
+ *
+ * That change makes this band's overhang free, as a side effect worth knowing:
+ * the row is now as tall as the 44px ::after, so the ~6px it used to hang past
+ * the track — the part TAP_TARGET_TALL's own doc-comment asks callers to check
+ * their surroundings for — no longer reaches past the row at all.
  */
 export type SegmentedControlSize = "md" | "sm";
 

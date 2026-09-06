@@ -1,6 +1,5 @@
 import { PanelRight, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { cn } from "./cn";
-import { TAP_TARGET_TALL } from "./styleTokens";
 import { useRightSidebarContext } from "../hooks/useRightSidebarContext";
 
 /*
@@ -16,15 +15,23 @@ import { useRightSidebarContext } from "../hooks/useRightSidebarContext";
  *                        will this click do?" the same way. Since #1284 it is
  *                        also the panel's ONLY close affordance on Desktop.
  *  variant "hamburger" — Mobile: sits at the left end of the segment row
- *                        (PanelRight, 32×32, bordered) and opens the drawer.
+ *                        (PanelRight, bordered) and opens the drawer.
  *                        Static glyph on purpose — the drawer is modal and
  *                        covers this button, so there is no open state for it
  *                        to reflect (the variant name is kept to avoid churn
  *                        at the call sites).
- *                        It shares the row's height with the segmented
- *                        control, so it came down from 36 with it (#1039) and
- *                        carries the same invisible 44px hit area — the row
- *                        is what got shorter, not the target.
+ *                        Floored to the 44px touch target (#1512). It used to
+ *                        be a 2rem box carrying TAP_TARGET_TALL, which bought
+ *                        the height but not the WIDTH — inset-x-0 holds that
+ *                        pseudo-element to the control's own 2rem, so a thumb
+ *                        still had a 36px-wide strip to find. The box itself
+ *                        is the target now, and TAP_TARGET_TALL came off
+ *                        because it would be exactly the height the box
+ *                        already has.
+ *                        This is the branch that sets the narrow row's height
+ *                        together with Undo/Redo; #1039's shorter SEGMENT
+ *                        BAND is untouched and still reads as the smaller
+ *                        furniture it was shrunk to be.
  *
  * aria-expanded reflects isOpen, and the aria-label flips with it (open ↔
  * close action) so the announced action always matches what a click will do.
@@ -58,8 +65,12 @@ export function RightSidebarToggle({
         aria-label={label}
         aria-expanded={isOpen}
         className={cn(
-          "grid h-8 w-8 flex-shrink-0 place-items-center rounded-lumen-md",
-          TAP_TARGET_TALL,
+          // min-* rather than h-11/w-11: `cn` is a plain string join, so two
+          // utilities for the SAME property would be resolved by Tailwind's
+          // emit order and not by call order (#830). A min floor is a
+          // different property, and it also lets a caller's className still
+          // grow the button.
+          "grid min-h-11 min-w-11 flex-shrink-0 place-items-center rounded-lumen-md",
           "border border-lumen-border bg-lumen-bg text-lumen-text-secondary",
           "transition-colors hover:bg-lumen-hover hover:text-lumen-text",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lumen-accent",
