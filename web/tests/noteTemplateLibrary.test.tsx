@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import type { DataService, NoteNode } from "@life-editor/shared";
@@ -328,5 +328,89 @@ describe("saved templates in the Notes sidebar (#1180)", () => {
         name: /materials\.templates\.sidebarHeading/,
       }),
     ).toBeNull();
+  });
+});
+
+/*
+ * #1471 — the dialog opens at the width of the note column it covers, end to
+ * end.
+ *
+ * The fix has three hops: NotesView puts a measuring ref on the box its note
+ * detail renders in, hands the number to TemplateEditHost, and the panel turns
+ * it into `min(<reading token>, Npx)`. The hook and the panel each got their
+ * own suite; the two hops BETWEEN them got none, which is the gap this closes.
+ * Delete `ref={measureMainColumn}` or `columnWidth={mainColumnWidth}` and every
+ * other suite in the repo stays green while the dialog goes back to opening at
+ * the token's 818px over a 642px note — the exact symptom the audit measured.
+ *
+ * jsdom has no layout (CLAUDE.md §7.1), so the ONE thing stubbed here is the
+ * width a box reports; the ref, the prop and the panel's min() are all the real
+ * code. The stub answers for EVERY element, so what this pins is that a box is
+ * measured and the number reaches the dialog — not that the ref sits on the
+ * right box. Which box that is stays a reading question (it is the one the note
+ * detail renders in), and moving the ref to another element in the same column
+ * would not change the answer anyway.
+ */
+describe("the template editor opens at the note column's width (#1471)", () => {
+  /** Give jsdom the single measurement it cannot make. */
+  function measureEveryBoxAt(width: number) {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+      width,
+      height: 0,
+      top: 0,
+      left: 0,
+      right: width,
+      bottom: 0,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+  }
+
+  /** Open the pencil on "Weekly review" and return the panel. */
+  async function openEditor(): Promise<HTMLElement> {
+    await openTemplates();
+    fireEvent.click(
+      screen.getByLabelText("materials.templates.edit: Weekly review"),
+    );
+    return await screen.findByRole("dialog");
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("carries the measured column through to the panel", async () => {
+    // 642 is what the note card measured at 1280x800 while this dialog opened
+    // at 818 (the audit's numbers).
+    measureEveryBoxAt(642);
+    render(<NotesView dataService={makeDS()} />);
+
+    expect((await openEditor()).style.maxWidth).toBe(
+      "min(var(--container-lumen-reading), 642px)",
+    );
+  });
+
+  it("keeps the token alone when there is nothing to measure", async () => {
+    // No stub: every jsdom box is 0 wide, which `useElementWidth` reports as
+    // unmeasured rather than as a zero-width dialog.
+    render(<NotesView dataService={makeDS()} />);
+    const dialog = await openEditor();
+
+    expect(dialog.style.maxWidth).toBe("");
+    expect(dialog.className).toContain("max-w-lumen-reading");
+  });
+
+  it("re-measures on narrow too, where the drawer opens the same panel", async () => {
+    // The panel is mounted at the view's top level rather than inside the
+    // sidebar portal (#1180), so the narrow drawer closing must not take the
+    // measurement with it.
+    state.isWide = false;
+    measureEveryBoxAt(390);
+    render(<NotesView dataService={makeDS()} />);
+
+    expect((await openEditor()).style.maxWidth).toBe(
+      "min(var(--container-lumen-reading), 390px)",
+    );
   });
 });
