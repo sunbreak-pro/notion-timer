@@ -219,9 +219,12 @@ export function EveningView({
 
       {/* ── Masthead — the title deliberately keeps the newspaper serif
           (#269) regardless of the Settings font; body copy follows the
-          global preference (#556) ─────────────────────────────────── */}
+          global preference (#556). `break-keep` for the same reason the
+          morning paper carries it: 「LIFE EDITOR 夕刊」wrapped between 夕 and
+          刊 at 390px, and keep-all leaves the space before the paper's name
+          as the only break point (#1513). ─────────────────────────── */}
       <header className="border-b-4 border-double border-lumen-border-strong pb-4 pt-6 text-center">
-        <h2 className="font-serif text-2xl font-semibold tracking-[0.3em] text-lumen-text">
+        <h2 className="break-keep font-serif text-2xl font-semibold tracking-[0.3em] text-lumen-text">
           {labels.masthead}
         </h2>
         <p className="mt-2 text-xs tracking-[0.2em] text-lumen-text-secondary">
