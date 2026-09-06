@@ -66,7 +66,6 @@ export const TODO_HISTORY_LABELS = [
   "todoChipResize",
   "todoChipAllDay",
   "todoAddToToday",
-  "todoRemoveFromToday",
 ] as const;
 
 export type TodoHistoryLabel = (typeof TODO_HISTORY_LABELS)[number];

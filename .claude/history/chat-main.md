@@ -1,5 +1,22 @@
 # HISTORY (chat-main)
 
+### 2026-09-05 - #1409 Mobile 幅点検の実行セッション — finding 16 件（#1512〜#1527）起票・レポート PR
+
+#### 概要
+
+ユーザー依頼「1409 の実行を開始して」。計画書 `2026-09-05-mobile-screen-audit.md`（PR #1489 merge 済み）どおりに実行セッションを回した。dev server は先客 5174 を流用し `browser_resize(390, 844)` で固定（`innerWidth = 390` を全報告で実測）。シェル調査 → 7 画面を `playwright-ui-verifier` 直列（フォールバック 0 回・stream 停止なし・5〜25 分 / 40〜190 ツール呼び出し）→ 結合 M1〜M10 → 後始末 をメインが回し、所見はスクリーンショット / コード / SQL / MCP で spot check してから 1 件 1 Issue で起票。レポートを `docs/reports/2026-09-05-mobile-screen-audit.md` に置き、計画書を COMPLETED で archive へ（PR = docs/1409-mobile-screen-audit-report）。所要 約 2 時間（17:44〜19:45 JST）。
+
+#### 変更点
+
+- **環境の注記**: migration `0029_timer_sessions_event_link.sql`（#1375 / PR #1456）が**本番未適用**（remote は 0028 まで）で、`timer_sessions` の GET が `column event_id does not exist` の 400 になる。TimerProvider がグローバル層なのでセクション切替のたびに console error が増える。console 増分はこれを除いて数えた（それ以外は全工程 0）。**分析は `AnalyticsScreen.tsx:147` の `Promise.all` で束ねているため、この 1 本で Todo / イベント / 完了数まで全部 0** → 結合 M2 の分析側は環境起因で PARTIAL、作りの側を #1524 に起票。🛑 ユーザーの `supabase db push` 待ち
+- **画面別**: briefing = ロゴ「夕 / 刊」の語中折れ・Todo 行のはみ出し（編集 / 削除の常設）/ schedule = ドロワー Todo 行の 8px はみ出し・月セルの `text-overflow: clip`・繰り返しタブ「N日ごと」の折り返し / materials = `[[` 候補メニューが right 453 で横スクロール / work = 選択シートに繰り返しの発生分が同名 7 行 / analytics = ルーチン名 96px 固定 / connect = **エディタに `callout` ノードが無く MCP が書いたノートの本文が破棄される**（対象外所見から重要所見へ格上げ・`grep callout` が web / shared で 0 件） / settings = カテゴリ選択でドロワーが閉じない・TagEditModal に閉じるが無い・ゴミ箱のタイトル列 111px。横断 = タップ対象 44px 未満（ヘッダー 36 / ドロワー閉じる 32 / タブ帯 33 / 気分★ 35 / 各行ボタン 41・32・24 高）を 1 件に束ねて #1512（important）
+- **エージェント報告の棄却 / 格下げ**: schedule「移動ボタンがホバー専用」→ `[@media(hover:none)]:opacity-100` で実タッチは常時表示（実機申し送り）/ schedule「往復で時刻が消える」→ D-20260902-sched-1 = A（本日ユーザー裁定）の決定どおり / work「選び直し導線が消える」→ シートに「選択を外す」行あり（判断待ち）/ settings「ゴミ箱のカテゴリが 4 つ」→ 空カテゴリを畳む実装 / #1486 は PR #1449（#1442）で `role=checkbox` が付いており Desktop 側の再確認で close 可とコメント
+- **結合**: M1 / M3 / M4 / M6 / M7 / M8 / M10 PASS。M2 PARTIAL（分析 = 0029）/ M5 PARTIAL（Note は保持されるが予定のアンカー日は今日にリセット → 判断待ち）/ M9 = Note 本文チェックボックス 20×25.6・role 無し（#1523）。**M4 の Desktop → narrow は完全 PASS**（月セル / 朝刊 / ノートのチェックボックス / セクション保持）
+- **後始末**: MCP `delete_todo` / `delete_schedule_item` / `delete_note` / `untag_entity` でソフトデリート → 繰り返しは 1280 幅の「予定の操作 → 削除 → すべての予定（過去分も含む）」→ タグは 1280 幅の TagEditModal → **390 幅のゴミ箱で 39 行を複数選択して一括削除**（操作できた）。実測 = `items_meta` 0 行 / `search_all` 0 / `list_wiki_tags` 無し / `timer_sessions` 当日 0 → 0。**残置 = `wiki_tags` の `PWV1409-tag` ソフトデリート行**（ゴミ箱にタグのカテゴリが無く UI から消せない = 判断待ち P-16。#1408 の `PWV1408-tag` も同じはず）
+- **判断待ち 16 件**をレポート §6 に列挙（ドロワーのスクリムが下タブを覆う / ドロワーが左から出る / 月グリッド下の余白 / セルの並び順 / Todo 詳細に日時入力が無い / アンカー日のリセット / ヒントのモーダル化と文言 / タグの完全削除経路 など）。`mobile-scope.md` は書き換えず、#7 / #8 行の齟齬は #1522（docs）
+- **一時 worktree**: `C:/Users/user/orca/workspaces/life-editor/docs-1409-report`（`docs/1409-mobile-screen-audit-report` + tracker ブランチ）は PR merge 後に削除する。`plan-1409`（PR #1489 merge 済み）も削除対象
+- **知見**: (1) playwright のスクリーンショットは cwd 直下に落ちる — `.playwright-mcp/` 配下の相対パスで指定する（scratchpad は allowed roots 外で拒否される）(2) 月セルは「他 N 件」に畳むので画面文字での有無確認は不能 → MCP `list_schedule` で裏取り (3) 同名行の `getByLabel().first()` は同じ要素を叩き続ける → DOM 側で全チェックボックスを直接 click (4) Desktop で開いていた詳細パネルは 390 に戻すとドロワーとして残り、スクリムが下タブを塞ぐ → 幅を戻す前に閉じる
+
 ### 2026-09-05 - #1409 Mobile 幅点検の計画セッション（PR #1489）+ origin 取り込み + night-safe 22:48 走の outbox 保全
 
 #### 概要

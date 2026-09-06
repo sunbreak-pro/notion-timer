@@ -528,12 +528,7 @@ export {
   type TodoChipSlot,
 } from "./utils/itemConversion";
 // A-3 (#298): "add from todos" selector for the Today's Todo tray.
-export {
-  pickAddableTodos,
-  pickOtherTodos,
-  type AddableTodo,
-  type OtherTodo,
-} from "./utils/todayTodo";
+export { pickAddableTodos, type AddableTodo } from "./utils/todayTodo";
 // Schedule host domain helpers (#280, extracted from web CalendarTab /
 // scheduleLabels): pure label mapping, view-mode normalisation + visible
 // range, and the optimistic-create row factory.

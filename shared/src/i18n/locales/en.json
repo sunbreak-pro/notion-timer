@@ -67,7 +67,7 @@
           "body": "Headings and UI stay fixed; only body readability is adjusted."
         },
         "palette": {
-          "title": "Search & change from {{shortcut}}",
+          "title": "Search & change from ⌘K",
           "body": "You can also change shortcut assignments from the command palette."
         }
       }
@@ -662,12 +662,12 @@
     "editDetail": "Edit details",
     "itemActionsLabel": "Event actions",
     "tabTodo": "Today's Todo",
-    "todoTodayHeading": "Today's todos",
-    "todoEmptyToday": "Nothing on today yet",
-    "todoOthersHeading": "Other todos",
-    "todoEmptyOthers": "No other open todos",
-    "todoMoveToToday": "Move to today",
-    "todoMoveToOthers": "Take off today",
+    "todoPlacedHeading": "Scheduled",
+    "todoUnplacedHeading": "Candidates",
+    "todoEmptyPlaced": "Nothing scheduled with a time yet",
+    "todoEmptyUnplaced": "No candidates for today",
+    "todoAddHeading": "Add from todos",
+    "todoAddAction": "Add to today",
     "todoAddCta": "Todo",
     "todoAddDialogTitle": "New todo",
     "todoOpenDetail": "Open this todo",
@@ -874,7 +874,6 @@
       "todoChipResize": "todo duration change",
       "todoChipAllDay": "todo moved to all-day",
       "todoAddToToday": "adding a todo to today",
-      "todoRemoveFromToday": "taking a todo off today",
       "createScheduleItem": "event creation",
       "updateScheduleItem": "event update",
       "toggleScheduleItemComplete": "event completion toggle",

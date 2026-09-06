@@ -398,7 +398,6 @@ export function CalendarTab({
     handleTodoChipDropAllDay,
     handleTodoToggleComplete,
     handleTodoAddCandidate,
-    handleTodoMoveOut,
     handleTodoDelete,
     handleTodoDetailDelete,
   } = useScheduleTodoChips({
@@ -1014,7 +1013,6 @@ export function CalendarTab({
           addable: todoAddable,
           onToggleComplete: handleTodoToggleComplete,
           onAddCandidate: handleTodoAddCandidate,
-          onMoveOut: handleTodoMoveOut,
           // #1153: both groups open the same overlay. They used to jump to the
           // Kanban tab, which no longer exists — and the overlay was already
           // the surface a chip press opened, so this makes one detail answer
